@@ -13,8 +13,6 @@
 #include "tests/filesys/extended/syn-rw.h"
 #include "tests/lib.h"
 
-const char *test_name = "child-syn-rw";
-
 static char buf1[BUF_SIZE];
 static char buf2[BUF_SIZE];
 
@@ -25,6 +23,7 @@ main (int argc, const char *argv[])
   int fd;
   size_t ofs;
 
+  test_name = "child-syn-rw";
   quiet = true;
   
   CHECK (argc == 2, "argc must be 2, actually %d", argc);

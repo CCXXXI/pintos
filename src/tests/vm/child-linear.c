@@ -7,8 +7,6 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-const char *test_name = "child-linear";
-
 #define SIZE (1024 * 1024)
 static char buf[SIZE];
 
@@ -18,6 +16,8 @@ main (int argc, char *argv[])
   const char *key = argv[argc - 1];
   struct arc4 arc4;
   size_t i;
+
+  test_name = "child-linear";
 
   /* Encrypt zeros. */
   arc4_init (&arc4, key, strlen (key));
