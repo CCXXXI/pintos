@@ -648,7 +648,8 @@ to cause many of the tests to fail.
 Using the jitter feature in Bochs (@pxref{Debugging versus Testing})
 is a great way to discover bugs that are timing dependent. However,
 the following tests are known to
-fail with jitter even if your code is correct: @code{alarm-simultaneous},
+fail with jitter even if your code is correct: @code{alarm-priority},
+@code{alarm-simultaneous},
 @code{mlfqs-recent-1}, @code{mlfqs-fair-2}, @code{mlfqs-fair-20},
 @code{mlfqs-nice-2}, @code{mlfqs-nice-10}, and @code{priority-fifo}.
 The behavior of these tests can sometimes vary based on timing (e.g.,
