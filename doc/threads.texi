@@ -643,6 +643,17 @@ to cause many of the tests to fail.
 
 @xref{Testing}.
 
+@item Should I try running the tests with jitter?
+
+Using the jitter feature in Bochs (@pxref{Debugging versus Testing})
+is a great way to discover bugs that are timing dependent. However,
+the following tests are known to
+fail with jitter even if your code is correct: @code{alarm-simultaneous},
+@code{mlfqs-recent-1}, @code{mlfqs-fair-2}, @code{mlfqs-fair-20},
+@code{mlfqs-nice-2}, @code{mlfqs-nice-10}, and @code{priority-fifo}.
+The behavior of these tests can sometimes vary based on timing (e.g.,
+if a timer interrupt arrives at an inconvenient time).
+
 @item Why do I get a test failure in @func{pass}?
 
 @anchor{The pass function fails}
