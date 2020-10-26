@@ -1,0 +1,555 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: 4.4BSD Scheduler</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: 4.4BSD Scheduler">
+<META NAME="keywords" CONTENT="Pintos Projects: 4.4BSD Scheduler">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="SEC131"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_6.html#SEC90"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_8.html#SEC138"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+
+<HR SIZE=2>
+<H1> B. 4.4<ACRONYM>BSD</ACRONYM> Scheduler </H1>
+<!--docid::SEC131::-->
+<P>
+
+The goal of a general-purpose scheduler is to balance threads' different
+scheduling needs.  Threads that perform a lot of I/O require a fast
+response time to keep input and output devices busy, but need little CPU
+time.  On the other hand, compute-bound threads need to receive a lot of
+CPU time to finish their work, but have no requirement for fast response
+time.  Other threads lie somewhere in between, with periods of I/O
+punctuated by periods of computation, and thus have requirements that
+vary over time.  A well-designed scheduler can often accommodate threads
+with all these requirements simultaneously.
+</P>
+<P>
+
+For project 1, you must implement the scheduler described in this
+appendix.  Our scheduler resembles the one described in [ <A HREF="pintos_13.html#McKusick">McKusick</A>],
+which is one example of a <EM>multilevel feedback queue</EM> scheduler.
+This type of scheduler maintains several queues of ready-to-run threads,
+where each queue holds threads with a different priority.  At any given
+time, the scheduler chooses a thread from the highest-priority non-empty
+queue.  If the highest-priority queue contains multiple threads, then
+they run in &quot;round robin&quot; order.
+</P>
+<P>
+
+Multiple facets of the scheduler require data to be updated after a
+certain number of timer ticks.  In every case, these updates should
+occur before any ordinary kernel thread has a chance to run, so that
+there is no chance that a kernel thread could see a newly increased
+<CODE>timer_ticks()</CODE> value but old scheduler data values.
+</P>
+<P>
+
+The 4.4<ACRONYM>BSD</ACRONYM> scheduler does not include priority donation.
+</P>
+<P>
+
+<A NAME="Thread Niceness"></A>
+<HR SIZE="6">
+<A NAME="SEC132"></A>
+<H2> B.1 Niceness </H2>
+<!--docid::SEC132::-->
+<P>
+
+Thread priority is dynamically determined by the scheduler using a
+formula given below.  However, each thread also has an integer
+<EM>nice</EM> value that determines how &quot;nice&quot; the thread should be to
+other threads.  A <VAR>nice</VAR> of zero does not affect thread priority.  A
+positive <VAR>nice</VAR>, to the maximum of 20, decreases the priority of a 
+thread and causes it to give up some CPU time it would otherwise receive.
+On the other hand, a negative <VAR>nice</VAR>, to the minimum of -20, tends
+to take away CPU time from other threads.
+</P>
+<P>
+
+The initial thread starts with a <VAR>nice</VAR> value of zero.  Other
+threads start with a <VAR>nice</VAR> value inherited from their parent
+thread.  You must implement the functions described below, which are for
+use by test programs.  We have provided skeleton definitions for them in
+<Q><TT>threads/thread.c</TT></Q>.
+</P>
+<P>
+
+<A NAME="IDX180"></A>
+</P>
+<DL>
+<DT><U>Function:</U> int <B>thread_get_nice</B> (void)
+<DD>Returns the current thread's <VAR>nice</VAR> value.
+</DL>
+<P>
+
+<A NAME="IDX181"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_set_nice</B> (int <VAR>new_nice</VAR>)
+<DD>Sets the current thread's <VAR>nice</VAR> value to <VAR>new_nice</VAR> and
+recalculates the thread's priority based on the new value
+(see section <A HREF="pintos_7.html#SEC133">B.2 Calculating Priority</A>).  If the running thread no longer has the
+highest priority, yields.
+</DL>
+<P>
+
+<A NAME="Calculating Priority"></A>
+<HR SIZE="6">
+<A NAME="SEC133"></A>
+<H2> B.2 Calculating Priority </H2>
+<!--docid::SEC133::-->
+<P>
+
+Our scheduler has 64 priorities and thus 64 ready queues, numbered 0
+(<CODE>PRI_MIN</CODE>) through 63 (<CODE>PRI_MAX</CODE>).  Lower numbers correspond
+to lower priorities, so that priority 0 is the lowest priority
+and priority 63 is the highest.  Thread priority is calculated initially
+at thread initialization.  It is also recalculated once every fourth
+clock tick, for every thread.  In either case, it is determined by
+the formula
+</P>
+<P>
+
+<center>
+ <TT><VAR>priority</VAR> = <CODE>PRI_MAX</CODE> - (<VAR>recent_cpu</VAR> / 4) - (<VAR>nice</VAR> * 2)</TT>,
+</center>
+</P>
+<P>
+
+where <VAR>recent_cpu</VAR> is an estimate of the CPU time the
+thread has used recently (see below) and <VAR>nice</VAR> is the thread's
+<VAR>nice</VAR> value.  The result should be rounded down to the nearest
+integer (truncated).
+The coefficients 1/4 and 2 on <VAR>recent_cpu</VAR>
+and <VAR>nice</VAR>, respectively, have been found to work well in practice
+but lack deeper meaning.  The calculated <VAR>priority</VAR> is always
+adjusted to lie in the valid range <CODE>PRI_MIN</CODE> to <CODE>PRI_MAX</CODE>.
+</P>
+<P>
+
+This formula gives a thread that has received CPU
+time recently lower priority for being reassigned the CPU the next
+time the scheduler runs.  This is key to preventing starvation: a
+thread that has not received any CPU time recently will have a
+<VAR>recent_cpu</VAR> of 0, which barring a high <VAR>nice</VAR> value should
+ensure that it receives CPU time soon.
+</P>
+<P>
+
+<A NAME="Calculating recent_cpu"></A>
+<HR SIZE="6">
+<A NAME="SEC134"></A>
+<H2> B.3 Calculating <VAR>recent_cpu</VAR> </H2>
+<!--docid::SEC134::-->
+<P>
+
+We wish <VAR>recent_cpu</VAR> to measure how much CPU time each process has
+received &quot;recently.&quot; Furthermore, as a refinement, more recent CPU
+time should be weighted more heavily than less recent CPU time.  One
+approach would use an array of <VAR>n</VAR> elements to
+track the CPU time received in each of the last <VAR>n</VAR> seconds.
+However, this approach requires O(<VAR>n</VAR>) space per thread and
+O(<VAR>n</VAR>) time per calculation of a new weighted average.
+</P>
+<P>
+
+Instead, we use a <EM>exponentially weighted moving average</EM>, which
+takes this general form:
+</P>
+<P>
+
+<center>
+ x(0) = f(0),
+</center>
+<center>
+ x(t) = a*x(t-1) + f(t),
+</center>
+<center>
+ a = k/(k+1),
+</center>
+</P>
+<P>
+
+where x(t) is the moving average at integer time t &gt;= 0, f(t) is the function being averaged, and k &gt; 0 controls the rate of decay.  We can iterate the formula over a few
+steps as follows:
+</P>
+<P>
+
+<center>
+ x(1) = f(1),
+</center>
+<center>
+ x(2) = a*f(1) + f(2),
+</center>
+<center>
+ ...
+</center>
+<center>
+ x(5) = a**4*f(1) + a**3*f(2) + a**2*f(3) + a*f(4) + f(5).
+</center>
+</P>
+<P>
+
+The value of f(t) has a weight of 1 at time t, a
+weight of a at time t+1, a**2 at time
+t+2, and so on.  We can also relate x(t) to k:
+f(t) has a weight of approximately 1/e at time t+k,
+approximately 1/e**2 at time t+2*k, and so on.
+From the opposite direction, f(t) decays to weight w at
+time t + ln(w)/ln(a).
+</P>
+<P>
+
+The initial value of <VAR>recent_cpu</VAR> is 0 in the first thread
+created, or the parent's value in other new threads.  Each time a timer
+interrupt occurs, <VAR>recent_cpu</VAR> is incremented by 1 for the running
+thread only, unless the idle thread is running.  In addition, once per
+second the value of <VAR>recent_cpu</VAR>
+is recalculated for every thread (whether running, ready, or blocked),
+using this formula:
+</P>
+<P>
+
+<center>
+ <TT><VAR>recent_cpu</VAR> = (2*<VAR>load_avg</VAR>)/(2*<VAR>load_avg</VAR> + 1) * <VAR>recent_cpu</VAR> + <VAR>nice</VAR></TT>,
+</center>
+</P>
+<P>
+
+where <VAR>load_avg</VAR> is a moving average of the number of
+threads ready to run (see below).  If <VAR>load_avg</VAR> is 1, indicating
+that a single thread, on average, is competing for the CPU, then the
+current value of <VAR>recent_cpu</VAR> decays to a weight of .1 in
+ln(.1)/ln(2/3) = approx. 6 seconds; if
+<VAR>load_avg</VAR> is 2, then decay to a weight of .1 takes ln(.1)/ln(3/4) = approx. 8 seconds.  The effect is that
+<VAR>recent_cpu</VAR> estimates the amount of CPU time the thread has
+received &quot;recently,&quot; with the rate of decay inversely proportional to
+the number of threads competing for the CPU.
+</P>
+<P>
+
+Assumptions made by some of the tests require that these recalculations of
+<VAR>recent_cpu</VAR> be made exactly when the system tick counter reaches a
+multiple of a second, that is, when <CODE>timer_ticks () % TIMER_FREQ ==
+0</CODE>, and not at any other time.
+</P>
+<P>
+
+The value of <VAR>recent_cpu</VAR> can be negative for a thread with a
+negative <VAR>nice</VAR> value.  Do not clamp negative <VAR>recent_cpu</VAR> to 0.
+</P>
+<P>
+
+You may need to think about the order of calculations in this formula.
+We recommend computing the coefficient of <VAR>recent_cpu</VAR> first, then
+multiplying.  Some students have reported that multiplying
+<VAR>load_avg</VAR> by <VAR>recent_cpu</VAR> directly can cause overflow.
+</P>
+<P>
+
+You must implement <CODE>thread_get_recent_cpu()</CODE>, for which there is a
+skeleton in <Q><TT>threads/thread.c</TT></Q>.
+</P>
+<P>
+
+<A NAME="IDX182"></A>
+</P>
+<DL>
+<DT><U>Function:</U> int <B>thread_get_recent_cpu</B> (void)
+<DD>Returns 100 times the current thread's <VAR>recent_cpu</VAR> value, rounded
+to the nearest integer.
+</DL>
+<P>
+
+<A NAME="Calculating load_avg"></A>
+<HR SIZE="6">
+<A NAME="SEC135"></A>
+<H2> B.4 Calculating <VAR>load_avg</VAR> </H2>
+<!--docid::SEC135::-->
+<P>
+
+Finally, <VAR>load_avg</VAR>, often known as the system load average,
+estimates the average number of threads ready to run over the past
+minute.  Like <VAR>recent_cpu</VAR>, it is an exponentially weighted moving
+average.  Unlike <VAR>priority</VAR> and <VAR>recent_cpu</VAR>, <VAR>load_avg</VAR> is
+system-wide, not thread-specific.  At system boot, it is initialized to
+0.  Once per second thereafter, it is updated according to the following
+formula:
+</P>
+<P>
+
+<center>
+ <TT><VAR>load_avg</VAR> = (59/60)*<VAR>load_avg</VAR> + (1/60)*<VAR>ready_threads</VAR></TT>,
+</center>
+</P>
+<P>
+
+where <VAR>ready_threads</VAR> is the number of threads that are
+either running or ready to run at time of update (not including the idle
+thread).
+</P>
+<P>
+
+Because of assumptions made by some of the tests, <VAR>load_avg</VAR> must be
+updated exactly when the system tick counter reaches a multiple of a
+second, that is, when <CODE>timer_ticks () % TIMER_FREQ == 0</CODE>, and not
+at any other time.
+</P>
+<P>
+
+You must implement <CODE>thread_get_load_avg()</CODE>, for which there is a
+skeleton in <Q><TT>threads/thread.c</TT></Q>.
+</P>
+<P>
+
+<A NAME="IDX183"></A>
+</P>
+<DL>
+<DT><U>Function:</U> int <B>thread_get_load_avg</B> (void)
+<DD>Returns 100 times the current system load average, rounded to the
+nearest integer.
+</DL>
+<P>
+
+<A NAME="4.4BSD Scheduler Summary"></A>
+<HR SIZE="6">
+<A NAME="SEC136"></A>
+<H2> B.5 Summary </H2>
+<!--docid::SEC136::-->
+<P>
+
+The following formulas summarize the calculations required to implement the
+scheduler.  They are not a complete description of scheduler requirements.
+</P>
+<P>
+
+Every thread has a <VAR>nice</VAR> value between -20 and 20 directly under
+its control.  Each thread also has a priority, between 0
+(<CODE>PRI_MIN</CODE>) through 63 (<CODE>PRI_MAX</CODE>), which is recalculated
+using the following formula every fourth tick:
+</P>
+<P>
+
+<center>
+ <TT><VAR>priority</VAR> = <CODE>PRI_MAX</CODE> - (<VAR>recent_cpu</VAR> / 4) - (<VAR>nice</VAR> * 2)</TT>.
+</center>
+</P>
+<P>
+
+<VAR>recent_cpu</VAR> measures the amount of CPU time a thread has received
+&quot;recently.&quot;  On each timer tick, the running thread's <VAR>recent_cpu</VAR>
+is incremented by 1.  Once per second, every thread's <VAR>recent_cpu</VAR>
+is updated this way:
+</P>
+<P>
+
+<center>
+ <TT><VAR>recent_cpu</VAR> = (2*<VAR>load_avg</VAR>)/(2*<VAR>load_avg</VAR> + 1) * <VAR>recent_cpu</VAR> + <VAR>nice</VAR></TT>.
+</center>
+</P>
+<P>
+
+<VAR>load_avg</VAR> estimates the average number of threads ready to run over
+the past minute.  It is initialized to 0 at boot and recalculated once
+per second as follows:
+</P>
+<P>
+
+<center>
+ <TT><VAR>load_avg</VAR> = (59/60)*<VAR>load_avg</VAR> + (1/60)*<VAR>ready_threads</VAR></TT>.
+</center>
+</P>
+<P>
+
+where <VAR>ready_threads</VAR> is the number of threads that are
+either running or ready to run at time of update (not including the idle
+thread).
+</P>
+<P>
+
+<A NAME="Fixed-Point Real Arithmetic"></A>
+<HR SIZE="6">
+<A NAME="SEC137"></A>
+<H2> B.6 Fixed-Point Real Arithmetic </H2>
+<!--docid::SEC137::-->
+<P>
+
+In the formulas above, <VAR>priority</VAR>, <VAR>nice</VAR>, and
+<VAR>ready_threads</VAR> are integers, but <VAR>recent_cpu</VAR> and <VAR>load_avg</VAR>
+are real numbers.  Unfortunately, Pintos does not support floating-point
+arithmetic in the kernel, because it would
+complicate and slow the kernel.  Real kernels often have the same
+limitation, for the same reason.  This means that calculations on real
+quantities must be simulated using integers.  This is not
+difficult, but many students do not know how to do it.  This
+section explains the basics.
+</P>
+<P>
+
+The fundamental idea is to treat the rightmost bits of an integer as
+representing a fraction.  For example, we can designate the lowest 14
+bits of a signed 32-bit integer as fractional bits, so that an integer
+x represents the real number
+x/(2**14), where ** represents exponentiation.
+This is called a 17.14 fixed-point number representation, because there
+are 17 bits before the decimal point, 14 bits after it, and one sign
+bit.<A NAME="DOCF7" HREF="pintos_fot.html#FOOT7">(7)</A> A number in 17.14 format represents, at maximum, a
+value of (2**31 - 1)/(2**14) = approx. 131,071.999.
+</P>
+<P>
+
+Suppose that we are using a p.q fixed-point format, and let f = 2**q.  By the definition above, we can convert an integer or
+real number into p.q format by multiplying with f.  For example,
+in 17.14 format the fraction 59/60 used in the calculation of
+<VAR>load_avg</VAR>, above, is 59/60*(2**14) = 16,110.
+To convert a fixed-point value back to an
+integer, divide by f.  (The normal <Q><SAMP>/</SAMP></Q> operator in C rounds
+toward zero, that is, it rounds positive numbers down and negative
+numbers up.  To round to nearest, add f / 2 to a positive number, or
+subtract it from a negative number, before dividing.)
+</P>
+<P>
+
+Many operations on fixed-point numbers are straightforward.  Let
+<CODE>x</CODE> and <CODE>y</CODE> be fixed-point numbers, and let <CODE>n</CODE> be an
+integer.  Then the sum of <CODE>x</CODE> and <CODE>y</CODE> is <CODE>x + y</CODE> and
+their difference is <CODE>x - y</CODE>.  The sum of <CODE>x</CODE> and <CODE>n</CODE> is
+<CODE>x + n * f</CODE>; difference, <CODE>x - n * f</CODE>; product, <CODE>x * n</CODE>;
+quotient, <CODE>x / n</CODE>.
+</P>
+<P>
+
+Multiplying two fixed-point values has two complications.  First, the
+decimal point of the result is q bits too far to the left.  Consider
+that (59/60)*(59/60) should be slightly less than
+1, but 16,111*16,111 = 259,564,321 is much
+greater than 2**14 = 16,384.  Shifting q bits right, we
+get 259,564,321/(2**14) = 15,842, or about 0.97,
+the correct answer.  Second, the multiplication can overflow even though
+the answer is representable.  For example, 64 in 17.14 format is
+64*(2**14) = 1,048,576 and its square 64**2 = 4,096 is well within the 17.14 range, but 1,048,576**2 = 2**40, greater than the maximum signed 32-bit
+integer value 2**31 - 1.  An easy solution is to do the
+multiplication as a 64-bit operation.  The product of <CODE>x</CODE> and
+<CODE>y</CODE> is then <CODE>((int64_t) x) * y / f</CODE>.
+</P>
+<P>
+
+Dividing two fixed-point values has opposite issues.  The
+decimal point will be too far to the right, which we fix by shifting the
+dividend q bits to the left before the division.  The left shift
+discards the top q bits of the dividend, which we can again fix by
+doing the division in 64 bits.  Thus, the quotient when <CODE>x</CODE> is
+divided by <CODE>y</CODE> is <CODE>((int64_t) x) * f / y</CODE>.
+</P>
+<P>
+
+This section has consistently used multiplication or division by f,
+instead of q-bit shifts, for two reasons.  First, multiplication and
+division do not have the surprising operator precedence of the C shift
+operators.  Second, multiplication and division are well-defined on
+negative operands, but the C shift operators are not.  Take care with
+these issues in your implementation.
+</P>
+<P>
+
+The following table summarizes how fixed-point arithmetic operations can
+be implemented in C.  In the table, <CODE>x</CODE> and <CODE>y</CODE> are
+fixed-point numbers, <CODE>n</CODE> is an integer, fixed-point numbers are in
+signed p.q format where p + q = 31, and <CODE>f</CODE> is <CODE>1 &lt;&lt;
+q</CODE>:
+</P>
+<P>
+
+<CENTER>
+</P>
+<TABLE>
+<TR><TD>Convert <CODE>n</CODE> to fixed point:</TD>
+</TD><TD> <CODE>n * f</CODE>
+
+</TR>
+<TR><TD>Convert <CODE>x</CODE> to integer (rounding toward zero):</TD>
+</TD><TD> <CODE>x / f</CODE>
+
+</TR>
+<TR><TD>Convert <CODE>x</CODE> to integer (rounding to nearest):</TD>
+</TD><TD> <CODE>(x + f / 2) / f</CODE> if <CODE>x &gt;= 0</CODE>, <BR>
+<CODE>(x - f / 2) / f</CODE> if <CODE>x &lt;= 0</CODE>.
+
+</TR>
+<TR><TD>Add <CODE>x</CODE> and <CODE>y</CODE>:</TD>
+</TD><TD> <CODE>x + y</CODE>
+
+</TR>
+<TR><TD>Subtract <CODE>y</CODE> from <CODE>x</CODE>:</TD>
+</TD><TD> <CODE>x - y</CODE>
+
+</TR>
+<TR><TD>Add <CODE>x</CODE> and <CODE>n</CODE>:</TD>
+</TD><TD> <CODE>x + n * f</CODE>
+
+</TR>
+<TR><TD>Subtract <CODE>n</CODE> from <CODE>x</CODE>:</TD>
+</TD><TD> <CODE>x - n * f</CODE>
+
+</TR>
+<TR><TD>Multiply <CODE>x</CODE> by <CODE>y</CODE>:</TD>
+</TD><TD> <CODE>((int64_t) x) * y / f</CODE>
+
+</TR>
+<TR><TD>Multiply <CODE>x</CODE> by <CODE>n</CODE>:</TD>
+</TD><TD> <CODE>x * n</CODE>
+
+</TR>
+<TR><TD>Divide <CODE>x</CODE> by <CODE>y</CODE>:</TD>
+</TD><TD> <CODE>((int64_t) x) * f / y</CODE>
+
+</TR>
+<TR><TD>Divide <CODE>x</CODE> by <CODE>n</CODE>:</TD>
+</TD><TD> <CODE>x / n</CODE>
+</TR></TABLE>
+</CENTER>
+<A NAME="Coding Standards"></A>
+<HR SIZE="6">
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_7.html#SEC131"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_8.html#SEC138"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>

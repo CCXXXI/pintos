@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: Footnotes</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: Footnotes">
+<META NAME="keywords" CONTENT="Pintos Projects: Footnotes">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="pintos_fot.html"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<H1>Footnotes</H1>
+<H3><A NAME="FOOT1" HREF="pintos_1.html#DOCF1">(1)</A></H3>
+<P>The term <Q><SAMP>`uname -m`</SAMP></Q> expands to a value
+such as <Q><TT>x86_64</TT></Q> that indicates the type of computer you're
+logged into.
+<H3><A NAME="FOOT2" HREF="pintos_2.html#DOCF2">(2)</A></H3>
+<P>GDB might tell you that
+<CODE>schedule()</CODE> doesn't exist, which is arguably a GDB bug.
+You can work around this by setting the breakpoint by filename and
+line number, e.g. <CODE>break thread.c:<VAR>ln</VAR></CODE> where <VAR>ln</VAR> is
+the line number of the first declaration in <CODE>schedule()</CODE>.
+<H3><A NAME="FOOT3" HREF="pintos_3.html#DOCF3">(3)</A></H3>
+<P>We
+will treat these terms as synonyms.  There is no standard
+distinction between them, although Intel processor manuals make 
+a minor distinction between them on 80<VAR>x</VAR>86.
+<H3><A NAME="FOOT4" HREF="pintos_4.html#DOCF4">(4)</A></H3>
+<P>This rule is
+common but not universal.  One modern exception is the
+<A HREF="http://www.x86-64.org/documentation/abi.pdf"><VAR>x</VAR>86-64 System V
+ABI</A>, which designates 128 bytes below the stack pointer as a &quot;red
+zone&quot; that may not be modified by signal or interrupt handlers.
+<H3><A NAME="FOOT5" HREF="pintos_6.html#DOCF5">(5)</A></H3>
+<P>This is because <CODE>switch_threads()</CODE> takes
+arguments on the stack and the 80<VAR>x</VAR>86 SVR4 calling convention
+requires the caller, not the called function, to remove them when the
+call is complete.  See [ <A HREF="pintos_13.html#SysV-i386">SysV-i386</A>] chapter 3 for details.
+<H3><A NAME="FOOT6" HREF="pintos_6.html#DOCF6">(6)</A></H3>
+<P>Actually, virtual to physical translation on the
+80<VAR>x</VAR>86 architecture occurs via an intermediate &quot;linear
+address,&quot; but Pintos (and most modern 80<VAR>x</VAR>86 OSes) set up the CPU
+so that linear and virtual addresses are one and the same.  Thus, you
+can effectively ignore this CPU feature.
+<H3><A NAME="FOOT7" HREF="pintos_7.html#DOCF7">(7)</A></H3>
+<P>Because we are working in binary, the &quot;decimal&quot; point
+might more correctly be called the &quot;binary&quot; point, but the meaning
+should be clear.
+<H3><A NAME="FOOT8" HREF="pintos_10.html#DOCF8">(8)</A></H3>
+<P><CODE>pintos-gdb</CODE> is a wrapper around
+<CODE>gdb</CODE> (80<VAR>x</VAR>86) or <CODE>i386-elf-gdb</CODE> (SPARC) that loads
+the Pintos macros at startup.
+<H3><A NAME="FOOT9" HREF="pintos_10.html#DOCF9">(9)</A></H3>
+<P>To be precise, GDB will stop
+only when running under Bochs.  When running under QEMU, you must
+set a breakpoint in the <CODE>page_fault</CODE> function to stop execution 
+when a page fault occurs. In that case, the <CODE>btpagefault</CODE> macro is
+unnecessary.
+<H3><A NAME="FOOT10" HREF="pintos_11.html#DOCF10">(10)</A></H3>
+<P>This is typically <CODE>vi</CODE>.  To
+exit <CODE>vi</CODE>, type <KBD>: q <KBD>Enter</KBD></KBD>.
+<HR SIZE=1>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>

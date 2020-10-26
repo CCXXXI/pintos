@@ -1,0 +1,305 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: Coding Standards</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: Coding Standards">
+<META NAME="keywords" CONTENT="Pintos Projects: Coding Standards">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="SEC138"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_7.html#SEC131"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_9.html#SEC142"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+
+<HR SIZE=2>
+<H1> C. Coding Standards </H1>
+<!--docid::SEC138::-->
+<P>
+
+Our standards for coding are most important for grading.  We want to
+stress that aside from the fact that we are explicitly basing part of
+your grade on these things, good coding practices will improve the
+quality of your code.  This makes it easier for your partners to
+interact with it, and ultimately, will improve your chances of having a
+good working program.  That said once, the rest of this document will
+discuss only the ways in which our coding standards will affect our
+grading.
+</P>
+<P>
+
+<A NAME="Coding Style"></A>
+<HR SIZE="6">
+<A NAME="SEC139"></A>
+<H2> C.1 Style </H2>
+<!--docid::SEC139::-->
+<P>
+
+Style, for the purposes of our grading, refers to how readable your
+code is.  At minimum, this means that your code is well formatted, your
+variable names are descriptive and your functions are decomposed and
+well commented.  Any other factors which make it hard (or easy) for us
+to read or use your code will be reflected in your style grade.
+</P>
+<P>
+
+The existing Pintos code is written in the GNU style and largely
+follows the <A HREF="http://www.gnu.org/prep/standards_toc.html">GNU
+Coding Standards</A>.  We encourage you to follow the applicable parts of
+them too, especially chapter 5, &quot;Making the Best Use of C.&quot;  Using a
+different style won't cause actual problems, but it's ugly to see
+gratuitous differences in style from one function to another.  If your
+code is too ugly, it will cost you points.
+</P>
+<P>
+
+Please limit C source file lines to at most 79 characters long.
+</P>
+<P>
+
+Pintos comments sometimes refer to external standards or
+specifications by writing a name inside square brackets, like this:
+<CODE>[IA32-v3a]</CODE>.  These names refer to the reference names used in
+this documentation (see section <A HREF="pintos_13.html#SEC165">Bibliography</A>).
+</P>
+<P>
+
+If you remove existing Pintos code, please delete it from your source
+file entirely.  Don't just put it into a comment or a conditional
+compilation directive, because that makes the resulting code hard to
+read.
+</P>
+<P>
+
+We're only going to do a compile in the directory for the project being
+submitted.  You don't need to make sure that the previous projects also
+compile.
+</P>
+<P>
+
+Project code should be written so that all of the subproblems for the
+project function together, that is, without the need to rebuild with
+different macros defined, etc.  If you do extra credit work that
+changes normal Pintos behavior so as to interfere with grading, then
+you must implement it so that it only acts that way when given a
+special command-line option of the form <Q><SAMP>-<VAR>name</VAR></SAMP></Q>, where
+<VAR>name</VAR> is a name of your choice.  You can add such an option by
+modifying <CODE>parse_options()</CODE> in <Q><TT>threads/init.c</TT></Q>.
+</P>
+<P>
+
+The introduction describes additional coding style requirements
+(see section <A HREF="pintos_1.html#SEC9">1.2.2 Design</A>).
+</P>
+<P>
+
+<A NAME="C99"></A>
+<HR SIZE="6">
+<A NAME="SEC140"></A>
+<H2> C.2 C99 </H2>
+<!--docid::SEC140::-->
+<P>
+
+The Pintos source code uses a few features of the &quot;C99&quot; standard
+library that were not in the original 1989 standard for C.  Many
+programmers are unaware of these feature, so we will describe them.  The
+new features used in Pintos are
+mostly in new headers:
+</P>
+<P>
+
+</P>
+<DL COMPACT>
+<DT><Q><TT>&lt;stdbool.h&gt;</TT></Q>
+<DD>Defines macros <CODE>bool</CODE>, a 1-bit type that takes on only the values
+0 and 1, <CODE>true</CODE>, which expands to 1, and <CODE>false</CODE>, which
+expands to 0.
+<P>
+
+</P>
+<DT><Q><TT>&lt;stdint.h&gt;</TT></Q>
+<DD>On systems that support them, this header defines types
+<CODE>int<VAR>n</VAR>_t</CODE> and <CODE>uint<VAR>n</VAR>_t</CODE> for <VAR>n</VAR> = 8, 16, 32,
+64, and possibly other values.  These are 2's complement signed and unsigned
+types, respectively, with the given number of bits.  
+<P>
+
+On systems where it is possible, this header also defines types
+<CODE>intptr_t</CODE> and <CODE>uintptr_t</CODE>, which are integer types big
+enough to hold a pointer.
+</P>
+<P>
+
+On all systems, this header defines types <CODE>intmax_t</CODE> and
+<CODE>uintmax_t</CODE>, which are the system's signed and unsigned integer
+types with the widest ranges.
+</P>
+<P>
+
+For every signed integer type <CODE><VAR>type</VAR>_t</CODE> defined here, as well
+as for <CODE>ptrdiff_t</CODE> defined in <Q><TT>&lt;stddef.h&gt;</TT></Q>, this header also
+defines macros <CODE><VAR>TYPE</VAR>_MAX</CODE> and <CODE><VAR>TYPE</VAR>_MIN</CODE> that
+give the type's range.  Similarly, for every unsigned integer type
+<CODE><VAR>type</VAR>_t</CODE> defined here, as well as for <CODE>size_t</CODE> defined
+in <Q><TT>&lt;stddef.h&gt;</TT></Q>, this header defines a <CODE><VAR>TYPE</VAR>_MAX</CODE>
+macro giving its maximum value.
+</P>
+<P>
+
+</P>
+<DT><Q><TT>&lt;inttypes.h&gt;</TT></Q>
+<DD><Q><TT>&lt;stdint.h&gt;</TT></Q> provides no straightforward way to format
+the types it defines with <CODE>printf()</CODE> and related functions.  This
+header provides macros to help with that.  For every
+<CODE>int<VAR>n</VAR>_t</CODE> defined by <Q><TT>&lt;stdint.h&gt;</TT></Q>, it provides macros
+<CODE>PRId<VAR>n</VAR></CODE> and <CODE>PRIi<VAR>n</VAR></CODE> for formatting values of
+that type with <CODE>&quot;%d&quot;</CODE> and <CODE>&quot;%i&quot;</CODE>.  Similarly, for every
+<CODE>uint<VAR>n</VAR>_t</CODE>, it provides <CODE>PRIo<VAR>n</VAR></CODE>,
+<CODE>PRIu<VAR>n</VAR></CODE>, <CODE>PRIu<VAR>x</VAR></CODE>, and <CODE>PRIu<VAR>X</VAR></CODE>.
+<P>
+
+You use these something like this, taking advantage of the fact that
+the C compiler concatenates adjacent string literals:
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>#include &lt;inttypes.h&gt;
+<small>...</small>
+int32_t value = <small>...</small>;
+printf (&quot;value=%08&quot;PRId32&quot;\n&quot;, value);
+</pre></td></tr></table>The <Q><SAMP>%</SAMP></Q> is not supplied by the <CODE>PRI</CODE> macros.  As shown
+above, you supply it yourself and follow it by any flags, field
+width, etc.
+<P>
+
+</P>
+<DT><Q><TT>&lt;stdio.h&gt;</TT></Q>
+<DD>The <CODE>printf()</CODE> function has some new type modifiers for printing
+standard types:
+<P>
+
+</P>
+<DL COMPACT>
+<DT><Q><SAMP>j</SAMP></Q>
+<DD>For <CODE>intmax_t</CODE> (e.g. <Q><SAMP>%jd</SAMP></Q>) or <CODE>uintmax_t</CODE> (e.g.
+<Q><SAMP>%ju</SAMP></Q>).
+<P>
+
+</P>
+<DT><Q><SAMP>z</SAMP></Q>
+<DD>For <CODE>size_t</CODE> (e.g. <Q><SAMP>%zu</SAMP></Q>).
+<P>
+
+</P>
+<DT><Q><SAMP>t</SAMP></Q>
+<DD>For <CODE>ptrdiff_t</CODE> (e.g. <Q><SAMP>%td</SAMP></Q>).
+</DL>
+<P>
+
+Pintos <CODE>printf()</CODE> also implements a nonstandard <Q><SAMP>'</SAMP></Q> flag that
+groups large numbers with commas to make them easier to read.
+</DL>
+<P>
+
+<A NAME="Unsafe String Functions"></A>
+<HR SIZE="6">
+<A NAME="SEC141"></A>
+<H2> C.3 Unsafe String Functions </H2>
+<!--docid::SEC141::-->
+<P>
+
+A few of the string functions declared in the standard
+<Q><TT>&lt;string.h&gt;</TT></Q> and <Q><TT>&lt;stdio.h&gt;</TT></Q> headers are notoriously unsafe.
+The worst offenders are intentionally not included in the Pintos C
+library:
+</P>
+<P>
+
+</P>
+<DL COMPACT>
+<DT><CODE>strcpy</CODE>
+<DD>When used carelessly this function can overflow the buffer reserved
+for its output string.  Use <CODE>strlcpy()</CODE> instead.  Refer to
+comments in its source code in <CODE>lib/string.c</CODE> for documentation.
+<P>
+
+</P>
+<DT><CODE>strncpy</CODE>
+<DD>This function can leave its destination buffer without a null string
+terminator.  It also has performance problems.  Again, use
+<CODE>strlcpy()</CODE>.
+<P>
+
+</P>
+<DT><CODE>strcat</CODE>
+<DD>Same issue as <CODE>strcpy()</CODE>.  Use <CODE>strlcat()</CODE> instead.
+Again, refer to comments in its source code in <CODE>lib/string.c</CODE> for
+documentation.
+<P>
+
+</P>
+<DT><CODE>strncat</CODE>
+<DD>The meaning of its buffer size argument is surprising.
+Again, use <CODE>strlcat()</CODE>.
+<P>
+
+</P>
+<DT><CODE>strtok</CODE>
+<DD>Uses global data, so it is unsafe in threaded programs such as
+kernels.  Use <CODE>strtok_r()</CODE> instead, and see its source code in
+<CODE>lib/string.c</CODE> for documentation and an example.
+<P>
+
+</P>
+<DT><CODE>sprintf</CODE>
+<DD>Same issue as <CODE>strcpy()</CODE>.  Use <CODE>snprintf()</CODE> instead.  Refer
+to comments in <CODE>lib/stdio.h</CODE> for documentation.
+<P>
+
+</P>
+<DT><CODE>vsprintf</CODE>
+<DD>Same issue as <CODE>strcpy()</CODE>.  Use <CODE>vsnprintf()</CODE> instead.
+</DL>
+<P>
+
+If you try to use any of these functions, the error message will give
+you a hint by referring to an identifier like
+<CODE>dont_use_sprintf_use_snprintf</CODE>.
+<A NAME="Project Documentation"></A>
+<HR SIZE="6">
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_8.html#SEC138"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_9.html#SEC142"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>

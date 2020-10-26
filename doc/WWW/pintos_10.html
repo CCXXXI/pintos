@@ -1,0 +1,1041 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: Debugging Tools</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: Debugging Tools">
+<META NAME="keywords" CONTENT="Pintos Projects: Debugging Tools">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="SEC145"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_9.html#SEC142"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_11.html#SEC158"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+
+<HR SIZE=2>
+<H1> E. Debugging Tools </H1>
+<!--docid::SEC145::-->
+<P>
+
+Many tools lie at your disposal for debugging Pintos.  This appendix
+introduces you to a few of them.
+</P>
+<P>
+
+<A NAME="printf"></A>
+<HR SIZE="6">
+<A NAME="SEC146"></A>
+<H2> E.1 <CODE>printf()</CODE> </H2>
+<!--docid::SEC146::-->
+<P>
+
+Don't underestimate the value of <CODE>printf()</CODE>.  The way
+<CODE>printf()</CODE> is implemented in Pintos, you can call it from
+practically anywhere in the kernel, whether it's in a kernel thread or
+an interrupt handler, almost regardless of what locks are held.
+</P>
+<P>
+
+<CODE>printf()</CODE> is useful for more than just examining data.
+It can also help figure out when and where something goes wrong, even
+when the kernel crashes or panics without a useful error message.  The
+strategy is to sprinkle calls to <CODE>printf()</CODE> with different strings
+(e.g. <CODE>&quot;&lt;1&gt;&quot;</CODE>, <CODE>&quot;&lt;2&gt;&quot;</CODE>, <small>...</small>) throughout the pieces of
+code you suspect are failing.  If you don't even see <CODE>&lt;1&gt;</CODE> printed,
+then something bad happened before that point, if you see <CODE>&lt;1&gt;</CODE>
+but not <CODE>&lt;2&gt;</CODE>, then something bad happened between those two
+points, and so on.  Based on what you learn, you can then insert more
+<CODE>printf()</CODE> calls in the new, smaller region of code you suspect.
+Eventually you can narrow the problem down to a single statement.
+See section <A HREF="pintos_10.html#SEC155">E.6 Triple Faults</A>, for a related technique.
+</P>
+<P>
+
+<A NAME="ASSERT"></A>
+<HR SIZE="6">
+<A NAME="SEC147"></A>
+<H2> E.2 <CODE>ASSERT</CODE> </H2>
+<!--docid::SEC147::-->
+<P>
+
+Assertions are useful because they can catch problems early, before
+they'd otherwise be noticed.  Ideally, each function should begin with a
+set of assertions that check its arguments for validity.  (Initializers
+for functions' local variables are evaluated before assertions are
+checked, so be careful not to assume that an argument is valid in an
+initializer.)  You can also sprinkle assertions throughout the body of
+functions in places where you suspect things are likely to go wrong.
+They are especially useful for checking loop invariants.
+</P>
+<P>
+
+Pintos provides the <CODE>ASSERT</CODE> macro, defined in <Q><TT>&lt;debug.h&gt;</TT></Q>,
+for checking assertions.
+</P>
+<P>
+
+<A NAME="IDX185"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>ASSERT</B> <I>(expression)</I>
+<DD>Tests the value of <VAR>expression</VAR>.  If it evaluates to zero (false),
+the kernel panics.  The panic message includes the expression that
+failed, its file and line number, and a backtrace, which should help you
+to find the problem.  See section <A HREF="pintos_10.html#SEC149">E.4 Backtraces</A>, for more information.
+</DL>
+<P>
+
+<A NAME="Function and Parameter Attributes"></A>
+<HR SIZE="6">
+<A NAME="SEC148"></A>
+<H2> E.3 Function and Parameter Attributes </H2>
+<!--docid::SEC148::-->
+<P>
+
+These macros defined in <Q><TT>&lt;debug.h&gt;</TT></Q> tell the compiler special
+attributes of a function or function parameter.  Their expansions are
+GCC-specific.
+</P>
+<P>
+
+<A NAME="IDX186"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>UNUSED</B>
+<DD>Appended to a function parameter to tell the compiler that the
+parameter might not be used within the function.  It suppresses the
+warning that would otherwise appear.
+</DL>
+<P>
+
+<A NAME="IDX187"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>NO_RETURN</B>
+<DD>Appended to a function prototype to tell the compiler that the
+function never returns.  It allows the compiler to fine-tune its
+warnings and its code generation.
+</DL>
+<P>
+
+<A NAME="IDX188"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>NO_INLINE</B>
+<DD>Appended to a function prototype to tell the compiler to never emit
+the function in-line.  Occasionally useful to improve the quality of
+backtraces (see below).
+</DL>
+<P>
+
+<A NAME="IDX189"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PRINTF_FORMAT</B> <I>(<VAR>format</VAR>, <VAR>first</VAR>)</I>
+<DD>Appended to a function prototype to tell the compiler that the function
+takes a <CODE>printf()</CODE>-like format string as the argument numbered
+<VAR>format</VAR> (starting from 1) and that the corresponding value
+arguments start at the argument numbered <VAR>first</VAR>.  This lets the
+compiler tell you if you pass the wrong argument types.
+</DL>
+<P>
+
+<A NAME="Backtraces"></A>
+<HR SIZE="6">
+<A NAME="SEC149"></A>
+<H2> E.4 Backtraces </H2>
+<!--docid::SEC149::-->
+<P>
+
+When the kernel panics, it prints a &quot;backtrace,&quot; that is, a summary
+of how your program got where it is, as a list of addresses inside the
+functions that were running at the time of the panic.  You can also
+insert a call to <CODE>debug_backtrace()</CODE>, prototyped in
+<Q><TT>&lt;debug.h&gt;</TT></Q>, to print a backtrace at any point in your code.
+<CODE>debug_backtrace_all()</CODE>, also declared in <Q><TT>&lt;debug.h&gt;</TT></Q>, 
+prints backtraces of all threads.
+</P>
+<P>
+
+The addresses in a backtrace are listed as raw hexadecimal numbers,
+which are difficult to interpret.  We provide a tool called
+<CODE>backtrace</CODE> to translate these into function names and source
+file line numbers.
+Give it the name of your <Q><TT>kernel.o</TT></Q> as the first argument and the
+hexadecimal numbers composing the backtrace (including the <Q><SAMP>0x</SAMP></Q>
+prefixes) as the remaining arguments.  It outputs the function name
+and source file line numbers that correspond to each address.  
+</P>
+<P>
+
+If the translated form of a backtrace is garbled, or doesn't make
+sense (e.g. function A is listed above function B, but B doesn't
+call A), then it's a good sign that you're corrupting a kernel
+thread's stack, because the backtrace is extracted from the stack.
+Alternatively, it could be that the <Q><TT>kernel.o</TT></Q> you passed to
+<CODE>backtrace</CODE> is not the same kernel that produced
+the backtrace.
+</P>
+<P>
+
+Sometimes backtraces can be confusing without any corruption.
+Compiler optimizations can cause surprising behavior.  When a function
+has called another function as its final action (a <EM>tail call</EM>), the
+calling function may not appear in a backtrace at all.  Similarly, when
+function A calls another function B that never returns, the compiler may
+optimize such that an unrelated function C appears in the backtrace
+instead of A.  Function C is simply the function that happens to be in
+memory just after A.  In the threads project, this is commonly seen in
+backtraces for test failures; see <A HREF="pintos_2.html#The pass function fails"><CODE>pass()</CODE> Fails</A>, for more information.
+</P>
+<P>
+
+<A NAME="Backtrace Example"></A>
+<HR SIZE="6">
+<A NAME="SEC150"></A>
+<H3> E.4.1 Example </H3>
+<!--docid::SEC150::-->
+<P>
+
+Here's an example.  Suppose that Pintos printed out this following call
+stack, which is taken from an actual Pintos submission for the file
+system project:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>Call stack: 0xc0106eff 0xc01102fb 0xc010dc22 0xc010cf67 0xc0102319
+0xc010325a 0x804812c 0x8048a96 0x8048ac8.
+</pre></td></tr></table><P>
+
+You would then invoke the <CODE>backtrace</CODE> utility like shown below,
+cutting and pasting the backtrace information into the command line.
+This assumes that <Q><TT>kernel.o</TT></Q> is in the current directory.  You
+would of course enter all of the following on a single shell command
+line, even though that would overflow our margins here:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>backtrace kernel.o 0xc0106eff 0xc01102fb 0xc010dc22 0xc010cf67 
+0xc0102319 0xc010325a 0x804812c 0x8048a96 0x8048ac8
+</pre></td></tr></table><P>
+
+The backtrace output would then look something like this:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>0xc0106eff: debug_panic (lib/debug.c:86)
+0xc01102fb: file_seek (filesys/file.c:405)
+0xc010dc22: seek (userprog/syscall.c:744)
+0xc010cf67: syscall_handler (userprog/syscall.c:444)
+0xc0102319: intr_handler (threads/interrupt.c:334)
+0xc010325a: intr_entry (threads/intr-stubs.S:38)
+0x0804812c: (unknown)
+0x08048a96: (unknown)
+0x08048ac8: (unknown)
+</pre></td></tr></table><P>
+
+(You will probably not see exactly the same addresses if you run the
+command above on your own kernel binary, because the source code you
+compiled and the compiler you used are probably different.)
+</P>
+<P>
+
+The first line in the backtrace refers to <CODE>debug_panic()</CODE>, the
+function that implements kernel panics.  Because backtraces commonly
+result from kernel panics, <CODE>debug_panic()</CODE> will often be the first
+function shown in a backtrace.
+</P>
+<P>
+
+The second line shows <CODE>file_seek()</CODE> as the function that panicked,
+in this case as the result of an assertion failure.  In the source code
+tree used for this example, line 405 of <Q><TT>filesys/file.c</TT></Q> is the
+assertion
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>ASSERT (file_ofs &gt;= 0);
+</pre></td></tr></table><P>
+
+(This line was also cited in the assertion failure message.)
+Thus, <CODE>file_seek()</CODE> panicked because it passed a negative file offset
+argument.
+</P>
+<P>
+
+The third line indicates that <CODE>seek()</CODE> called <CODE>file_seek()</CODE>,
+presumably without validating the offset argument.  In this submission,
+<CODE>seek()</CODE> implements the <CODE>seek</CODE> system call.
+</P>
+<P>
+
+The fourth line shows that <CODE>syscall_handler()</CODE>, the system call
+handler, invoked <CODE>seek()</CODE>.
+</P>
+<P>
+
+The fifth and sixth lines are the interrupt handler entry path.
+</P>
+<P>
+
+The remaining lines are for addresses below <CODE>PHYS_BASE</CODE>.  This
+means that they refer to addresses in the user program, not in the
+kernel.  If you know what user program was running when the kernel
+panicked, you can re-run <CODE>backtrace</CODE> on the user program, like
+so: (typing the command on a single line, of course):
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>backtrace tests/filesys/extended/grow-too-big 0xc0106eff 0xc01102fb
+0xc010dc22 0xc010cf67 0xc0102319 0xc010325a 0x804812c 0x8048a96
+0x8048ac8
+</pre></td></tr></table><P>
+
+The results look like this:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>0xc0106eff: (unknown)
+0xc01102fb: (unknown)
+0xc010dc22: (unknown)
+0xc010cf67: (unknown)
+0xc0102319: (unknown)
+0xc010325a: (unknown)
+0x0804812c: test_main (...xtended/grow-too-big.c:20)
+0x08048a96: main (tests/main.c:10)
+0x08048ac8: _start (lib/user/entry.c:9)
+</pre></td></tr></table><P>
+
+You can even specify both the kernel and the user program names on
+the command line, like so:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>backtrace kernel.o tests/filesys/extended/grow-too-big 0xc0106eff
+0xc01102fb 0xc010dc22 0xc010cf67 0xc0102319 0xc010325a 0x804812c
+0x8048a96 0x8048ac8
+</pre></td></tr></table><P>
+
+The result is a combined backtrace:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>In kernel.o:
+0xc0106eff: debug_panic (lib/debug.c:86)
+0xc01102fb: file_seek (filesys/file.c:405)
+0xc010dc22: seek (userprog/syscall.c:744)
+0xc010cf67: syscall_handler (userprog/syscall.c:444)
+0xc0102319: intr_handler (threads/interrupt.c:334)
+0xc010325a: intr_entry (threads/intr-stubs.S:38)
+In tests/filesys/extended/grow-too-big:
+0x0804812c: test_main (...xtended/grow-too-big.c:20)
+0x08048a96: main (tests/main.c:10)
+0x08048ac8: _start (lib/user/entry.c:9)
+</pre></td></tr></table><P>
+
+Here's an extra tip for anyone who read this far: <CODE>backtrace</CODE>
+is smart enough to strip the <CODE>Call stack:</CODE> header and <Q><SAMP>.</SAMP></Q>
+trailer from the command line if you include them.  This can save you
+a little bit of trouble in cutting and pasting.  Thus, the following
+command prints the same output as the first one we used:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>backtrace kernel.o Call stack: 0xc0106eff 0xc01102fb 0xc010dc22
+0xc010cf67 0xc0102319 0xc010325a 0x804812c 0x8048a96 0x8048ac8.
+</pre></td></tr></table><P>
+
+<A NAME="GDB"></A>
+<HR SIZE="6">
+<A NAME="SEC151"></A>
+<H2> E.5 GDB </H2>
+<!--docid::SEC151::-->
+<P>
+
+You can run Pintos under the supervision of the GDB debugger.
+First, start Pintos with the <Q><SAMP>--gdb</SAMP></Q> option, e.g.
+<CODE>pintos --gdb -- run mytest</CODE>.  Second, open a second terminal on
+the same machine and
+use <CODE>pintos-gdb</CODE> to invoke GDB on
+<Q><TT>kernel.o</TT></Q>:<A NAME="DOCF8" HREF="pintos_fot.html#FOOT8">(8)</A>
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>pintos-gdb kernel.o
+</pre></td></tr></table>and issue the following GDB command:
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>target remote localhost:1234
+</pre></td></tr></table><P>
+
+Now GDB is connected to the simulator over a local
+network connection.  You can now issue any normal GDB
+commands.  If you issue the <Q><SAMP>c</SAMP></Q> command, the simulated BIOS will take
+control, load Pintos, and then Pintos will run in the usual way.  You
+can pause the process at any point with <KBD>Ctrl+C</KBD>.
+</P>
+<P>
+
+<A NAME="Using GDB"></A>
+<HR SIZE="6">
+<A NAME="SEC152"></A>
+<H3> E.5.1 Using GDB </H3>
+<!--docid::SEC152::-->
+<P>
+
+You can read the GDB manual by typing <CODE>info gdb</CODE> at a
+terminal command prompt.  Here's a few commonly useful GDB commands:
+</P>
+<P>
+
+<A NAME="IDX190"></A>
+</P>
+<DL>
+<DT><U>GDB Command:</U> <B>c</B>
+<DD>Continues execution until <KBD>Ctrl+C</KBD> or the next breakpoint.
+</DL>
+<P>
+
+<A NAME="IDX191"></A>
+</P>
+<DL>
+<DT><U>GDB Command:</U> <B>break</B> <I>function</I>
+<DD><A NAME="IDX192"></A>
+<DT><U>GDB Command:</U> <B>break</B> <I>file:line</I>
+<DD><A NAME="IDX193"></A>
+<DT><U>GDB Command:</U> <B>break</B> <I>*address</I>
+<DD>Sets a breakpoint at <VAR>function</VAR>, at <VAR>line</VAR> within <VAR>file</VAR>, or
+<VAR>address</VAR>.
+(Use a <Q><SAMP>0x</SAMP></Q> prefix to specify an address in hex.)
+<P>
+
+Use <CODE>break main</CODE> to make GDB stop when Pintos starts running.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX194"></A>
+</P>
+<DL>
+<DT><U>GDB Command:</U> <B>p</B> <I>expression</I>
+<DD>Evaluates the given <VAR>expression</VAR> and prints its value.
+If the expression contains a function call, that function will actually
+be executed.
+</DL>
+<P>
+
+<A NAME="IDX195"></A>
+</P>
+<DL>
+<DT><U>GDB Command:</U> <B>l</B> <I>*address</I>
+<DD>Lists a few lines of code around <VAR>address</VAR>.
+(Use a <Q><SAMP>0x</SAMP></Q> prefix to specify an address in hex.)
+</DL>
+<P>
+
+<A NAME="IDX196"></A>
+</P>
+<DL>
+<DT><U>GDB Command:</U> <B>bt</B>
+<DD>Prints a stack backtrace similar to that output by the
+<CODE>backtrace</CODE> program described above.
+</DL>
+<P>
+
+<A NAME="IDX197"></A>
+</P>
+<DL>
+<DT><U>GDB Command:</U> <B>p/a</B> <I>address</I>
+<DD>Prints the name of the function or variable that occupies <VAR>address</VAR>.
+(Use a <Q><SAMP>0x</SAMP></Q> prefix to specify an address in hex.)
+</DL>
+<P>
+
+<A NAME="IDX198"></A>
+</P>
+<DL>
+<DT><U>GDB Command:</U> <B>diassemble</B> <I>function</I>
+<DD>Disassembles <VAR>function</VAR>.
+</DL>
+<P>
+
+We also provide a set of macros specialized for debugging Pintos,
+written by Godmar Back <A HREF="mailto:gback@cs.vt.edu">gback@cs.vt.edu</A>.  You can type
+<CODE>help user-defined</CODE> for basic help with the macros.  Here is an
+overview of their functionality, based on Godmar's documentation:
+</P>
+<P>
+
+<A NAME="IDX199"></A>
+</P>
+<DL>
+<DT><U>GDB Macro:</U> <B>debugpintos</B>
+<DD>Attach debugger to a waiting pintos process on the same machine.
+Shorthand for <CODE>target remote localhost:1234</CODE>.
+</DL>
+<P>
+
+<A NAME="IDX200"></A>
+</P>
+<DL>
+<DT><U>GDB Macro:</U> <B>dumplist</B> <I>&amp;list type element</I>
+<DD>Prints the elements of <VAR>list</VAR>, which should be a <CODE>struct</CODE> list
+that contains elements of the given <VAR>type</VAR> (without the word
+<CODE>struct</CODE>) in which <VAR>element</VAR> is the <CODE>struct list_elem</CODE> member
+that links the elements.
+<P>
+
+Example: <CODE>dumplist &amp;all_list thread allelem</CODE> prints all elements of
+<CODE>struct thread</CODE> that are linked in <CODE>struct list all_list</CODE> using the
+<CODE>struct list_elem allelem</CODE> which is part of <CODE>struct thread</CODE>.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX201"></A>
+</P>
+<DL>
+<DT><U>GDB Macro:</U> <B>btthread</B> <I>thread</I>
+<DD>Shows the backtrace of <VAR>thread</VAR>, which is a pointer to the
+<CODE>struct thread</CODE> of the thread whose backtrace it should show.  For the
+current thread, this is identical to the <CODE>bt</CODE> (backtrace) command.
+It also works for any thread suspended in <CODE>schedule()</CODE>,
+provided you know where its kernel stack page is located.
+</DL>
+<P>
+
+<A NAME="IDX202"></A>
+</P>
+<DL>
+<DT><U>GDB Macro:</U> <B>btthreadlist</B> <I>list element</I>
+<DD>Shows the backtraces of all threads in <VAR>list</VAR>, the <CODE>struct list</CODE> in
+which the threads are kept.  Specify <VAR>element</VAR> as the
+<CODE>struct list_elem</CODE> field used inside <CODE>struct thread</CODE> to link the threads
+together.
+<P>
+
+Example: <CODE>btthreadlist all_list allelem</CODE> shows the backtraces of
+all threads contained in <CODE>struct list all_list</CODE>, linked together by
+<CODE>allelem</CODE>.  This command is useful to determine where your threads
+are stuck when a deadlock occurs.  Please see the example scenario below.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX203"></A>
+</P>
+<DL>
+<DT><U>GDB Macro:</U> <B>btthreadall</B>
+<DD>Short-hand for <CODE>btthreadlist all_list allelem</CODE>.
+</DL>
+<P>
+
+<A NAME="IDX204"></A>
+</P>
+<DL>
+<DT><U>GDB Macro:</U> <B>btpagefault</B>
+<DD>Print a backtrace of the current thread after a page fault exception.
+Normally, when a page fault exception occurs, GDB will stop
+with a message that might say:<A NAME="DOCF9" HREF="pintos_fot.html#FOOT9">(9)</A>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>Program received signal 0, Signal 0.
+0xc0102320 in intr0e_stub ()
+</pre></td></tr></table><P>
+
+In that case, the <CODE>bt</CODE> command might not give a useful
+backtrace.  Use <CODE>btpagefault</CODE> instead.
+</P>
+<P>
+
+You may also use <CODE>btpagefault</CODE> for page faults that occur in a user
+process.  In this case, you may wish to also load the user program's
+symbol table using the <CODE>loadusersymbols</CODE> macro, as described above.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX205"></A>
+</P>
+<DL>
+<DT><U>GDB Macro:</U> <B>hook-stop</B>
+<DD>GDB invokes this macro every time the simulation stops, which Bochs will
+do for every processor exception, among other reasons.  If the
+simulation stops due to a page fault, <CODE>hook-stop</CODE> will print a
+message that says and explains further whether the page fault occurred
+in the kernel or in user code.
+<P>
+
+If the exception occurred from user code, <CODE>hook-stop</CODE> will say:
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>pintos-debug: a page fault exception occurred in user mode
+pintos-debug: hit 'c' to continue, or 's' to step to intr_handler
+</pre></td></tr></table><P>
+
+In Project 2, a page fault in a user process leads to the termination of
+the process.  You should expect those page faults to occur in the
+robustness tests where we test that your kernel properly terminates
+processes that try to access invalid addresses.  To debug those, set a
+break point in <CODE>page_fault()</CODE> in <Q><TT>exception.c</TT></Q>, which you will
+need to modify accordingly.
+</P>
+<P>
+
+In Project 3, a page fault in a user process no longer automatically
+leads to the termination of a process.  Instead, it may require reading in
+data for the page the process was trying to access, either
+because it was swapped out or because this is the first time it's
+accessed.  In either case, you will reach <CODE>page_fault()</CODE> and need to
+take the appropriate action there.
+</P>
+<P>
+
+If the page fault did not occur in user mode while executing a user
+process, then it occurred in kernel mode while executing kernel code.
+In this case, <CODE>hook-stop</CODE> will print this message:
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>pintos-debug: a page fault occurred in kernel mode
+</pre></td></tr></table>followed by the output of the <CODE>btpagefault</CODE> command.
+<P>
+
+Before Project 3, a page fault exception in kernel code is always a bug
+in your kernel, because your kernel should never crash.  Starting with
+Project 3, the situation will change if you use the <CODE>get_user()</CODE> and
+<CODE>put_user()</CODE> strategy to verify user memory accesses
+(see section <A HREF="pintos_3.html#SEC39">3.1.5 Accessing User Memory</A>).
+</P>
+<P>
+
+</P>
+</DL>
+<P>
+
+<A NAME="Example GDB Session"></A>
+<HR SIZE="6">
+<A NAME="SEC153"></A>
+<H3> E.5.2 Example GDB Session </H3>
+<!--docid::SEC153::-->
+<P>
+
+This section narrates a sample GDB session, provided by Godmar Back.
+This example illustrates how one might debug a Project 1 solution in
+which occasionally a thread that calls <CODE>timer_sleep()</CODE> is not woken
+up.  With this bug, tests such as <CODE>mlfqs_load_1</CODE> get stuck.
+</P>
+<P>
+
+This session was captured with a slightly older version of Bochs and the
+GDB macros for Pintos, so it looks slightly different than it would now.
+Program output is shown in normal type, user input in <STRONG>strong</STRONG>
+type.
+</P>
+<P>
+
+First, I start Pintos:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>$ <STRONG>pintos -v --gdb -- -q -mlfqs run mlfqs-load-1</STRONG>
+Writing command line to /tmp/gDAlqTB5Uf.dsk...
+bochs -q
+========================================================================
+                       Bochs x86 Emulator 2.2.5
+             Build from CVS snapshot on December 30, 2005
+========================================================================
+00000000000i[     ] reading configuration from bochsrc.txt
+00000000000i[     ] Enabled gdbstub
+00000000000i[     ] installing nogui module as the Bochs GUI
+00000000000i[     ] using log file bochsout.txt
+Waiting for gdb connection on localhost:1234
+</FONT></pre></td></tr></table><P>
+
+Then, I open a second window on the same machine and start GDB:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>$ <STRONG>pintos-gdb kernel.o</STRONG>
+GNU gdb Red Hat Linux (6.3.0.0-1.84rh)
+Copyright 2004 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &quot;show copying&quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &quot;show warranty&quot; for details.
+This GDB was configured as &quot;i386-redhat-linux-gnu&quot;...
+Using host libthread_db library &quot;/lib/libthread_db.so.1&quot;.
+</FONT></pre></td></tr></table><P>
+
+Then, I tell GDB to attach to the waiting Pintos emulator:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>(gdb) <STRONG>debugpintos</STRONG>
+Remote debugging using localhost:1234
+0x0000fff0 in ?? ()
+Reply contains invalid hex digit 78
+</FONT></pre></td></tr></table><P>
+
+Now I tell Pintos to run by executing <CODE>c</CODE> (short for
+<CODE>continue</CODE>) twice:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>(gdb) <STRONG>c</STRONG>
+Continuing.
+Reply contains invalid hex digit 78
+(gdb) <STRONG>c</STRONG>
+Continuing.
+</FONT></pre></td></tr></table><P>
+
+Now Pintos will continue and output:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>Pintos booting with 4,096 kB RAM...
+Kernel command line: -q -mlfqs run mlfqs-load-1
+374 pages available in kernel pool.
+373 pages available in user pool.
+Calibrating timer...  102,400 loops/s.
+Boot complete.
+Executing 'mlfqs-load-1':
+(mlfqs-load-1) begin
+(mlfqs-load-1) spinning for up to 45 seconds, please wait...
+(mlfqs-load-1) load average rose to 0.5 after 42 seconds
+(mlfqs-load-1) sleeping for another 10 seconds, please wait...
+</FONT></pre></td></tr></table><P>
+
+<small>...</small>until it gets stuck because of the bug I had introduced.  I hit
+<KBD>Ctrl+C</KBD> in the debugger window:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>Program received signal 0, Signal 0.
+0xc010168c in next_thread_to_run () at ../../threads/thread.c:649
+649	  while (i &lt;= PRI_MAX &amp;&amp; list_empty (&amp;ready_list[i]))
+(gdb) 
+</FONT></pre></td></tr></table><P>
+
+The thread that was running when I interrupted Pintos was the idle
+thread.  If I run <CODE>backtrace</CODE>, it shows this backtrace:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>(gdb) <STRONG>bt</STRONG>
+#0  0xc010168c in next_thread_to_run () at ../../threads/thread.c:649
+#1  0xc0101778 in schedule () at ../../threads/thread.c:714
+#2  0xc0100f8f in thread_block () at ../../threads/thread.c:324
+#3  0xc0101419 in idle (aux=0x0) at ../../threads/thread.c:551
+#4  0xc010145a in kernel_thread (function=0xc01013ff , aux=0x0)
+    at ../../threads/thread.c:575
+#5  0x00000000 in ?? ()
+</FONT></pre></td></tr></table><P>
+
+Not terribly useful.  What I really like to know is what's up with the
+other thread (or threads).  Since I keep all threads in a linked list
+called <CODE>all_list</CODE>, linked together by a <CODE>struct list_elem</CODE> member
+named <CODE>allelem</CODE>, I can use the <CODE>btthreadlist</CODE> macro from the
+macro library I wrote.  <CODE>btthreadlist</CODE> iterates through the list of
+threads and prints the backtrace for each thread:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>(gdb) <STRONG>btthreadlist all_list allelem</STRONG>
+pintos-debug: dumping backtrace of thread 'main' @0xc002f000
+#0  0xc0101820 in schedule () at ../../threads/thread.c:722
+#1  0xc0100f8f in thread_block () at ../../threads/thread.c:324
+#2  0xc0104755 in timer_sleep (ticks=1000) at ../../devices/timer.c:141
+#3  0xc010bf7c in test_mlfqs_load_1 () at ../../tests/threads/mlfqs-load-1.c:49
+#4  0xc010aabb in run_test (name=0xc0007d8c &quot;mlfqs-load-1&quot;)
+    at ../../tests/threads/tests.c:50
+#5  0xc0100647 in run_task (argv=0xc0110d28) at ../../threads/init.c:281
+#6  0xc0100721 in run_actions (argv=0xc0110d28) at ../../threads/init.c:331
+#7  0xc01000c7 in main () at ../../threads/init.c:140
+
+pintos-debug: dumping backtrace of thread 'idle' @0xc0116000
+#0  0xc010168c in next_thread_to_run () at ../../threads/thread.c:649
+#1  0xc0101778 in schedule () at ../../threads/thread.c:714
+#2  0xc0100f8f in thread_block () at ../../threads/thread.c:324
+#3  0xc0101419 in idle (aux=0x0) at ../../threads/thread.c:551
+#4  0xc010145a in kernel_thread (function=0xc01013ff , aux=0x0)
+    at ../../threads/thread.c:575
+#5  0x00000000 in ?? ()
+</FONT></pre></td></tr></table><P>
+
+In this case, there are only two threads, the idle thread and the main
+thread.  The kernel stack pages (to which the <CODE>struct thread</CODE> points)
+are at <TT>0xc0116000</TT> and <TT>0xc002f000</TT>, respectively.  The main thread
+is stuck in <CODE>timer_sleep()</CODE>, called from <CODE>test_mlfqs_load_1</CODE>.
+</P>
+<P>
+
+Knowing where threads are stuck can be tremendously useful, for instance
+when diagnosing deadlocks or unexplained hangs.
+</P>
+<P>
+
+<A NAME="IDX206"></A>
+</P>
+<DL>
+<DT><U>GDB Macro:</U> <B>loadusersymbols</B>
+<DD><P>
+
+You can also use GDB to debug a user program running under Pintos.  
+To do that, use the <CODE>loadusersymbols</CODE> macro to load the program's 
+symbol table:
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>loadusersymbols <VAR>program</VAR>
+</pre></td></tr></table>where <VAR>program</VAR> is the name of the program's executable (in the host
+file system, not in the Pintos file system).  For example, you may issue:
+<TABLE><tr><td>&nbsp;</td><td class=smallexample><pre><FONT SIZE=-1>(gdb) <STRONG>loadusersymbols tests/userprog/exec-multiple</STRONG>
+add symbol table from file &quot;tests/userprog/exec-multiple&quot; at
+    .text_addr = 0x80480a0
+(gdb) 
+</FONT></pre></td></tr></table><P>
+
+After this, you should be
+able to debug the user program the same way you would the kernel, by
+placing breakpoints, inspecting data, etc.  Your actions apply to every
+user program running in Pintos, not just to the one you want to debug,
+so be careful in interpreting the results:  GDB does not know
+which process is currently active (because that is an abstraction 
+the Pintos kernel creates).  Also, a name that appears in
+both the kernel and the user program will actually refer to the kernel
+name.  (The latter problem can be avoided by giving the user executable
+name on the GDB command line, instead of <Q><TT>kernel.o</TT></Q>, and then using
+<CODE>loadusersymbols</CODE> to load <Q><TT>kernel.o</TT></Q>.)
+<CODE>loadusersymbols</CODE> is implemented via GDB's <CODE>add-symbol-file</CODE>
+command.
+</P>
+<P>
+
+</P>
+</DL>
+<P>
+
+<A NAME="GDB FAQ"></A>
+<HR SIZE="6">
+<A NAME="SEC154"></A>
+<H3> E.5.3 FAQ </H3>
+<!--docid::SEC154::-->
+<P>
+
+</P>
+<DL COMPACT>
+<DT>GDB can't connect to Bochs.
+<DD><P>
+
+If the <CODE>target remote</CODE> command fails, then make sure that both
+GDB and <CODE>pintos</CODE> are running on the same machine by
+running <CODE>hostname</CODE> in each terminal.  If the names printed
+differ, then you need to open a new terminal for GDB on the
+machine running <CODE>pintos</CODE>.
+</P>
+<P>
+
+</P>
+<DT>GDB doesn't recognize any of the macros.
+<DD><P>
+
+If you start GDB with <CODE>pintos-gdb</CODE>, it should load the Pintos
+macros automatically.  If you start GDB some other way, then you must
+issue the command <CODE>source <VAR>pintosdir</VAR>/src/misc/gdb-macros</CODE>,
+where <VAR>pintosdir</VAR> is the root of your Pintos directory, before you
+can use them.
+</P>
+<P>
+
+</P>
+<DT>Can I debug Pintos with DDD?
+<DD><P>
+
+Yes, you can.  DDD invokes GDB as a subprocess, so you'll need to tell
+it to invokes <CODE>pintos-gdb</CODE> instead:
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>ddd --gdb --debugger pintos-gdb
+</pre></td></tr></table><P>
+
+</P>
+<DT>Can I use GDB inside Emacs?
+<DD><P>
+
+Yes, you can.  Emacs has special support for running GDB as a
+subprocess.  Type <KBD>M-x gdb</KBD> and enter your <CODE>pintos-gdb</CODE>
+command at the prompt.  The Emacs manual has information on how to use
+its debugging features in a section titled &quot;Debuggers.&quot;
+</P>
+<P>
+
+</P>
+<DT>GDB is doing something weird.
+<DD><P>
+
+If you notice strange behavior while using GDB, there
+are three possibilities: a bug in your
+modified Pintos, a bug in Bochs's
+interface to GDB or in GDB itself, or
+a bug in the original Pintos code.  The first and second
+are quite likely, and you should seriously consider both.  We hope
+that the third is less likely, but it is also possible.
+</DL>
+<P>
+
+<A NAME="Triple Faults"></A>
+<HR SIZE="6">
+<A NAME="SEC155"></A>
+<H2> E.6 Triple Faults </H2>
+<!--docid::SEC155::-->
+<P>
+
+When a CPU exception handler, such as a page fault handler, cannot be
+invoked because it is missing or defective, the CPU will try to invoke
+the &quot;double fault&quot; handler.  If the double fault handler is itself
+missing or defective, that's called a &quot;triple fault.&quot;  A triple fault
+causes an immediate CPU reset.
+</P>
+<P>
+
+Thus, if you get yourself into a situation where the machine reboots in
+a loop, that's probably a &quot;triple fault.&quot;  In a triple fault
+situation, you might not be able to use <CODE>printf()</CODE> for debugging,
+because the reboots might be happening even before everything needed for
+<CODE>printf()</CODE> is initialized.
+</P>
+<P>
+
+There are at least two ways to debug triple faults.  First, you can run
+Pintos in Bochs under GDB (see section <A HREF="pintos_10.html#SEC151">E.5 GDB</A>).  If Bochs has been built
+properly for Pintos, a triple fault under GDB will cause it to print the
+message &quot;Triple fault: stopping for gdb&quot; on the console and break into
+the debugger.  (If Bochs is not running under GDB, a triple fault will
+still cause it to reboot.)  You can then inspect where Pintos stopped,
+which is where the triple fault occurred.
+</P>
+<P>
+
+Another option is what I call &quot;debugging by infinite loop.&quot;
+Pick a place in the Pintos code, insert the infinite loop
+<CODE>for (;;);</CODE> there, and recompile and run.  There are two likely
+possibilities:
+</P>
+<P>
+
+<UL>
+<LI>
+The machine hangs without rebooting.  If this happens, you know that
+the infinite loop is running.  That means that whatever caused the
+reboot must be <EM>after</EM> the place you inserted the infinite loop.
+Now move the infinite loop later in the code sequence.
+<P>
+
+</P>
+<LI>
+The machine reboots in a loop.  If this happens, you know that the
+machine didn't make it to the infinite loop.  Thus, whatever caused the
+reboot must be <EM>before</EM> the place you inserted the infinite loop.
+Now move the infinite loop earlier in the code sequence.
+</UL>
+<P>
+
+If you move around the infinite loop in a &quot;binary search&quot; fashion, you
+can use this technique to pin down the exact spot that everything goes
+wrong.  It should only take a few minutes at most.
+</P>
+<P>
+
+<A NAME="Modifying Bochs"></A>
+<HR SIZE="6">
+<A NAME="SEC156"></A>
+<H2> E.7 Modifying Bochs </H2>
+<!--docid::SEC156::-->
+<P>
+
+An advanced debugging technique is to modify and recompile the
+simulator.  This proves useful when the simulated hardware has more
+information than it makes available to the OS.  For example, page
+faults have a long list of potential causes, but the hardware does not
+report to the OS exactly which one is the particular cause.
+Furthermore, a bug in the kernel's handling of page faults can easily
+lead to recursive faults, but a &quot;triple fault&quot; will cause the CPU to
+reset itself, which is hardly conducive to debugging.
+</P>
+<P>
+
+In a case like this, you might appreciate being able to make Bochs
+print out more debug information, such as the exact type of fault that
+occurred.  It's not very hard.  You start by retrieving the source
+code for Bochs 2.2.6 from <A HREF="http://bochs.sourceforge.net">http://bochs.sourceforge.net</A> and
+saving the file <Q><TT>bochs-2.2.6.tar.gz</TT></Q> into a directory.  
+The script <Q><TT>pintos/src/misc/bochs-2.2.6-build.sh</TT></Q>
+applies a number of patches contained in <Q><TT>pintos/src/misc</TT></Q>
+to the Bochs tree, then builds Bochs and installs it in a directory
+of your choice.
+Run this script without arguments to learn usage instructions.
+To use your <Q><TT>bochs</TT></Q> binary with <CODE>pintos</CODE>,
+put it in your <CODE>PATH</CODE>, and make sure that it is earlier than
+<Q><TT>/usr/class/cs140/`uname -m`/bin/bochs</TT></Q>.
+</P>
+<P>
+
+Of course, to get any good out of this you'll have to actually modify
+Bochs.  Instructions for doing this are firmly out of the scope of
+this document.  However, if you want to debug page faults as suggested
+above, a good place to start adding <CODE>printf()</CODE>s is
+<CODE>BX_CPU_C::dtranslate_linear()</CODE> in <Q><TT>cpu/paging.cc</TT></Q>.
+</P>
+<P>
+
+<A NAME="Debugging Tips"></A>
+<HR SIZE="6">
+<A NAME="SEC157"></A>
+<H2> E.8 Tips </H2>
+<!--docid::SEC157::-->
+<P>
+
+The page allocator in <Q><TT>threads/palloc.c</TT></Q> and the block allocator in
+<Q><TT>threads/malloc.c</TT></Q> clear all the bytes in memory to
+<TT>0xcc</TT> at time of free.  Thus, if you see an attempt to
+dereference a pointer like <TT>0xcccccccc</TT>, or some other reference to
+<TT>0xcc</TT>, there's a good chance you're trying to reuse a page that's
+already been freed.  Also, byte <TT>0xcc</TT> is the CPU opcode for &quot;invoke
+interrupt 3,&quot; so if you see an error like <CODE>Interrupt 0x03 (#BP
+Breakpoint Exception)</CODE>, then Pintos tried to execute code in a freed page or
+block.
+</P>
+<P>
+
+An assertion failure on the expression <CODE>sec_no &lt; d-&gt;capacity</CODE>
+indicates that Pintos tried to access a file through an inode that has
+been closed and freed.  Freeing an inode clears its starting sector
+number to <TT>0xcccccccc</TT>, which is not a valid sector number for disks
+smaller than about 1.6 TB.
+<A NAME="Development Tools"></A>
+<HR SIZE="6">
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_10.html#SEC145"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_11.html#SEC158"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>

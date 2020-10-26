@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: Development Tools</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: Development Tools">
+<META NAME="keywords" CONTENT="Pintos Projects: Development Tools">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="SEC158"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_10.html#SEC145"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_12.html#SEC163"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+
+<HR SIZE=2>
+<H1> F. Development Tools </H1>
+<!--docid::SEC158::-->
+<P>
+
+Here are some tools that you might find useful while developing code.
+</P>
+<P>
+
+<A NAME="Tags"></A>
+<HR SIZE="6">
+<A NAME="SEC159"></A>
+<H2> F.1 Tags </H2>
+<!--docid::SEC159::-->
+<P>
+
+Tags are an index to the functions and global variables declared in a
+program.  Many editors, including Emacs and <CODE>vi</CODE>, can use
+them.  The <Q><TT>Makefile</TT></Q> in <Q><TT>pintos/src</TT></Q> produces Emacs-style
+tags with the command <CODE>make TAGS</CODE> or <CODE>vi</CODE>-style tags with
+<CODE>make tags</CODE>.
+</P>
+<P>
+
+In Emacs, use <KBD>M-.</KBD> to follow a tag in the current window,
+<KBD>C-x 4 .</KBD> in a new window, or <KBD>C-x 5 .</KBD> in a new frame.  If
+your cursor is on a symbol name for any of those commands, it becomes
+the default target.  If a tag name has multiple definitions, <KBD>M-0
+M-.</KBD> jumps to the next one.  To jump back to where you were before
+you followed the last tag, use <KBD>M-*</KBD>.
+</P>
+<P>
+
+<A NAME="cscope"></A>
+<HR SIZE="6">
+<A NAME="SEC160"></A>
+<H2> F.2 cscope </H2>
+<!--docid::SEC160::-->
+<P>
+
+The <CODE>cscope</CODE> program also provides an index to functions and
+variables declared in a program.  It has some features that tag
+facilities lack.  Most notably, it can find all the points in a
+program at which a given function is called.
+</P>
+<P>
+
+The <Q><TT>Makefile</TT></Q> in <Q><TT>pintos/src</TT></Q> produces <CODE>cscope</CODE>
+indexes when it is invoked as <CODE>make cscope</CODE>.  Once the index has
+been generated, run <CODE>cscope</CODE> from a shell command line; no
+command-line arguments are normally necessary.  Then use the arrow
+keys to choose one of the search criteria listed near the bottom of
+the terminal, type in an identifier, and hit <KBD>Enter</KBD>.
+<CODE>cscope</CODE> will then display the matches in the upper part of
+the terminal.  You may use the arrow keys to choose a particular
+match; if you then hit <KBD>Enter</KBD>, <CODE>cscope</CODE> will invoke the
+default system editor<A NAME="DOCF10" HREF="pintos_fot.html#FOOT10">(10)</A> and position the
+cursor on that match.  To start a new search, type <KBD>Tab</KBD>.  To exit
+<CODE>cscope</CODE>, type <KBD>Ctrl-d</KBD>.
+</P>
+<P>
+
+Emacs and some versions of <CODE>vi</CODE> have their own interfaces to
+<CODE>cscope</CODE>.  For information on how to use these interface,
+visit <A HREF="http://cscope.sourceforge.net, the &lt;CODE&gt;cscope&lt;/CODE&gt; home
+page">http://cscope.sourceforge.net, the <CODE>cscope</CODE> home
+page</A>.
+</P>
+<P>
+
+<A NAME="Git"></A>
+<HR SIZE="6">
+<A NAME="SEC161"></A>
+<H2> F.3 Git </H2>
+<!--docid::SEC161::-->
+<P>
+
+It's crucial that you use a source code control system to manage your
+Pintos code. This will allow you to keep track of your changes
+and coordinate changes made by different people in the project. For this
+class we recommend that you use Git; if you followed the instructions on
+getting started, a Git repository will already have been created for you.
+If you don't already know how to use Git, we recommend that you read
+the <A HREF="http://git-scm.com/book">Pro Git</A> book online.
+</P>
+<P>
+
+<A NAME="VNC"></A>
+<HR SIZE="6">
+<A NAME="SEC162"></A>
+<H2> F.4 VNC </H2>
+<!--docid::SEC162::-->
+<P>
+
+VNC stands for Virtual Network Computing.  It is, in essence, a remote
+display system which allows you to view a computing &quot;desktop&quot;
+environment not only on the machine where it is running, but from
+anywhere on the Internet and from a wide variety of machine
+architectures.  It is already installed on the lab machines.  
+For more information, look at the <A HREF="http://www.realvnc.com/">VNC
+Home Page</A>.
+</P>
+<P>
+
+<A NAME="Installing Pintos"></A>
+<HR SIZE="6">
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_11.html#SEC158"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_12.html#SEC163"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>

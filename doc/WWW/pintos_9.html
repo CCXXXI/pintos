@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: Project Documentation</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: Project Documentation">
+<META NAME="keywords" CONTENT="Pintos Projects: Project Documentation">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="SEC142"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_8.html#SEC138"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_10.html#SEC145"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+
+<HR SIZE=2>
+<H1> D. Project Documentation </H1>
+<!--docid::SEC142::-->
+<P>
+
+This chapter presents a sample assignment and a filled-in design
+document for one possible implementation.  Its purpose is to give you an
+idea of what we expect to see in your own design documents.
+</P>
+<P>
+
+<A NAME="Sample Assignment"></A>
+<HR SIZE="6">
+<A NAME="SEC143"></A>
+<H2> D.1 Sample Assignment </H2>
+<!--docid::SEC143::-->
+<P>
+
+Implement <CODE>thread_join()</CODE>.
+</P>
+<P>
+
+<A NAME="IDX184"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_join</B> (tid_t <VAR>tid</VAR>)
+<DD>Blocks the current thread until thread <VAR>tid</VAR> exits.  If <VAR>A</VAR> is
+the running thread and <VAR>B</VAR> is the argument, then we say that
+&quot;<VAR>A</VAR> joins <VAR>B</VAR>.&quot;
+<P>
+
+Incidentally, the argument is a thread id, instead of a thread pointer,
+because a thread pointer is not unique over time.  That is, when a
+thread dies, its memory may be, whether immediately or much later,
+reused for another thread.  If thread <VAR>A</VAR> over time had two children
+<VAR>B</VAR> and <VAR>C</VAR> that were stored at the same address, then
+<CODE>thread_join(<VAR>B</VAR>)</CODE> and <CODE>thread_join(<VAR>C</VAR>)</CODE> would be
+ambiguous.
+</P>
+<P>
+
+A thread may only join its immediate children.  Calling
+<CODE>thread_join()</CODE> on a thread that is not the caller's child should
+cause the caller to return immediately.  Children are not &quot;inherited,&quot;
+that is, if <VAR>A</VAR> has child <VAR>B</VAR> and <VAR>B</VAR> has child <VAR>C</VAR>,
+then <VAR>A</VAR> always returns immediately should it try to join <VAR>C</VAR>,
+even if <VAR>B</VAR> is dead.
+</P>
+<P>
+
+A thread need not ever be joined.  Your solution should properly free
+all of a thread's resources, including its <CODE>struct thread</CODE>,
+whether it is ever joined or not, and regardless of whether the child
+exits before or after its parent.  That is, a thread should be freed
+exactly once in all cases.
+</P>
+<P>
+
+Joining a given thread is idempotent.  That is, joining a thread
+multiple times is equivalent to joining it once, because it has already
+exited at the time of the later joins.  Thus, joins on a given thread
+after the first should return immediately.
+</P>
+<P>
+
+You must handle all the ways a join can occur: nested joins (<VAR>A</VAR>
+joins <VAR>B</VAR>, then <VAR>B</VAR> joins <VAR>C</VAR>), multiple joins (<VAR>A</VAR>
+joins <VAR>B</VAR>, then <VAR>A</VAR> joins <VAR>C</VAR>), and so on.
+</P>
+</DL>
+<P>
+
+<A NAME="Sample Design Document"></A>
+<HR SIZE="6">
+<A NAME="SEC144"></A>
+<H2> D.2 Sample Design Document </H2>
+<!--docid::SEC144::-->
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>
+                         +-----------------+
+                         |      CS 140     |
+                         |  SAMPLE PROJECT |
+                         | DESIGN DOCUMENT |
+                         +-----------------+
+
+---- GROUP ----
+
+Ben Pfaff &lt;blp@stanford.edu&gt;
+
+---- PRELIMINARIES ----
+
+&gt;&gt; If you have any preliminary comments on your submission, notes for
+&gt;&gt; the TAs, or extra credit, please give them here.
+
+(This is a sample design document.)
+
+&gt;&gt; Please cite any offline or online sources you consulted while
+&gt;&gt; preparing your submission, other than the Pintos documentation,
+&gt;&gt; course text, and lecture notes.
+
+None.
+
+                                 JOIN
+                                 ====
+
+---- DATA STRUCTURES ----
+
+&gt;&gt; Copy here the declaration of each new or changed `struct' or `struct'
+&gt;&gt; member, global or static variable, `typedef', or enumeration.
+&gt;&gt; Identify the purpose of each in 25 words or less.
+
+A &quot;latch&quot; is a new synchronization primitive.  Acquires block
+until the first release.  Afterward, all ongoing and future
+acquires pass immediately.
+
+    /* Latch. */
+    struct latch 
+      {
+        bool released;              /* Released yet? */
+        struct lock monitor_lock;   /* Monitor lock. */
+        struct condition rel_cond;  /* Signaled when released. */
+      };
+
+Added to struct thread:
+
+    /* Members for implementing thread_join(). */
+    struct latch ready_to_die;   /* Release when thread about to die. */
+    struct semaphore can_die;    /* Up when thread allowed to die. */
+    struct list children;        /* List of child threads. */
+    list_elem children_elem;     /* Element of `children' list. */
+
+---- ALGORITHMS ----
+
+&gt;&gt; Briefly describe your implementation of thread_join() and how it
+&gt;&gt; interacts with thread termination.
+
+thread_join() finds the joined child on the thread's list of
+children and waits for the child to exit by acquiring the child's
+ready_to_die latch.  When thread_exit() is called, the thread
+releases its ready_to_die latch, allowing the parent to continue.
+
+---- SYNCHRONIZATION ----
+
+&gt;&gt; Consider parent thread P with child thread C.  How do you ensure
+&gt;&gt; proper synchronization and avoid race conditions when P calls wait(C)
+&gt;&gt; before C exits?  After C exits?  How do you ensure that all resources
+&gt;&gt; are freed in each case?  How about when P terminates without waiting,
+&gt;&gt; before C exits?  After C exits?  Are there any special cases?
+
+C waits in thread_exit() for P to die before it finishes its own
+exit, using the can_die semaphore &quot;down&quot;ed by C and &quot;up&quot;ed by P as
+it exits.  Regardless of whether whether C has terminated, there
+is no race on wait(C), because C waits for P's permission before
+it frees itself.
+
+Regardless of whether P waits for C, P still &quot;up&quot;s C's can_die
+semaphore when P dies, so C will always be freed.  (However,
+freeing C's resources is delayed until P's death.)
+
+The initial thread is a special case because it has no parent to
+wait for it or to &quot;up&quot; its can_die semaphore.  Therefore, its
+can_die semaphore is initialized to 1.
+
+---- RATIONALE ----
+
+&gt;&gt; Critique your design, pointing out advantages and disadvantages in
+&gt;&gt; your design choices.
+
+This design has the advantage of simplicity.  Encapsulating most
+of the synchronization logic into a new &quot;latch&quot; structure
+abstracts what little complexity there is into a separate layer,
+making the design easier to reason about.  Also, all the new data
+members are in `struct thread', with no need for any extra dynamic
+allocation, etc., that would require extra management code.
+
+On the other hand, this design is wasteful in that a child thread
+cannot free itself before its parent has terminated.  A parent
+thread that creates a large number of short-lived child threads
+could unnecessarily exhaust kernel memory.  This is probably
+acceptable for implementing kernel threads, but it may be a bad
+idea for use with user processes because of the larger number of
+resources that user processes tend to own.
+</pre></td></tr></table><A NAME="Debugging Tools"></A>
+<HR SIZE="6">
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_9.html#SEC142"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_10.html#SEC145"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>

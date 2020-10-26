@@ -23,3 +23,5 @@ pintos.text
 pintos_*.html
 projects.html
 sample.tmpl.texi
+
+!WWW/*

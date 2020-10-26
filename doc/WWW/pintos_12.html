@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: Installing Pintos</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: Installing Pintos">
+<META NAME="keywords" CONTENT="Pintos Projects: Installing Pintos">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="SEC163"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_11.html#SEC158"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_12.html#SEC164"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+
+<HR SIZE=2>
+<H1> G. Installing Pintos </H1>
+<!--docid::SEC163::-->
+<P>
+
+This chapter explains how to install a Pintos development environment on
+your own machine.  If you are using a Pintos development environment
+that has been set up by someone else, you do not need to read this
+chapter or follow these instructions.
+</P>
+<P>
+
+The Pintos development environment is targeted at Unix-like systems.  It
+has been most extensively tested on GNU/Linux, in particular the Debian
+and Ubuntu distributions, and Solaris.  It is not designed to install
+under any form of Windows.
+</P>
+<P>
+
+Prerequisites for installing a Pintos development environment include
+the following, on top of standard Unix utilities:
+</P>
+<P>
+
+<UL>
+<LI>
+Required: <A HREF="http://gcc.gnu.org/">GCC</A>.  Version 4.0 or later is
+preferred.  Version 3.3 or later should work.  If the host machine has
+an 80<VAR>x</VAR>86 processor, then GCC should be available as <CODE>gcc</CODE>;
+otherwise, an 80<VAR>x</VAR>86 cross-compiler should be available as
+<CODE>i386-elf-gcc</CODE>.  A sample set of commands for installing GCC
+3.3.6 as a cross-compiler are included in
+<Q><TT>src/misc/gcc-3.3.6-cross-howto</TT></Q>.
+<P>
+
+</P>
+<LI>
+Required: <A HREF="http://www.gnu.org/software/binutils/">GNU binutils</A>.
+Pintos uses <CODE>addr2line</CODE>, <CODE>ar</CODE>, <CODE>ld</CODE>,
+<CODE>objcopy</CODE>, and <CODE>ranlib</CODE>.  If the host machine is not an
+80<VAR>x</VAR>86, versions targeting 80<VAR>x</VAR>86 should be available with an
+<Q><SAMP>i386-elf-</SAMP></Q> prefix.
+<P>
+
+</P>
+<LI>
+Required: <A HREF="http://www.perl.org">Perl</A>.  Version 5.8.0 or later is
+preferred.  Version 5.6.1 or later should work.
+<P>
+
+</P>
+<LI>
+Required: <A HREF="http://www.gnu.org/software/make/">GNU make</A>, version
+3.80 or later.
+<P>
+
+</P>
+<LI>
+Recommended: <A HREF="http://fabrice.bellard.free.fr/qemu/">QEMU</A>, version
+0.11.0 or later.  If QEMU is not available, Bochs can be used, but its
+slowness is frustrating.
+<P>
+
+</P>
+<LI>
+Recommended: <A HREF="http://www.gnu.org/software/gdb/">GDB</A>.  GDB is
+helpful in debugging (see section <A HREF="pintos_10.html#SEC151">E.5 GDB</A>).  If the host machine is not an
+80<VAR>x</VAR>86, a version of GDB targeting 80<VAR>x</VAR>86 should be available
+as <Q><SAMP>i386-elf-gdb</SAMP></Q>.
+<P>
+
+</P>
+<LI>
+Recommended: <A HREF="http://www.x.org/">X</A>.  Being able to use an X server
+makes the virtual machine feel more like a physical machine, but it is
+not strictly necessary.
+<P>
+
+</P>
+<LI>
+Optional: <A HREF="http://www.gnu.org/software/texinfo/">Texinfo</A>, version
+4.5 or later.  Texinfo is required to build the PDF version of the
+documentation.
+<P>
+
+</P>
+<LI>
+Optional: <A HREF="http://www.tug.org/">TeX</A>.  Also required to build
+the PDF version of the documentation.
+<P>
+
+</P>
+<LI>
+Optional: <A HREF="http://www.vmware.com/">VMware Player</A>.  This is a
+third platform that can also be used to test Pintos.
+</UL>
+<P>
+
+Once these prerequisites are available, follow these instructions to
+install Pintos:
+</P>
+<P>
+
+<OL>
+<LI>
+Install <A HREF="http://bochs.sourceforge.net/">Bochs</A>, version 2.2.6, as
+described below (see section <A HREF="pintos_12.html#SEC164">G.1 Building Bochs for Pintos</A>).
+<P>
+
+</P>
+<LI>
+Install scripts from <Q><TT>src/utils</TT></Q>.  Copy <Q><TT>backtrace</TT></Q>,
+<Q><TT>pintos</TT></Q>, <Q><TT>pintos-gdb</TT></Q>, <Q><TT>pintos-mkdisk</TT></Q>,
+<Q><TT>pintos-set-cmdline</TT></Q>, and <Q><TT>Pintos.pm</TT></Q> into the default
+<CODE>PATH</CODE>.
+<P>
+
+</P>
+<LI>
+Install <Q><TT>src/misc/gdb-macros</TT></Q> in a public location.  Then use a
+text editor to edit the installed copy of <Q><TT>pintos-gdb</TT></Q>, changing
+the definition of <CODE>GDBMACROS</CODE> to point to where you installed
+<Q><TT>gdb-macros</TT></Q>.  Test the installation by running
+<CODE>pintos-gdb</CODE> without any arguments.  If it does not complain
+about missing <Q><TT>gdb-macros</TT></Q>, it is installed correctly.
+<P>
+
+</P>
+<LI>
+Compile the remaining Pintos utilities by typing <CODE>make</CODE> in
+<Q><TT>src/utils</TT></Q>.  Install <Q><TT>squish-pty</TT></Q> somewhere in <CODE>PATH</CODE>.
+To support VMware Player, install <Q><TT>squish-unix</TT></Q>.
+If your Perl is older than version 5.8.0, also install
+<Q><TT>setitimer-helper</TT></Q>; otherwise, it is unneeded.
+<P>
+
+</P>
+<LI>
+Pintos should now be ready for use.  If you have the Pintos reference
+solutions, which are provided only to faculty and their teaching
+assistants, then you may test your installation by running <CODE>make
+check</CODE> in the top-level <Q><TT>tests</TT></Q> directory.  The tests take between
+20 minutes and 1 hour to run, depending on the speed of your hardware.
+<P>
+
+</P>
+<LI>
+Optional: Build the documentation, by running <CODE>make dist</CODE> in the
+top-level <Q><TT>doc</TT></Q> directory.  This creates a <Q><TT>WWW</TT></Q> subdirectory
+within <Q><TT>doc</TT></Q> that contains HTML and PDF versions of the
+documentation, plus the design document templates and various hardware
+specifications referenced by the documentation.  Building the PDF
+version of the manual requires Texinfo and TeX (see above).  You may
+install <Q><TT>WWW</TT></Q> wherever you find most useful.
+<P>
+
+The <Q><TT>doc</TT></Q> directory is not included in the <Q><TT>.tar.gz</TT></Q>
+distributed for Pintos.  It is in the Pintos CVS tree available via
+<CODE>:pserver:anonymous@footstool.stanford.edu:/var/lib/cvs</CODE>, in the
+<CODE>pintos</CODE> module.  The CVS tree is <EM>not</EM> the authoritative
+source for Stanford course materials, which should be obtained from the
+course website.
+</OL>
+<P>
+
+<A NAME="Building Bochs for Pintos"></A>
+<HR SIZE="6">
+<A NAME="SEC164"></A>
+<H2> G.1 Building Bochs for Pintos </H2>
+<!--docid::SEC164::-->
+<P>
+
+Upstream Bochs has bugs and warts that should be fixed when used with
+Pintos.  Thus, Bochs should be installed manually for use with Pintos,
+instead of using the packaged version of Bochs included with an
+operating system distribution.
+</P>
+<P>
+
+Two different Bochs binaries should be installed.  One, named simply
+<CODE>bochs</CODE>, should have the GDB stub enabled, by passing
+<Q><SAMP>--enable-gdb-stub</SAMP></Q> to the Bochs <CODE>configure</CODE> script.  The
+other, named <CODE>bochs-dbg</CODE>, should have the internal debugger
+enabled, by passing <Q><SAMP>--enable-debugger</SAMP></Q> to <CODE>configure</CODE>.
+(The <CODE>pintos</CODE> script selects a binary based on the options
+passed to it.)  In each case, the X, terminal, and &quot;no GUI&quot; interfaces
+should be configured, by passing <Q><SAMP>--with-x --with-x11 --with-term
+--with-nogui</SAMP></Q> to <CODE>configure</CODE>.
+</P>
+<P>
+
+This version of Pintos is designed for use with Bochs 2.2.6.  A number
+of patches for this version of Bochs are included in <Q><TT>src/misc</TT></Q>:
+</P>
+<P>
+
+</P>
+<DL COMPACT>
+<DT><Q><TT>bochs-2.2.6-big-endian.patch</TT></Q>
+<DD><P>
+
+Makes the GDB stubs work on big-endian systems such as Solaris/Sparc, by
+doing proper byteswapping.  It should be harmless elsewhere.
+</P>
+<P>
+
+</P>
+<DT><Q><TT>bochs-2.2.6-jitter.patch</TT></Q>
+<DD><P>
+
+Adds the &quot;jitter&quot; feature, in which timer interrupts are delivered at
+random intervals (see section <A HREF="pintos_1.html#SEC6">1.1.4 Debugging versus Testing</A>).
+</P>
+<P>
+
+</P>
+<DT><Q><TT>bochs-2.2.6-triple-fault.patch</TT></Q>
+<DD><P>
+
+Causes Bochs to break to GDB when a triple fault occurs and
+the GDB stub is active (see section <A HREF="pintos_10.html#SEC155">E.6 Triple Faults</A>).
+</P>
+<P>
+
+</P>
+<DT><Q><TT>bochs-2.2.6-ms-extensions.patch</TT></Q>
+<DD><P>
+
+Needed for Bochs to compile with GCC on some hosts.  Probably
+harmless elsewhere.
+</P>
+<P>
+
+</P>
+<DT><Q><TT>bochs-2.2.6-solaris-tty.patch</TT></Q>
+<DD><P>
+
+Needed for Bochs to compile in terminal support on Solaris
+hosts.  Probably harmless elsewhere.
+</P>
+<P>
+
+</P>
+<DT><Q><TT>bochs-2.2.6-page-fault-segv.patch</TT></Q>
+<DD><P>
+
+Makes the GDB stub report a SIGSEGV to the debugger when a page-fault
+exception occurs, instead of &quot;signal 0.&quot;  The former can be ignored
+with <CODE>handle SIGSEGV nostop</CODE> but the latter cannot.
+</P>
+<P>
+
+</P>
+<DT><Q><TT>bochs-2.2.6-paranoia.patch</TT></Q>
+<DD><P>
+
+Fixes compile error with modern versions of GCC.
+</P>
+<P>
+
+</P>
+<DT><Q><TT>bochs-2.2.6-solaris-link.patch</TT></Q>
+<DD><P>
+
+Needed on Solaris hosts.  Do not apply it elsewhere.
+</DL>
+<P>
+
+To apply all the patches, <CODE>cd</CODE> into the Bochs directory, then
+type:
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>patch -p1 &lt; $PINTOSDIR/src/misc/bochs-2.2.6-big-endian.patch
+patch -p1 &lt; $PINTOSDIR/src/misc/bochs-2.2.6-jitter.patch
+patch -p1 &lt; $PINTOSDIR/src/misc/bochs-2.2.6-triple-fault.patch
+patch -p1 &lt; $PINTOSDIR/src/misc/bochs-2.2.6-ms-extensions.patch
+patch -p1 &lt; $PINTOSDIR/src/misc/bochs-2.2.6-solaris-tty.patch
+patch -p1 &lt; $PINTOSDIR/src/misc/bochs-2.2.6-page-fault-segv.patch
+patch -p1 &lt; $PINTOSDIR/src/misc/bochs-2.2.6-paranoia.patch
+patch -p1 &lt; $PINTOSDIR/src/misc/bochs-2.2.6-solaris-link.patch
+</pre></td></tr></table>You will have to supply the proper <CODE>$PINTOSDIR</CODE>, of course.  You can
+use <CODE>patch</CODE>'s <Q><SAMP>--dry-run</SAMP></Q> option if you want to test
+whether the patches would apply cleanly before trying to apply them.
+<P>
+
+Sample commands to build and install Bochs for Pintos are supplied in
+<Q><TT>src/misc/bochs-2.2.6-build.sh</TT></Q>.
+<A NAME="Bibliography"></A>
+<HR SIZE="6">
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_12.html#SEC163"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_13.html#SEC165"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>

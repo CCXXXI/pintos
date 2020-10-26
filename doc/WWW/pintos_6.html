@@ -1,0 +1,3341 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: Reference Guide</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: Reference Guide">
+<META NAME="keywords" CONTENT="Pintos Projects: Reference Guide">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="SEC90"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_5.html#SEC75"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_7.html#SEC131"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+
+<HR SIZE=2>
+<H1> A. Reference Guide </H1>
+<!--docid::SEC90::-->
+<P>
+
+This chapter is a reference for the Pintos code.  The reference guide
+does not cover all of the code in Pintos, but it does cover those
+pieces that students most often find troublesome.  You may find that
+you want to read each part of the reference guide as you work on the
+project where it becomes important.
+</P>
+<P>
+
+We recommend using &quot;tags&quot; to follow along with references to function
+and variable names (see section <A HREF="pintos_11.html#SEC159">F.1 Tags</A>).
+</P>
+<P>
+
+<A NAME="Pintos Loading"></A>
+<HR SIZE="6">
+<A NAME="SEC91"></A>
+<H2> A.1 Loading </H2>
+<!--docid::SEC91::-->
+<P>
+
+This section covers the Pintos loader and basic kernel
+initialization.
+</P>
+<P>
+
+<A NAME="Pintos Loader"></A>
+<HR SIZE="6">
+<A NAME="SEC92"></A>
+<H3> A.1.1 The Loader </H3>
+<!--docid::SEC92::-->
+<P>
+
+The first part of Pintos that runs is the loader, in
+<Q><TT>threads/loader.S</TT></Q>.  The PC BIOS loads the loader into memory.
+The loader, in turn, is responsible for finding the kernel on disk,
+loading it into memory, and then jumping to its start.  It's
+not important to understand exactly how the loader works, but if
+you're interested, read on.  You should probably read along with the
+loader's source.  You should also understand the basics of the
+80<VAR>x</VAR>86 architecture as described by chapter 3, &quot;Basic Execution
+Environment,&quot; of [ <A HREF="pintos_13.html#IA32-v1">IA32-v1</A>].
+</P>
+<P>
+
+The PC BIOS loads the loader from the first sector of the first hard
+disk, called the <EM>master boot record</EM> (MBR).  PC conventions
+reserve 64 bytes of the MBR for the partition table, and Pintos uses
+about 128 additional bytes for kernel command-line arguments.  This
+leaves a little over 300 bytes for the loader's own code.  This is a
+severe restriction that means, practically speaking, the loader must
+be written in assembly language.
+</P>
+<P>
+
+The Pintos loader and kernel don't have to be on the same disk, nor
+does is the kernel required to be in any particular location on a
+given disk.  The loader's first job, then, is to find the kernel by
+reading the partition table on each hard disk, looking for a bootable
+partition of the type used for a Pintos kernel.
+</P>
+<P>
+
+When the loader finds a bootable kernel partition, it reads the
+partition's contents into memory at physical address 128 kB.  The
+kernel is at the beginning of the partition, which might be larger
+than necessary due to partition boundary alignment conventions, so the
+loader reads no more than 512 kB (and the Pintos build process
+will refuse to produce kernels larger than that).  Reading more data
+than this would cross into the region from 640 kB to 1 MB that
+the PC architecture reserves for hardware and the BIOS, and a standard
+PC BIOS does not provide any means to load the kernel above 1 MB.
+</P>
+<P>
+
+The loader's final job is to extract the entry point from the loaded
+kernel image and transfer control to it.  The entry point is not at a
+predictable location, but the kernel's ELF header contains a pointer
+to it.  The loader extracts the pointer and jumps to the location it
+points to.
+</P>
+<P>
+
+The Pintos kernel command line
+is stored in the boot loader.  The <CODE>pintos</CODE> program actually
+modifies a copy of the boot loader on disk each time it runs the kernel,
+inserting whatever command-line arguments the user supplies to the kernel,
+and then the kernel at boot time reads those arguments out of the boot
+loader in memory.  This is not an elegant solution, but it is simple
+and effective.
+</P>
+<P>
+
+<A NAME="Low-Level Kernel Initialization"></A>
+<HR SIZE="6">
+<A NAME="SEC93"></A>
+<H3> A.1.2 Low-Level Kernel Initialization </H3>
+<!--docid::SEC93::-->
+<P>
+
+The loader's last action is to transfer control to the kernel's entry
+point, which is <CODE>start()</CODE> in <Q><TT>threads/start.S</TT></Q>.  The job of
+this code is to switch the CPU from legacy 16-bit &quot;real mode&quot; into
+the 32-bit &quot;protected mode&quot; used by all modern 80<VAR>x</VAR>86 operating
+systems.
+</P>
+<P>
+
+The startup code's first task is actually to obtain the machine's
+memory size, by asking the BIOS for the PC's memory size.  The
+simplest BIOS function to do this can only detect up to 64 MB of RAM,
+so that's the practical limit that Pintos can support.  The function
+stores the memory size, in pages, in global variable
+<CODE>init_ram_pages</CODE>.
+</P>
+<P>
+
+The first part of CPU initialization is to enable the A20 line, that
+is, the CPU's address line numbered 20.  For historical reasons, PCs
+boot with this address line fixed at 0, which means that attempts to
+access memory beyond the first 1 MB (2 raised to the 20th power) will
+fail.  Pintos wants to access more memory than this, so we have to
+enable it.
+</P>
+<P>
+
+Next, the loader creates a basic page table.  This page table maps
+the 64 MB at the base of virtual memory (starting at virtual address
+0) directly to the identical physical addresses.  It also maps the
+same physical memory starting at virtual address
+<CODE>LOADER_PHYS_BASE</CODE>, which defaults to <TT>0xc0000000</TT> (3 GB).  The
+Pintos kernel only wants the latter mapping, but there's a
+chicken-and-egg problem if we don't include the former: our current
+virtual address is roughly <TT>0x20000</TT>, the location where the loader
+put us, and we can't jump to <TT>0xc0020000</TT> until we turn on the
+page table, but if we turn on the page table without jumping there,
+then we've just pulled the rug out from under ourselves.
+</P>
+<P>
+
+After the page table is initialized, we load the CPU's control
+registers to turn on protected mode and paging, and set up the segment
+registers.  We aren't yet equipped to handle interrupts in protected
+mode, so we disable interrupts.  The final step is to call <CODE>main()</CODE>.
+</P>
+<P>
+
+<A NAME="High-Level Kernel Initialization"></A>
+<HR SIZE="6">
+<A NAME="SEC94"></A>
+<H3> A.1.3 High-Level Kernel Initialization </H3>
+<!--docid::SEC94::-->
+<P>
+
+The kernel proper starts with the <CODE>main()</CODE> function.  The
+<CODE>main()</CODE> function is written in C, as will be most of the code we
+encounter in Pintos from here on out.
+</P>
+<P>
+
+When <CODE>main()</CODE> starts, the system is in a pretty raw state.  We're
+in 32-bit protected mode with paging enabled, but hardly anything else is
+ready.  Thus, the <CODE>main()</CODE> function consists primarily of calls
+into other Pintos modules' initialization functions.
+These are usually named <CODE><VAR>module</VAR>_init()</CODE>, where
+<VAR>module</VAR> is the module's name, <Q><TT><VAR>module</VAR>.c</TT></Q> is the
+module's source code, and <Q><TT><VAR>module</VAR>.h</TT></Q> is the module's
+header.
+</P>
+<P>
+
+The first step in <CODE>main()</CODE> is to call <CODE>bss_init()</CODE>, which clears
+out the kernel's &quot;BSS&quot;, which is the traditional name for a
+segment that should be initialized to all zeros.  In most C
+implementations, whenever you
+declare a variable outside a function without providing an
+initializer, that variable goes into the BSS.  Because it's all zeros, the
+BSS isn't stored in the image that the loader brought into memory.  We
+just use <CODE>memset()</CODE> to zero it out.
+</P>
+<P>
+
+Next, <CODE>main()</CODE> calls <CODE>read_command_line()</CODE> to break the kernel command
+line into arguments, then <CODE>parse_options()</CODE> to read any options at
+the beginning of the command line.  (Actions specified on the
+command line execute later.)
+</P>
+<P>
+
+<CODE>thread_init()</CODE> initializes the thread system.  We will defer full
+discussion to our discussion of Pintos threads below.  It is called so
+early in initialization because a valid thread structure is a
+prerequisite for acquiring a lock, and lock acquisition in turn is
+important to other Pintos subsystems.  Then we initialize the console
+and print a startup message to the console.
+</P>
+<P>
+
+The next block of functions we call initializes the kernel's memory
+system.  <CODE>palloc_init()</CODE> sets up the kernel page allocator, which
+doles out memory one or more pages at a time (see section <A HREF="pintos_6.html#SEC112">A.5.1 Page Allocator</A>).
+<CODE>malloc_init()</CODE> sets
+up the allocator that handles allocations of arbitrary-size blocks of
+memory (see section <A HREF="pintos_6.html#SEC113">A.5.2 Block Allocator</A>).
+<CODE>paging_init()</CODE> sets up a page table for the kernel (see section <A HREF="pintos_6.html#SEC115">A.7 Page Table</A>).
+</P>
+<P>
+
+In projects 2 and later, <CODE>main()</CODE> also calls <CODE>tss_init()</CODE> and
+<CODE>gdt_init()</CODE>.
+</P>
+<P>
+
+The next set of calls initializes the interrupt system.
+<CODE>intr_init()</CODE> sets up the CPU's <EM>interrupt descriptor table</EM>
+(IDT) to ready it for interrupt handling (see section <A HREF="pintos_6.html#SEC108">A.4.1 Interrupt Infrastructure</A>), then <CODE>timer_init()</CODE> and <CODE>kbd_init()</CODE> prepare for
+handling timer interrupts and keyboard interrupts, respectively. 
+<CODE>input_init()</CODE> sets up to merge serial and keyboard input into one
+stream.  In
+projects 2 and later, we also prepare to handle interrupts caused by
+user programs using <CODE>exception_init()</CODE> and <CODE>syscall_init()</CODE>.
+</P>
+<P>
+
+Now that interrupts are set up, we can start the scheduler
+with <CODE>thread_start()</CODE>, which creates the idle thread and enables
+interrupts.
+With interrupts enabled, interrupt-driven serial port I/O becomes
+possible, so we use
+<CODE>serial_init_queue()</CODE> to switch to that mode.  Finally,
+<CODE>timer_calibrate()</CODE> calibrates the timer for accurate short delays.
+</P>
+<P>
+
+If the file system is compiled in, as it will starting in project 2, we
+initialize the IDE disks with <CODE>ide_init()</CODE>, then the
+file system with <CODE>filesys_init()</CODE>.
+</P>
+<P>
+
+Boot is complete, so we print a message.
+</P>
+<P>
+
+Function <CODE>run_actions()</CODE> now parses and executes actions specified on
+the kernel command line, such as <CODE>run</CODE> to run a test (in project
+1) or a user program (in later projects).
+</P>
+<P>
+
+Finally, if <Q><SAMP>-q</SAMP></Q> was specified on the kernel command line, we
+call <CODE>shutdown_power_off()</CODE> to terminate the machine simulator.  Otherwise,
+<CODE>main()</CODE> calls <CODE>thread_exit()</CODE>, which allows any other running
+threads to continue running.
+</P>
+<P>
+
+<A NAME="Physical Memory Map"></A>
+<HR SIZE="6">
+<A NAME="SEC95"></A>
+<H3> A.1.4 Physical Memory Map </H3>
+<!--docid::SEC95::-->
+<P>
+
+</P>
+<TABLE>
+@headitem Memory Range
+</TD><TD> Owner
+</TD><TD> Contents
+
+<TR><TD><TT>00000000</TT>--<TT>000003ff</TT> </TD><TD> CPU </TD><TD> Real mode interrupt table.</TD>
+</TR>
+<TR><TD><TT>00000400</TT>--<TT>000005ff</TT> </TD><TD> BIOS </TD><TD> Miscellaneous data area.</TD>
+</TR>
+<TR><TD><TT>00000600</TT>--<TT>00007bff</TT> </TD><TD> -- </TD><TD> ---</TD>
+</TR>
+<TR><TD><TT>00007c00</TT>--<TT>00007dff</TT> </TD><TD> Pintos </TD><TD> Loader.</TD>
+</TR>
+<TR><TD><TT>0000e000</TT>--<TT>0000efff</TT> </TD><TD> Pintos</TD>
+</TD><TD> Stack for loader; kernel stack and <CODE>struct thread</CODE> for initial
+kernel thread.
+</TR>
+<TR><TD><TT>0000f000</TT>--<TT>0000ffff</TT> </TD><TD> Pintos</TD>
+</TD><TD> Page directory for startup code.
+</TR>
+<TR><TD><TT>00010000</TT>--<TT>00020000</TT> </TD><TD> Pintos</TD>
+</TD><TD> Page tables for startup code.
+</TR>
+<TR><TD><TT>00020000</TT>--<TT>0009ffff</TT> </TD><TD> Pintos</TD>
+</TD><TD> Kernel code, data, and uninitialized data segments.
+</TR>
+<TR><TD><TT>000a0000</TT>--<TT>000bffff</TT> </TD><TD> Video </TD><TD> VGA display memory.</TD>
+</TR>
+<TR><TD><TT>000c0000</TT>--<TT>000effff</TT> </TD><TD> Hardware</TD>
+</TD><TD> Reserved for expansion card RAM and ROM.
+</TR>
+<TR><TD><TT>000f0000</TT>--<TT>000fffff</TT> </TD><TD> BIOS </TD><TD> ROM BIOS.</TD>
+</TR>
+<TR><TD><TT>00100000</TT>--<TT>03ffffff</TT> </TD><TD> Pintos </TD><TD> Dynamic memory allocation.</TD>
+</TR></TABLE>
+<P>
+
+<A NAME="Threads"></A>
+<HR SIZE="6">
+<A NAME="SEC96"></A>
+<H2> A.2 Threads </H2>
+<!--docid::SEC96::-->
+<P>
+
+<A NAME="struct thread"></A>
+<HR SIZE="6">
+<A NAME="SEC97"></A>
+<H3> A.2.1 <CODE>struct thread</CODE> </H3>
+<!--docid::SEC97::-->
+<P>
+
+The main Pintos data structure for threads is <CODE>struct thread</CODE>,
+declared in <Q><TT>threads/thread.h</TT></Q>.
+</P>
+<P>
+
+<A NAME="IDX24"></A>
+</P>
+<DL>
+<DT><U>Structure:</U> <B>struct thread</B>
+<DD>Represents a thread or a user process.  In the projects, you will have
+to add your own members to <CODE>struct thread</CODE>.  You may also change or
+delete the definitions of existing members.
+<P>
+
+Every <CODE>struct thread</CODE> occupies the beginning of its own page of
+memory.  The rest of the page is used for the thread's stack, which
+grows downward from the end of the page.  It looks like this:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>                  4 kB +---------------------------------+
+                       |          kernel stack           |
+                       |                |                |
+                       |                |                |
+                       |                V                |
+                       |         grows downward          |
+                       |                                 |
+                       |                                 |
+                       |                                 |
+                       |                                 |
+                       |                                 |
+                       |                                 |
+                       |                                 |
+                       |                                 |
+sizeof (struct thread) +---------------------------------+
+                       |              magic              |
+                       |                :                |
+                       |                :                |
+                       |              status             |
+                       |               tid               |
+                  0 kB +---------------------------------+
+</pre></td></tr></table><P>
+
+This has two consequences.  First, <CODE>struct thread</CODE> must not be allowed
+to grow too big.  If it does, then there will not be enough room for the
+kernel stack.  The base <CODE>struct thread</CODE> is only a few bytes in size.  It
+probably should stay well under 1 kB.
+</P>
+<P>
+
+Second, kernel stacks must not be allowed to grow too large.  If a stack
+overflows, it will corrupt the thread state.  Thus, kernel functions
+should not allocate large structures or arrays as non-static local
+variables.  Use dynamic allocation with <CODE>malloc()</CODE> or
+<CODE>palloc_get_page()</CODE> instead (see section <A HREF="pintos_6.html#SEC111">A.5 Memory Allocation</A>).
+</P>
+</DL>
+<P>
+
+<A NAME="IDX25"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> tid_t <B>tid</B>
+<DD>The thread's thread identifier or <EM>tid</EM>.  Every thread must have a
+tid that is unique over the entire lifetime of the kernel.  By
+default, <CODE>tid_t</CODE> is a <CODE>typedef</CODE> for <CODE>int</CODE> and each new
+thread receives the numerically next higher tid, starting from 1 for
+the initial process.  You can change the type and the numbering scheme
+if you like.
+</DL>
+<P>
+
+<A NAME="IDX26"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> enum thread_status <B>status</B>
+<DD><A NAME="Thread States"></A>
+The thread's state, one of the following:
+<P>
+
+<A NAME="IDX27"></A>
+</P>
+<DL>
+<DT><U>Thread State:</U> <B><CODE>THREAD_RUNNING</CODE></B>
+<DD>The thread is running.  Exactly one thread is running at a given time.
+<CODE>thread_current()</CODE> returns the running thread.
+</DL>
+<P>
+
+<A NAME="IDX28"></A>
+</P>
+<DL>
+<DT><U>Thread State:</U> <B><CODE>THREAD_READY</CODE></B>
+<DD>The thread is ready to run, but it's not running right now.  The
+thread could be selected to run the next time the scheduler is
+invoked.  Ready threads are kept in a doubly linked list called
+<CODE>ready_list</CODE>.
+</DL>
+<P>
+
+<A NAME="IDX29"></A>
+</P>
+<DL>
+<DT><U>Thread State:</U> <B><CODE>THREAD_BLOCKED</CODE></B>
+<DD>The thread is waiting for something, e.g. a lock to become
+available, an interrupt to be invoked.  The thread won't be scheduled
+again until it transitions to the <CODE>THREAD_READY</CODE> state with a
+call to <CODE>thread_unblock()</CODE>.  This is most conveniently done
+indirectly, using one of the Pintos synchronization primitives that
+block and unblock threads automatically (see section <A HREF="pintos_6.html#SEC100">A.3 Synchronization</A>).
+<P>
+
+There is no <I>a priori</I> way to tell what a blocked thread is waiting
+for, but a backtrace can help (see section <A HREF="pintos_10.html#SEC149">E.4 Backtraces</A>).
+</P>
+</DL>
+<P>
+
+<A NAME="IDX30"></A>
+</P>
+<DL>
+<DT><U>Thread State:</U> <B><CODE>THREAD_DYING</CODE></B>
+<DD>The thread will be destroyed by the scheduler after switching to the
+next thread.
+</DL>
+</DL>
+<P>
+
+<A NAME="IDX31"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> char <B>name[16]</B>
+<DD>The thread's name as a string, or at least the first few characters of
+it.
+</DL>
+<P>
+
+<A NAME="IDX32"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> uint8_t *<B>stack</B>
+<DD>Every thread has its own stack to keep track of its state.  When the
+thread is running, the CPU's stack pointer register tracks the top of
+the stack and this member is unused.  But when the CPU switches to
+another thread, this member saves the thread's stack pointer.  No
+other members are needed to save the thread's registers, because the
+other registers that must be saved are saved on the stack.
+<P>
+
+When an interrupt occurs, whether in the kernel or a user program, an
+<CODE>struct intr_frame</CODE> is pushed onto the stack.  When the interrupt occurs
+in a user program, the <CODE>struct intr_frame</CODE> is always at the very top of
+the page.  See section <A HREF="pintos_6.html#SEC107">A.4 Interrupt Handling</A>, for more information.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX33"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> int <B>priority</B>
+<DD>A thread priority, ranging from <CODE>PRI_MIN</CODE> (0) to <CODE>PRI_MAX</CODE>
+(63).  Lower numbers correspond to lower priorities, so that
+priority 0 is the lowest priority and priority 63 is the highest.
+Pintos as provided ignores thread priorities, but you will implement
+priority scheduling in project 1 (see section <A HREF="pintos_2.html#SEC26">2.2.3 Priority Scheduling</A>).
+</DL>
+<P>
+
+<A NAME="IDX34"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> <CODE>struct list_elem</CODE> <B>allelem</B>
+<DD>This &quot;list element&quot; is used to link the thread into the list of all
+threads.  Each thread is inserted into this list when it is created
+and removed when it exits.  The <CODE>thread_foreach()</CODE> function should 
+be used to iterate over all threads.
+</DL>
+<P>
+
+<A NAME="IDX35"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> <CODE>struct list_elem</CODE> <B>elem</B>
+<DD>A &quot;list element&quot; used to put the thread into doubly linked lists,
+either <CODE>ready_list</CODE> (the list of threads ready to run) or a list of
+threads waiting on a semaphore in <CODE>sema_down()</CODE>.  It can do double
+duty because a thread waiting on a semaphore is not ready, and vice
+versa.
+</DL>
+<P>
+
+<A NAME="IDX36"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> uint32_t *<B>pagedir</B>
+<DD>Only present in project 2 and later.  See section <A HREF="pintos_4.html#SEC59">4.1.2.3 Page Tables</A>.
+</DL>
+<P>
+
+<A NAME="IDX37"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct thread</CODE>:</U> unsigned <B>magic</B>
+<DD>Always set to <CODE>THREAD_MAGIC</CODE>, which is just an arbitrary number defined
+in <Q><TT>threads/thread.c</TT></Q>, and used to detect stack overflow.
+<CODE>thread_current()</CODE> checks that the <CODE>magic</CODE> member of the running
+thread's <CODE>struct thread</CODE> is set to <CODE>THREAD_MAGIC</CODE>.  Stack overflow
+tends to change this value, triggering the assertion.  For greatest
+benefit, as you add members to <CODE>struct thread</CODE>, leave <CODE>magic</CODE> at
+the end.
+</DL>
+<P>
+
+<A NAME="Thread Functions"></A>
+<HR SIZE="6">
+<A NAME="SEC98"></A>
+<H3> A.2.2 Thread Functions </H3>
+<!--docid::SEC98::-->
+<P>
+
+<Q><TT>threads/thread.c</TT></Q> implements several public functions for thread
+support.  Let's take a look at the most useful:
+</P>
+<P>
+
+<A NAME="IDX38"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_init</B> (void)
+<DD>Called by <CODE>main()</CODE> to initialize the thread system.  Its main
+purpose is to create a <CODE>struct thread</CODE> for Pintos's initial thread.
+This is possible because the Pintos loader puts the initial
+thread's stack at the top of a page, in the same position as any other
+Pintos thread.
+<P>
+
+Before <CODE>thread_init()</CODE> runs,
+<CODE>thread_current()</CODE> will fail because the running thread's
+<CODE>magic</CODE> value is incorrect.  Lots of functions call
+<CODE>thread_current()</CODE> directly or indirectly, including
+<CODE>lock_acquire()</CODE> for locking a lock, so <CODE>thread_init()</CODE> is
+called early in Pintos initialization.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX39"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_start</B> (void)
+<DD>Called by <CODE>main()</CODE> to start the scheduler.  Creates the idle
+thread, that is, the thread that is scheduled when no other thread is
+ready.  Then enables interrupts, which as a side effect enables the
+scheduler because the scheduler runs on return from the timer interrupt, using
+<CODE>intr_yield_on_return()</CODE> (see section <A HREF="pintos_6.html#SEC110">A.4.3 External Interrupt Handling</A>).
+</DL>
+<P>
+
+<A NAME="IDX40"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_tick</B> (void)
+<DD>Called by the timer interrupt at each timer tick.  It keeps track of
+thread statistics and triggers the scheduler when a time slice expires.
+</DL>
+<P>
+
+<A NAME="IDX41"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_print_stats</B> (void)
+<DD>Called during Pintos shutdown to print thread statistics.
+</DL>
+<P>
+
+<A NAME="IDX42"></A>
+</P>
+<DL>
+<DT><U>Function:</U> tid_t <B>thread_create</B> (const char *<VAR>name</VAR>, int <VAR>priority</VAR>, thread_func *<VAR>func</VAR>, void *<VAR>aux</VAR>)
+<DD>Creates and starts a new thread named <VAR>name</VAR> with the given
+<VAR>priority</VAR>, returning the new thread's tid.  The thread executes
+<VAR>func</VAR>, passing <VAR>aux</VAR> as the function's single argument.
+<P>
+
+<CODE>thread_create()</CODE> allocates a page for the thread's
+<CODE>struct thread</CODE> and stack and initializes its members, then it sets
+up a set of fake stack frames for it (see section <A HREF="pintos_6.html#SEC99">A.2.3 Thread Switching</A>).  The
+thread is initialized in the blocked state, then unblocked just before
+returning, which allows the new thread to
+be scheduled (see  <A HREF="pintos_6.html#Thread States">Thread States</A>).
+</P>
+<P>
+
+<A NAME="IDX43"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>void thread_func (void *<VAR>aux</VAR>)</B>
+<DD>This is the type of the function passed to <CODE>thread_create()</CODE>, whose
+<VAR>aux</VAR> argument is passed along as the function's argument.
+</DL>
+</DL>
+<P>
+
+<A NAME="IDX44"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_block</B> (void)
+<DD>Transitions the running thread from the running state to the blocked
+state (see  <A HREF="pintos_6.html#Thread States">Thread States</A>).  The thread will not run again until
+<CODE>thread_unblock()</CODE> is
+called on it, so you'd better have some way arranged for that to happen.
+Because <CODE>thread_block()</CODE> is so low-level, you should prefer to use
+one of the synchronization primitives instead (see section <A HREF="pintos_6.html#SEC100">A.3 Synchronization</A>).
+</DL>
+<P>
+
+<A NAME="IDX45"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_unblock</B> (struct thread *<VAR>thread</VAR>)
+<DD>Transitions <VAR>thread</VAR>, which must be in the blocked state, to the
+ready state, allowing it to resume running (see  <A HREF="pintos_6.html#Thread States">Thread States</A>).
+This is called when the event that the thread is waiting for occurs,
+e.g. when the lock that 
+the thread is waiting on becomes available.
+</DL>
+<P>
+
+<A NAME="IDX46"></A>
+</P>
+<DL>
+<DT><U>Function:</U> struct thread *<B>thread_current</B> (void)
+<DD>Returns the running thread.
+</DL>
+<P>
+
+<A NAME="IDX47"></A>
+</P>
+<DL>
+<DT><U>Function:</U> tid_t <B>thread_tid</B> (void)
+<DD>Returns the running thread's thread id.  Equivalent to
+<CODE>thread_current ()-&gt;tid</CODE>.
+</DL>
+<P>
+
+<A NAME="IDX48"></A>
+</P>
+<DL>
+<DT><U>Function:</U> const char *<B>thread_name</B> (void)
+<DD>Returns the running thread's name.  Equivalent to <CODE>thread_current
+()-&gt;name</CODE>.
+</DL>
+<P>
+
+<A NAME="IDX49"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_exit</B> (void) <CODE>NO_RETURN</CODE>
+<DD>Causes the current thread to exit.  Never returns, hence
+<CODE>NO_RETURN</CODE> (see section <A HREF="pintos_10.html#SEC148">E.3 Function and Parameter Attributes</A>).
+</DL>
+<P>
+
+<A NAME="IDX50"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_yield</B> (void)
+<DD>Yields the CPU to the scheduler, which picks a new thread to run.  The
+new thread might be the current thread, so you can't depend on this
+function to keep this thread from running for any particular length of
+time.
+</DL>
+<P>
+
+<A NAME="IDX51"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>thread_foreach</B> (thread_action_func *<VAR>action</VAR>, void *<VAR>aux</VAR>)
+<DD>Iterates over all threads <VAR>t</VAR> and invokes <CODE>action(t, aux)</CODE> on each.
+<VAR>action</VAR> must refer to a function that matches the signature 
+given by <CODE>thread_action_func()</CODE>:
+<P>
+
+<A NAME="IDX52"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>void thread_action_func (struct thread *<VAR>thread</VAR>, void *<VAR>aux</VAR>)</B>
+<DD>Performs some action on a thread, given <VAR>aux</VAR>.
+</DL>
+</DL>
+<P>
+
+<A NAME="IDX53"></A>
+</P>
+<DL>
+<DT><U>Function:</U> int <B>thread_get_priority</B> (void)
+<DD><A NAME="IDX54"></A>
+<DT><U>Function:</U> void <B>thread_set_priority</B> (int <VAR>new_priority</VAR>)
+<DD>Stub to set and get thread priority.  See section <A HREF="pintos_2.html#SEC26">2.2.3 Priority Scheduling</A>.
+</DL>
+<P>
+
+<A NAME="IDX55"></A>
+</P>
+<DL>
+<DT><U>Function:</U> int <B>thread_get_nice</B> (void)
+<DD><A NAME="IDX56"></A>
+<DT><U>Function:</U> void <B>thread_set_nice</B> (int <VAR>new_nice</VAR>)
+<DD><A NAME="IDX57"></A>
+<DT><U>Function:</U> int <B>thread_get_recent_cpu</B> (void)
+<DD><A NAME="IDX58"></A>
+<DT><U>Function:</U> int <B>thread_get_load_avg</B> (void)
+<DD>Stubs for the advanced scheduler.  See section <A HREF="pintos_7.html#SEC131">B. 4.4<ACRONYM>BSD</ACRONYM> Scheduler</A>.
+</DL>
+<P>
+
+<A NAME="Thread Switching"></A>
+<HR SIZE="6">
+<A NAME="SEC99"></A>
+<H3> A.2.3 Thread Switching </H3>
+<!--docid::SEC99::-->
+<P>
+
+<CODE>schedule()</CODE> is responsible for switching threads.  It
+is internal to <Q><TT>threads/thread.c</TT></Q> and called only by the three
+public thread functions that need to switch threads:
+<CODE>thread_block()</CODE>, <CODE>thread_exit()</CODE>, and <CODE>thread_yield()</CODE>.
+Before any of these functions call <CODE>schedule()</CODE>, they disable
+interrupts (or ensure that they are already disabled) and then change
+the running thread's state to something other than running.
+</P>
+<P>
+
+<CODE>schedule()</CODE> is short but tricky.  It records the
+current thread in local variable <VAR>cur</VAR>, determines the next thread
+to run as local variable <VAR>next</VAR> (by calling
+<CODE>next_thread_to_run()</CODE>), and then calls <CODE>switch_threads()</CODE> to do
+the actual thread switch.  The thread we switched to was also running
+inside <CODE>switch_threads()</CODE>, as are all the threads not currently
+running, so the new thread now returns out of
+<CODE>switch_threads()</CODE>, returning the previously running thread.
+</P>
+<P>
+
+<CODE>switch_threads()</CODE> is an assembly language routine in
+<Q><TT>threads/switch.S</TT></Q>.  It saves registers on the stack, saves the
+CPU's current stack pointer in the current <CODE>struct thread</CODE>'s <CODE>stack</CODE>
+member, restores the new thread's <CODE>stack</CODE> into the CPU's stack
+pointer, restores registers from the stack, and returns.
+</P>
+<P>
+
+The rest of the scheduler is implemented in <CODE>thread_schedule_tail()</CODE>.  It
+marks the new thread as running.  If the thread we just switched from
+is in the dying state, then it also frees the page that contained the
+dying thread's <CODE>struct thread</CODE> and stack.  These couldn't be freed
+prior to the thread switch because the switch needed to use it.
+</P>
+<P>
+
+Running a thread for the first time is a special case.  When
+<CODE>thread_create()</CODE> creates a new thread, it goes through a fair
+amount of trouble to get it started properly.  In particular, the new
+thread hasn't started running yet, so there's no way for it to be
+running inside <CODE>switch_threads()</CODE> as the scheduler expects.  To
+solve the problem, <CODE>thread_create()</CODE> creates some fake stack frames
+in the new thread's stack:
+</P>
+<P>
+
+<UL>
+<LI>
+The topmost fake stack frame is for <CODE>switch_threads()</CODE>, represented
+by <CODE>struct switch_threads_frame</CODE>.  The important part of this frame is
+its <CODE>eip</CODE> member, the return address.  We point <CODE>eip</CODE> to
+<CODE>switch_entry()</CODE>, indicating it to be the function that called
+<CODE>switch_entry()</CODE>.
+<P>
+
+</P>
+<LI>
+The next fake stack frame is for <CODE>switch_entry()</CODE>, an assembly
+language routine in <Q><TT>threads/switch.S</TT></Q> that adjusts the stack
+pointer,<A NAME="DOCF5" HREF="pintos_fot.html#FOOT5">(5)</A>
+calls <CODE>thread_schedule_tail()</CODE> (this special case is why
+<CODE>thread_schedule_tail()</CODE> is separate from <CODE>schedule()</CODE>), and returns.
+We fill in its stack frame so that it returns into
+<CODE>kernel_thread()</CODE>, a function in <Q><TT>threads/thread.c</TT></Q>.
+<P>
+
+</P>
+<LI>
+The final stack frame is for <CODE>kernel_thread()</CODE>, which enables
+interrupts and calls the thread's function (the function passed to
+<CODE>thread_create()</CODE>).  If the thread's function returns, it calls
+<CODE>thread_exit()</CODE> to terminate the thread.
+</UL>
+<P>
+
+<A NAME="Synchronization"></A>
+<HR SIZE="6">
+<A NAME="SEC100"></A>
+<H2> A.3 Synchronization </H2>
+<!--docid::SEC100::-->
+<P>
+
+If sharing of resources between threads is not handled in a careful,
+controlled fashion, the result is usually a big mess.
+This is especially the case in operating system kernels, where
+faulty sharing can crash the entire machine.  Pintos provides several
+synchronization primitives to help out.
+</P>
+<P>
+
+<A NAME="Disabling Interrupts"></A>
+<HR SIZE="6">
+<A NAME="SEC101"></A>
+<H3> A.3.1 Disabling Interrupts </H3>
+<!--docid::SEC101::-->
+<P>
+
+The crudest way to do synchronization is to disable interrupts, that
+is, to temporarily prevent the CPU from responding to interrupts.  If
+interrupts are off, no other thread will preempt the running thread,
+because thread preemption is driven by the timer interrupt.  If
+interrupts are on, as they normally are, then the running thread may
+be preempted by another at any time, whether between two C statements
+or even within the execution of one.
+</P>
+<P>
+
+Incidentally, this means that Pintos is a &quot;preemptible kernel,&quot; that
+is, kernel threads can be preempted at any time.  Traditional Unix
+systems are &quot;nonpreemptible,&quot; that is, kernel threads can only be
+preempted at points where they explicitly call into the scheduler.
+(User programs can be preempted at any time in both models.)  As you
+might imagine, preemptible kernels require more explicit
+synchronization.
+</P>
+<P>
+
+You should have little need to set the interrupt state directly.  Most
+of the time you should use the other synchronization primitives
+described in the following sections.  The main reason to disable
+interrupts is to synchronize kernel threads with external interrupt
+handlers, which cannot sleep and thus cannot use most other forms of
+synchronization (see section <A HREF="pintos_6.html#SEC110">A.4.3 External Interrupt Handling</A>).
+</P>
+<P>
+
+Some external interrupts cannot be postponed, even by disabling
+interrupts.  These interrupts, called <EM>non-maskable interrupts</EM>
+(NMIs), are supposed to be used only in emergencies, e.g. when the
+computer is on fire.  Pintos does not handle non-maskable interrupts.
+</P>
+<P>
+
+Types and functions for disabling and enabling interrupts are in
+<Q><TT>threads/interrupt.h</TT></Q>.
+</P>
+<P>
+
+<A NAME="IDX59"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>enum intr_level</B>
+<DD>One of <CODE>INTR_OFF</CODE> or <CODE>INTR_ON</CODE>, denoting that interrupts are
+disabled or enabled, respectively.
+</DL>
+<P>
+
+<A NAME="IDX60"></A>
+</P>
+<DL>
+<DT><U>Function:</U> enum intr_level <B>intr_get_level</B> (void)
+<DD>Returns the current interrupt state.
+</DL>
+<P>
+
+<A NAME="IDX61"></A>
+</P>
+<DL>
+<DT><U>Function:</U> enum intr_level <B>intr_set_level</B> (enum intr_level <VAR>level</VAR>)
+<DD>Turns interrupts on or off according to <VAR>level</VAR>.  Returns the
+previous interrupt state.
+</DL>
+<P>
+
+<A NAME="IDX62"></A>
+</P>
+<DL>
+<DT><U>Function:</U> enum intr_level <B>intr_enable</B> (void)
+<DD>Turns interrupts on.  Returns the previous interrupt state.
+</DL>
+<P>
+
+<A NAME="IDX63"></A>
+</P>
+<DL>
+<DT><U>Function:</U> enum intr_level <B>intr_disable</B> (void)
+<DD>Turns interrupts off.  Returns the previous interrupt state.
+</DL>
+<P>
+
+<A NAME="Semaphores"></A>
+<HR SIZE="6">
+<A NAME="SEC102"></A>
+<H3> A.3.2 Semaphores </H3>
+<!--docid::SEC102::-->
+<P>
+
+A <EM>semaphore</EM> is a nonnegative integer together with two operators
+that manipulate it atomically, which are:
+</P>
+<P>
+
+<UL>
+<LI>
+&quot;Down&quot; or &quot;P&quot;: wait for the value to become positive, then
+decrement it.
+<P>
+
+</P>
+<LI>
+&quot;Up&quot; or &quot;V&quot;: increment the value (and wake up one waiting thread,
+if any).
+</UL>
+<P>
+
+A semaphore initialized to 0 may be used to wait for an event
+that will happen exactly once.  For example, suppose thread <VAR>A</VAR>
+starts another thread <VAR>B</VAR> and wants to wait for <VAR>B</VAR> to signal
+that some activity is complete.  <VAR>A</VAR> can create a semaphore
+initialized to 0, pass it to <VAR>B</VAR> as it starts it, and then
+&quot;down&quot; the semaphore.  When <VAR>B</VAR> finishes its activity, it
+&quot;ups&quot; the semaphore.  This works regardless of whether <VAR>A</VAR>
+&quot;downs&quot; the semaphore or <VAR>B</VAR> &quot;ups&quot; it first.
+</P>
+<P>
+
+A semaphore initialized to 1 is typically used for controlling access
+to a resource.  Before a block of code starts using the resource, it
+&quot;downs&quot; the semaphore, then after it is done with the resource it
+&quot;ups&quot; the resource.  In such a case a lock, described below, may be
+more appropriate.
+</P>
+<P>
+
+Semaphores can also be initialized to values larger than 1.  These are
+rarely used.
+</P>
+<P>
+
+Semaphores were invented by Edsger Dijkstra and first used in the THE
+operating system ([ <A HREF="pintos_13.html#Dijkstra">Dijkstra</A>]).
+</P>
+<P>
+
+Pintos' semaphore type and operations are declared in
+<Q><TT>threads/synch.h</TT></Q>.  
+</P>
+<P>
+
+<A NAME="IDX64"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>struct semaphore</B>
+<DD>Represents a semaphore.
+</DL>
+<P>
+
+<A NAME="IDX65"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>sema_init</B> (struct semaphore *<VAR>sema</VAR>, unsigned <VAR>value</VAR>)
+<DD>Initializes <VAR>sema</VAR> as a new semaphore with the given initial
+<VAR>value</VAR>.
+</DL>
+<P>
+
+<A NAME="IDX66"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>sema_down</B> (struct semaphore *<VAR>sema</VAR>)
+<DD>Executes the &quot;down&quot; or &quot;P&quot; operation on <VAR>sema</VAR>, waiting for
+its value to become positive and then decrementing it by one.
+</DL>
+<P>
+
+<A NAME="IDX67"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>sema_try_down</B> (struct semaphore *<VAR>sema</VAR>)
+<DD>Tries to execute the &quot;down&quot; or &quot;P&quot; operation on <VAR>sema</VAR>,
+without waiting.  Returns true if <VAR>sema</VAR>
+was successfully decremented, or false if it was already
+zero and thus could not be decremented without waiting.  Calling this
+function in a
+tight loop wastes CPU time, so use <CODE>sema_down()</CODE> or find a
+different approach instead.
+</DL>
+<P>
+
+<A NAME="IDX68"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>sema_up</B> (struct semaphore *<VAR>sema</VAR>)
+<DD>Executes the &quot;up&quot; or &quot;V&quot; operation on <VAR>sema</VAR>,
+incrementing its value.  If any threads are waiting on
+<VAR>sema</VAR>, wakes one of them up.
+<P>
+
+Unlike most synchronization primitives, <CODE>sema_up()</CODE> may be called
+inside an external interrupt handler (see section <A HREF="pintos_6.html#SEC110">A.4.3 External Interrupt Handling</A>).
+</P>
+</DL>
+<P>
+
+Semaphores are internally built out of disabling interrupt
+(see section <A HREF="pintos_6.html#SEC101">A.3.1 Disabling Interrupts</A>) and thread blocking and unblocking
+(<CODE>thread_block()</CODE> and <CODE>thread_unblock()</CODE>).  Each semaphore maintains
+a list of waiting threads, using the linked list
+implementation in <Q><TT>lib/kernel/list.c</TT></Q>.
+</P>
+<P>
+
+<A NAME="Locks"></A>
+<HR SIZE="6">
+<A NAME="SEC103"></A>
+<H3> A.3.3 Locks </H3>
+<!--docid::SEC103::-->
+<P>
+
+A <EM>lock</EM> is like a semaphore with an initial value of 1
+(see section <A HREF="pintos_6.html#SEC102">A.3.2 Semaphores</A>).  A lock's equivalent of &quot;up&quot; is called
+&quot;release&quot;, and the &quot;down&quot; operation is called &quot;acquire&quot;.
+</P>
+<P>
+
+Compared to a semaphore, a lock has one added restriction: only the
+thread that acquires a lock, called the lock's &quot;owner&quot;, is allowed to
+release it.  If this restriction is a problem, it's a good sign that a
+semaphore should be used, instead of a lock.
+</P>
+<P>
+
+Locks in Pintos are not &quot;recursive,&quot; that is, it is an error for the
+thread currently holding a lock to try to acquire that lock.
+</P>
+<P>
+
+Lock types and functions are declared in <Q><TT>threads/synch.h</TT></Q>.
+</P>
+<P>
+
+<A NAME="IDX69"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>struct lock</B>
+<DD>Represents a lock.
+</DL>
+<P>
+
+<A NAME="IDX70"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>lock_init</B> (struct lock *<VAR>lock</VAR>)
+<DD>Initializes <VAR>lock</VAR> as a new lock.
+The lock is not initially owned by any thread.
+</DL>
+<P>
+
+<A NAME="IDX71"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>lock_acquire</B> (struct lock *<VAR>lock</VAR>)
+<DD>Acquires <VAR>lock</VAR> for the current thread, first waiting for
+any current owner to release it if necessary.
+</DL>
+<P>
+
+<A NAME="IDX72"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>lock_try_acquire</B> (struct lock *<VAR>lock</VAR>)
+<DD>Tries to acquire <VAR>lock</VAR> for use by the current thread, without
+waiting.  Returns true if successful, false if the lock is already
+owned.  Calling this function in a tight loop is a bad idea because it
+wastes CPU time, so use <CODE>lock_acquire()</CODE> instead.
+</DL>
+<P>
+
+<A NAME="IDX73"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>lock_release</B> (struct lock *<VAR>lock</VAR>)
+<DD>Releases <VAR>lock</VAR>, which the current thread must own.
+</DL>
+<P>
+
+<A NAME="IDX74"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>lock_held_by_current_thread</B> (const struct lock *<VAR>lock</VAR>)
+<DD>Returns true if the running thread owns <VAR>lock</VAR>,
+false otherwise.
+There is no function to test whether an arbitrary thread owns a lock,
+because the answer could change before the caller could act on it.
+</DL>
+<P>
+
+<A NAME="Monitors"></A>
+<HR SIZE="6">
+<A NAME="SEC104"></A>
+<H3> A.3.4 Monitors </H3>
+<!--docid::SEC104::-->
+<P>
+
+A <EM>monitor</EM> is a higher-level form of synchronization than a
+semaphore or a lock.  A monitor consists of data being synchronized,
+plus a lock, called the <EM>monitor lock</EM>, and one or more
+<EM>condition variables</EM>.  Before it accesses the protected data, a
+thread first acquires the monitor lock.  It is then said to be &quot;in the
+monitor&quot;.  While in the monitor, the thread has control over all the
+protected data, which it may freely examine or modify.  When access to
+the protected data is complete, it releases the monitor lock.
+</P>
+<P>
+
+Condition variables allow code in the monitor to wait for a condition to
+become true.  Each condition variable is associated with an abstract
+condition, e.g. &quot;some data has arrived for processing&quot; or &quot;over 10
+seconds has passed since the user's last keystroke&quot;.  When code in the
+monitor needs to wait for a condition to become true, it &quot;waits&quot; on
+the associated condition variable, which releases the lock and waits for
+the condition to be signaled.  If, on the other hand, it has caused one
+of these conditions to become true, it &quot;signals&quot; the condition to wake
+up one waiter, or &quot;broadcasts&quot; the condition to wake all of them.
+</P>
+<P>
+
+The theoretical framework for monitors was laid out by C. A. R.
+Hoare ([ <A HREF="pintos_13.html#Hoare">Hoare</A>]).  Their practical usage was later elaborated in a
+paper on the Mesa operating system ([ <A HREF="pintos_13.html#Lampson">Lampson</A>]).
+</P>
+<P>
+
+Condition variable types and functions are declared in
+<Q><TT>threads/synch.h</TT></Q>.
+</P>
+<P>
+
+<A NAME="IDX75"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>struct condition</B>
+<DD>Represents a condition variable.
+</DL>
+<P>
+
+<A NAME="IDX76"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>cond_init</B> (struct condition *<VAR>cond</VAR>)
+<DD>Initializes <VAR>cond</VAR> as a new condition variable.
+</DL>
+<P>
+
+<A NAME="IDX77"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>cond_wait</B> (struct condition *<VAR>cond</VAR>, struct lock *<VAR>lock</VAR>)
+<DD>Atomically releases <VAR>lock</VAR> (the monitor lock) and waits for
+<VAR>cond</VAR> to be signaled by some other piece of code.  After
+<VAR>cond</VAR> is signaled, reacquires <VAR>lock</VAR> before returning.
+<VAR>lock</VAR> must be held before calling this function.
+<P>
+
+Sending a signal and waking up from a wait are not an atomic operation.
+Thus, typically <CODE>cond_wait()</CODE>'s caller must recheck the condition
+after the wait completes and, if necessary, wait again.  See the next
+section for an example.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX78"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>cond_signal</B> (struct condition *<VAR>cond</VAR>, struct lock *<VAR>lock</VAR>)
+<DD>If any threads are waiting on <VAR>cond</VAR> (protected by monitor lock
+<VAR>lock</VAR>), then this function wakes up one of them.  If no threads are
+waiting, returns without performing any action.
+<VAR>lock</VAR> must be held before calling this function.
+</DL>
+<P>
+
+<A NAME="IDX79"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>cond_broadcast</B> (struct condition *<VAR>cond</VAR>, struct lock *<VAR>lock</VAR>)
+<DD>Wakes up all threads, if any, waiting on <VAR>cond</VAR> (protected by
+monitor lock <VAR>lock</VAR>).  <VAR>lock</VAR> must be held before calling this
+function.
+</DL>
+<P>
+
+<HR SIZE="6">
+<A NAME="SEC105"></A>
+<H4> A.3.4.1 Monitor Example </H4>
+<!--docid::SEC105::-->
+<P>
+
+The classical example of a monitor is handling a buffer into which one
+or more
+&quot;producer&quot; threads write characters and out of which one or more
+&quot;consumer&quot; threads read characters.  To implement this we need,
+besides the monitor lock, two condition variables which we will call
+<VAR>not_full</VAR> and <VAR>not_empty</VAR>:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>char buf[BUF_SIZE];     /* Buffer. */
+size_t n = 0;           /* 0 &lt;= n &lt;= <VAR>BUF_SIZE</VAR>: # of characters in buffer. */
+size_t head = 0;        /* <VAR>buf</VAR> index of next char to write (mod <VAR>BUF_SIZE</VAR>). */
+size_t tail = 0;        /* <VAR>buf</VAR> index of next char to read (mod <VAR>BUF_SIZE</VAR>). */
+struct lock lock;       /* Monitor lock. */
+struct condition not_empty; /* Signaled when the buffer is not empty. */
+struct condition not_full; /* Signaled when the buffer is not full. */
+
+<small>...</small>initialize the locks and condition variables<small>...</small>
+
+void put (char ch) {
+  lock_acquire (&amp;lock);
+  while (n == BUF_SIZE)            /* Can't add to <VAR>buf</VAR> as long as it's full. */
+    cond_wait (&amp;not_full, &amp;lock);
+  buf[head++ % BUF_SIZE] = ch;     /* Add <VAR>ch</VAR> to <VAR>buf</VAR>. */
+  n++;
+  cond_signal (&amp;not_empty, &amp;lock); /* <VAR>buf</VAR> can't be empty anymore. */
+  lock_release (&amp;lock);
+}
+
+char get (void) {
+  char ch;
+  lock_acquire (&amp;lock);
+  while (n == 0)                  /* Can't read <VAR>buf</VAR> as long as it's empty. */
+    cond_wait (&amp;not_empty, &amp;lock);
+  ch = buf[tail++ % BUF_SIZE];    /* Get <VAR>ch</VAR> from <VAR>buf</VAR>. */
+  n--;
+  cond_signal (&amp;not_full, &amp;lock); /* <VAR>buf</VAR> can't be full anymore. */
+  lock_release (&amp;lock);
+}
+</pre></td></tr></table><P>
+
+Note that <CODE>BUF_SIZE</CODE> must divide evenly into <CODE>SIZE_MAX + 1</CODE>
+for the above code to be completely correct.  Otherwise, it will fail
+the first time <CODE>head</CODE> wraps around to 0.  In practice,
+<CODE>BUF_SIZE</CODE> would ordinarily be a power of 2.
+</P>
+<P>
+
+<A NAME="Optimization Barriers"></A>
+<HR SIZE="6">
+<A NAME="SEC106"></A>
+<H3> A.3.5 Optimization Barriers </H3>
+<!--docid::SEC106::-->
+<P>
+
+An <EM>optimization barrier</EM> is a special statement that prevents the
+compiler from making assumptions about the state of memory across the
+barrier.  The compiler will not reorder reads or writes of variables
+across the barrier or assume that a variable's value is unmodified
+across the barrier, except for local variables whose address is never
+taken.  In Pintos, <Q><TT>threads/synch.h</TT></Q> defines the <CODE>barrier()</CODE>
+macro as an optimization barrier.
+</P>
+<P>
+
+One reason to use an optimization barrier is when data can change
+asynchronously, without the compiler's knowledge, e.g. by another
+thread or an interrupt handler.  The <CODE>too_many_loops()</CODE> function in
+<Q><TT>devices/timer.c</TT></Q> is an example.  This function starts out by
+busy-waiting in a loop until a timer tick occurs:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>/* Wait for a timer tick. */
+int64_t start = ticks;
+while (ticks == start)
+  barrier ();
+</pre></td></tr></table><P>
+
+Without an optimization barrier in the loop, the compiler could
+conclude that the loop would never terminate, because <CODE>start</CODE> and
+<CODE>ticks</CODE> start out equal and the loop itself never changes them.
+It could then &quot;optimize&quot; the function into an infinite loop, which
+would definitely be undesirable.
+</P>
+<P>
+
+Optimization barriers can be used to avoid other compiler
+optimizations.  The <CODE>busy_wait()</CODE> function, also in
+<Q><TT>devices/timer.c</TT></Q>, is an example.  It contains this loop:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>while (loops-- &gt; 0)
+  barrier ();
+</pre></td></tr></table><P>
+
+The goal of this loop is to busy-wait by counting <CODE>loops</CODE> down
+from its original value to 0.  Without the barrier, the compiler could
+delete the loop entirely, because it produces no useful output and has
+no side effects.  The barrier forces the compiler to pretend that the
+loop body has an important effect.
+</P>
+<P>
+
+Finally, optimization barriers can be used to force the ordering of
+memory reads or writes.  For example, suppose we add a &quot;feature&quot;
+that, whenever a timer interrupt occurs, the character in global
+variable <CODE>timer_put_char</CODE> is printed on the console, but only if
+global Boolean variable <CODE>timer_do_put</CODE> is true.  The best way to
+set up <Q><SAMP>x</SAMP></Q> to be printed is then to use an optimization barrier,
+like this:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>timer_put_char = 'x';
+barrier ();
+timer_do_put = true;
+</pre></td></tr></table><P>
+
+Without the barrier, the code is buggy because the compiler is free to
+reorder operations when it doesn't see a reason to keep them in the
+same order.  In this case, the compiler doesn't know that the order of
+assignments is important, so its optimizer is permitted to exchange
+their order.  There's no telling whether it will actually do this, and
+it is possible that passing the compiler different optimization flags
+or using a different version of the compiler will produce different
+behavior.
+</P>
+<P>
+
+Another solution is to disable interrupts around the assignments.
+This does not prevent reordering, but it prevents the interrupt
+handler from intervening between the assignments.  It also has the
+extra runtime cost of disabling and re-enabling interrupts:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>enum intr_level old_level = intr_disable ();
+timer_put_char = 'x';
+timer_do_put = true;
+intr_set_level (old_level);
+</pre></td></tr></table><P>
+
+A second solution is to mark the declarations of
+<CODE>timer_put_char</CODE> and <CODE>timer_do_put</CODE> as <Q><SAMP>volatile</SAMP></Q>.  This
+keyword tells the compiler that the variables are externally observable
+and restricts its latitude for optimization.  However, the semantics of
+<Q><SAMP>volatile</SAMP></Q> are not well-defined, so it is not a good general
+solution.  The base Pintos code does not use <Q><SAMP>volatile</SAMP></Q> at all.
+</P>
+<P>
+
+The following is <EM>not</EM> a solution, because locks neither prevent
+interrupts nor prevent the compiler from reordering the code within the
+region where the lock is held:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>lock_acquire (&amp;timer_lock);     /* INCORRECT CODE */
+timer_put_char = 'x';
+timer_do_put = true;
+lock_release (&amp;timer_lock);
+</pre></td></tr></table><P>
+
+The compiler treats invocation of any function defined externally,
+that is, in another source file, as a limited form of optimization
+barrier.  Specifically, the compiler assumes that any externally
+defined function may access any statically or dynamically allocated
+data and any local variable whose address is taken.  This often means
+that explicit barriers can be omitted.  It is one reason that Pintos
+contains few explicit barriers.
+</P>
+<P>
+
+A function defined in the same source file, or in a header included by
+the source file, cannot be relied upon as a optimization barrier.
+This applies even to invocation of a function before its
+definition, because the compiler may read and parse the entire source
+file before performing optimization.
+</P>
+<P>
+
+<A NAME="Interrupt Handling"></A>
+<HR SIZE="6">
+<A NAME="SEC107"></A>
+<H2> A.4 Interrupt Handling </H2>
+<!--docid::SEC107::-->
+<P>
+
+An <EM>interrupt</EM> notifies the CPU of some event.  Much of the work
+of an operating system relates to interrupts in one way or another.
+For our purposes, we classify interrupts into two broad categories:
+</P>
+<P>
+
+<UL>
+<LI>
+<EM>Internal interrupts</EM>, that is, interrupts caused directly by CPU
+instructions.  System calls, attempts at invalid memory access
+(<EM>page faults</EM>), and attempts to divide by zero are some activities
+that cause internal interrupts.  Because they are caused by CPU
+instructions, internal interrupts are <EM>synchronous</EM> or synchronized
+with CPU instructions.  <CODE>intr_disable()</CODE> does not disable internal
+interrupts.
+<P>
+
+</P>
+<LI>
+<EM>External interrupts</EM>, that is, interrupts originating outside the
+CPU.  These interrupts come from hardware devices such as the system
+timer, keyboard, serial ports, and disks.  External interrupts are
+<EM>asynchronous</EM>, meaning that their delivery is not
+synchronized with instruction execution.  Handling of external interrupts
+can be postponed with <CODE>intr_disable()</CODE> and related functions
+(see section <A HREF="pintos_6.html#SEC101">A.3.1 Disabling Interrupts</A>).
+</UL>
+<P>
+
+The CPU treats both classes of interrupts largely the same way,
+so Pintos has common infrastructure to handle both classes.
+The following section describes this
+common infrastructure.  The sections after that give the specifics of
+external and internal interrupts.
+</P>
+<P>
+
+If you haven't already read chapter 3, &quot;Basic Execution Environment,&quot;
+in [ <A HREF="pintos_13.html#IA32-v1">IA32-v1</A>], it is recommended that you do so now.  You might
+also want to skim chapter 5, &quot;Interrupt and Exception Handling,&quot; in
+[ <A HREF="pintos_13.html#IA32-v3a">IA32-v3a</A>].
+</P>
+<P>
+
+<A NAME="Interrupt Infrastructure"></A>
+<HR SIZE="6">
+<A NAME="SEC108"></A>
+<H3> A.4.1 Interrupt Infrastructure </H3>
+<!--docid::SEC108::-->
+<P>
+
+When an interrupt occurs, the CPU saves
+its most essential state on a stack and jumps to an interrupt
+handler routine.  The 80<VAR>x</VAR>86 architecture supports 256
+interrupts, numbered 0 through 255, each with an independent
+handler defined in an array called the <EM>interrupt
+descriptor table</EM> or IDT.
+</P>
+<P>
+
+In Pintos, <CODE>intr_init()</CODE> in <Q><TT>threads/interrupt.c</TT></Q> sets up the
+IDT so that each entry points to a unique entry point in
+<Q><TT>threads/intr-stubs.S</TT></Q> named <CODE>intr<VAR>NN</VAR>_stub()</CODE>, where
+<VAR>NN</VAR> is the interrupt number in
+hexadecimal.  Because the CPU doesn't give
+us any other way to find out the interrupt number, this entry point
+pushes the interrupt number on the stack.  Then it jumps to
+<CODE>intr_entry()</CODE>, which pushes all the registers that the processor
+didn't already push for us, and then calls <CODE>intr_handler()</CODE>, which
+brings us back into C in <Q><TT>threads/interrupt.c</TT></Q>.
+</P>
+<P>
+
+The main job of <CODE>intr_handler()</CODE> is to call the function
+registered for handling the particular interrupt.  (If no
+function is registered, it dumps some information to the console and
+panics.)  It also does some extra processing for external
+interrupts (see section <A HREF="pintos_6.html#SEC110">A.4.3 External Interrupt Handling</A>).
+</P>
+<P>
+
+When <CODE>intr_handler()</CODE> returns, the assembly code in
+<Q><TT>threads/intr-stubs.S</TT></Q> restores all the CPU registers saved
+earlier and directs the CPU to return from the interrupt.
+</P>
+<P>
+
+The following types and functions are common to all
+interrupts.
+</P>
+<P>
+
+<A NAME="IDX80"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>void intr_handler_func (struct intr_frame *<VAR>frame</VAR>)</B>
+<DD>This is how an interrupt handler function must be declared.  Its <VAR>frame</VAR>
+argument (see below) allows it to determine the cause of the interrupt
+and the state of the thread that was interrupted.
+</DL>
+<P>
+
+<A NAME="IDX81"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>struct intr_frame</B>
+<DD>The stack frame of an interrupt handler, as saved by the CPU, the interrupt
+stubs, and <CODE>intr_entry()</CODE>.  Its most interesting members are described
+below.
+</DL>
+<P>
+
+<A NAME="IDX82"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>edi</B>
+<DD><A NAME="IDX83"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>esi</B>
+<DD><A NAME="IDX84"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>ebp</B>
+<DD><A NAME="IDX85"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>esp_dummy</B>
+<DD><A NAME="IDX86"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>ebx</B>
+<DD><A NAME="IDX87"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>edx</B>
+<DD><A NAME="IDX88"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>ecx</B>
+<DD><A NAME="IDX89"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>eax</B>
+<DD><A NAME="IDX90"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint16_t <B>es</B>
+<DD><A NAME="IDX91"></A>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint16_t <B>ds</B>
+<DD>Register values in the interrupted thread, pushed by <CODE>intr_entry()</CODE>.
+The <CODE>esp_dummy</CODE> value isn't actually used (refer to the
+description of <CODE>PUSHA</CODE> in [ <A HREF="pintos_13.html#IA32-v2b">IA32-v2b</A>] for details).
+</DL>
+<P>
+
+<A NAME="IDX92"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>vec_no</B>
+<DD>The interrupt vector number, ranging from 0 to 255.
+</DL>
+<P>
+
+<A NAME="IDX93"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> uint32_t <B>error_code</B>
+<DD>The &quot;error code&quot; pushed on the stack by the CPU for some internal
+interrupts.
+</DL>
+<P>
+
+<A NAME="IDX94"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> void <B>(*eip)</B> (void)
+<DD>The address of the next instruction to be executed by the interrupted
+thread.
+</DL>
+<P>
+
+<A NAME="IDX95"></A>
+</P>
+<DL>
+<DT><U>Member of <CODE>struct intr_frame</CODE>:</U> void *<B>esp</B>
+<DD>The interrupted thread's stack pointer.
+</DL>
+<P>
+
+<A NAME="IDX96"></A>
+</P>
+<DL>
+<DT><U>Function:</U> const char *<B>intr_name</B> (uint8_t <VAR>vec</VAR>)
+<DD>Returns the name of the interrupt numbered <VAR>vec</VAR>, or
+<CODE>&quot;unknown&quot;</CODE> if the interrupt has no registered name.
+</DL>
+<P>
+
+<A NAME="Internal Interrupt Handling"></A>
+<HR SIZE="6">
+<A NAME="SEC109"></A>
+<H3> A.4.2 Internal Interrupt Handling </H3>
+<!--docid::SEC109::-->
+<P>
+
+Internal interrupts are caused directly by CPU instructions executed by
+the running kernel thread or user process (from project 2 onward).  An
+internal interrupt is therefore said to arise in a &quot;process context.&quot;
+</P>
+<P>
+
+In an internal interrupt's handler, it can make sense to examine the
+<CODE>struct intr_frame</CODE> passed to the interrupt handler, or even to modify
+it.  When the interrupt returns, modifications in <CODE>struct intr_frame</CODE>
+become changes to the calling thread or process's state.  For example,
+the Pintos system call handler returns a value to the user program by
+modifying the saved EAX register (see section <A HREF="pintos_3.html#SEC52">3.5.2 System Call Details</A>).
+</P>
+<P>
+
+There are no special restrictions on what an internal interrupt
+handler can or can't do.  Generally they should run with interrupts
+enabled, just like other code, and so they can be preempted by other
+kernel threads.  Thus, they do need to synchronize with other threads
+on shared data and other resources (see section <A HREF="pintos_6.html#SEC100">A.3 Synchronization</A>).
+</P>
+<P>
+
+Internal interrupt handlers can be invoked recursively.  For example,
+the system call handler might cause a page fault while attempting to
+read user memory.  Deep recursion would risk overflowing the limited
+kernel stack (see section <A HREF="pintos_6.html#SEC97">A.2.1 <CODE>struct thread</CODE></A>), but should be unnecessary.
+</P>
+<P>
+
+<A NAME="IDX97"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>intr_register_int</B> (uint8_t <VAR>vec</VAR>, int <VAR>dpl</VAR>, enum intr_level <VAR>level</VAR>, intr_handler_func *<VAR>handler</VAR>, const char *<VAR>name</VAR>)
+<DD>Registers <VAR>handler</VAR> to be called when internal interrupt numbered
+<VAR>vec</VAR> is triggered.  Names the interrupt <VAR>name</VAR> for debugging
+purposes.
+<P>
+
+If <VAR>level</VAR> is <CODE>INTR_ON</CODE>, external interrupts will be processed
+normally during the interrupt handler's execution, which is normally
+desirable.  Specifying <CODE>INTR_OFF</CODE> will cause the CPU to disable
+external interrupts when it invokes the interrupt handler.  The effect
+is slightly different from calling <CODE>intr_disable()</CODE> inside the
+handler, because that leaves a window of one or more CPU instructions in
+which external interrupts are still enabled.  This is important for the
+page fault handler; refer to the comments in <Q><TT>userprog/exception.c</TT></Q>
+for details.
+</P>
+<P>
+
+<VAR>dpl</VAR> determines how the interrupt can be invoked.  If <VAR>dpl</VAR> is
+0, then the interrupt can be invoked only by kernel threads.  Otherwise
+<VAR>dpl</VAR> should be 3, which allows user processes to invoke the
+interrupt with an explicit INT instruction.  The value of <VAR>dpl</VAR>
+doesn't affect user processes' ability to invoke the interrupt
+indirectly, e.g. an invalid memory reference will cause a page fault
+regardless of <VAR>dpl</VAR>.
+</P>
+</DL>
+<P>
+
+<A NAME="External Interrupt Handling"></A>
+<HR SIZE="6">
+<A NAME="SEC110"></A>
+<H3> A.4.3 External Interrupt Handling </H3>
+<!--docid::SEC110::-->
+<P>
+
+External interrupts are caused by events outside the CPU.
+They are asynchronous, so they can be invoked at any time that
+interrupts have not been disabled.  We say that an external interrupt
+runs in an &quot;interrupt context.&quot;
+</P>
+<P>
+
+In an external interrupt, the <CODE>struct intr_frame</CODE> passed to the
+handler is not very meaningful.  It describes the state of the thread
+or process that was interrupted, but there is no way to predict which
+one that is.  It is possible, although rarely useful, to examine it, but
+modifying it is a recipe for disaster.
+</P>
+<P>
+
+Only one external interrupt may be processed at a time.  Neither
+internal nor external interrupt may nest within an external interrupt
+handler.  Thus, an external interrupt's handler must run with interrupts
+disabled (see section <A HREF="pintos_6.html#SEC101">A.3.1 Disabling Interrupts</A>).
+</P>
+<P>
+
+An external interrupt handler must not sleep or yield, which rules out
+calling <CODE>lock_acquire()</CODE>, <CODE>thread_yield()</CODE>, and many other
+functions.  Sleeping in interrupt context would effectively put the
+interrupted thread to sleep, too, until the interrupt handler was again
+scheduled and returned.  This would be unfair to the unlucky thread, and
+it would deadlock if the handler were waiting for the sleeping thread
+to, e.g., release a lock.
+</P>
+<P>
+
+An external interrupt handler
+effectively monopolizes the machine and delays all other activities.
+Therefore, external interrupt handlers should complete as quickly as
+they can.  Anything that require much CPU time should instead run in a
+kernel thread, possibly one that the interrupt triggers using a
+synchronization primitive.
+</P>
+<P>
+
+External interrupts are controlled by a
+pair of devices outside the CPU called <EM>programmable interrupt
+controllers</EM>, <EM>PICs</EM> for short.  When <CODE>intr_init()</CODE> sets up the
+CPU's IDT, it also initializes the PICs for interrupt handling.  The
+PICs also must be &quot;acknowledged&quot; at the end of processing for each
+external interrupt.  <CODE>intr_handler()</CODE> takes care of that by calling
+<CODE>pic_end_of_interrupt()</CODE>, which properly signals the PICs.
+</P>
+<P>
+
+The following functions relate to external
+interrupts.
+</P>
+<P>
+
+<A NAME="IDX98"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>intr_register_ext</B> (uint8_t <VAR>vec</VAR>, intr_handler_func *<VAR>handler</VAR>, const char *<VAR>name</VAR>)
+<DD>Registers <VAR>handler</VAR> to be called when external interrupt numbered
+<VAR>vec</VAR> is triggered.  Names the interrupt <VAR>name</VAR> for debugging
+purposes.  The handler will run with interrupts disabled.
+</DL>
+<P>
+
+<A NAME="IDX99"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>intr_context</B> (void)
+<DD>Returns true if we are running in an interrupt context, otherwise
+false.  Mainly used in functions that might sleep
+or that otherwise should not be called from interrupt context, in this
+form:
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>ASSERT (!intr_context ());
+</pre></td></tr></table></DL>
+<P>
+
+<A NAME="IDX100"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>intr_yield_on_return</B> (void)
+<DD>When called in an interrupt context, causes <CODE>thread_yield()</CODE> to be
+called just before the interrupt returns.  Used
+in the timer interrupt handler when a thread's time slice expires, to
+cause a new thread to be scheduled.
+</DL>
+<P>
+
+<A NAME="Memory Allocation"></A>
+<HR SIZE="6">
+<A NAME="SEC111"></A>
+<H2> A.5 Memory Allocation </H2>
+<!--docid::SEC111::-->
+<P>
+
+Pintos contains two memory allocators, one that allocates memory in
+units of a page, and one that can allocate blocks of any size.
+</P>
+<P>
+
+<A NAME="Page Allocator"></A>
+<HR SIZE="6">
+<A NAME="SEC112"></A>
+<H3> A.5.1 Page Allocator </H3>
+<!--docid::SEC112::-->
+<P>
+
+The page allocator declared in <Q><TT>threads/palloc.h</TT></Q> allocates
+memory in units of a page.  It is most often used to allocate memory
+one page at a time, but it can also allocate multiple contiguous pages
+at once.
+</P>
+<P>
+
+The page allocator divides the memory it allocates into two pools,
+called the kernel and user pools.  By default, each pool gets half of
+system memory above 1 MB, but the division can be changed with the
+<Q><SAMP>-ul</SAMP></Q> kernel
+command line
+option (see  <A HREF="pintos_4.html#Why PAL_USER?">Why PAL_USER?</A>).  An allocation request draws from one
+pool or the other.  If one pool becomes empty, the other may still
+have free pages.  The user pool should be used for allocating memory
+for user processes and the kernel pool for all other allocations.
+This will only become important starting with project 3.  Until then,
+all allocations should be made from the kernel pool.
+</P>
+<P>
+
+Each pool's usage is tracked with a bitmap, one bit per page in
+the pool.  A request to allocate <VAR>n</VAR> pages scans the bitmap
+for <VAR>n</VAR> consecutive bits set to
+false, indicating that those pages are free, and then sets those bits
+to true to mark them as used.  This is a &quot;first fit&quot; allocation
+strategy (see  <A HREF="pintos_13.html#Wilson">Wilson</A>).
+</P>
+<P>
+
+The page allocator is subject to fragmentation.  That is, it may not
+be possible to allocate <VAR>n</VAR> contiguous pages even though <VAR>n</VAR>
+or more pages are free, because the free pages are separated by used
+pages.  In fact, in pathological cases it may be impossible to
+allocate 2 contiguous pages even though half of the pool's pages are free.
+Single-page requests can't fail due to fragmentation, so
+requests for multiple contiguous pages should be limited as much as
+possible.
+</P>
+<P>
+
+Pages may not be allocated from interrupt context, but they may be
+freed.
+</P>
+<P>
+
+When a page is freed, all of its bytes are cleared to <TT>0xcc</TT>, as
+a debugging aid (see section <A HREF="pintos_10.html#SEC157">E.8 Tips</A>).
+</P>
+<P>
+
+Page allocator types and functions are described below.
+</P>
+<P>
+
+<A NAME="IDX101"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>palloc_get_page</B> (enum palloc_flags <VAR>flags</VAR>)
+<DD><A NAME="IDX102"></A>
+<DT><U>Function:</U> void *<B>palloc_get_multiple</B> (enum palloc_flags <VAR>flags</VAR>, size_t <VAR>page_cnt</VAR>)
+<DD>Obtains and returns one page, or <VAR>page_cnt</VAR> contiguous pages,
+respectively.  Returns a null pointer if the pages cannot be allocated.
+<P>
+
+The <VAR>flags</VAR> argument may be any combination of the following flags:
+</P>
+<P>
+
+<A NAME="IDX103"></A>
+</P>
+<DL>
+<DT><U>Page Allocator Flag:</U> <B><CODE>PAL_ASSERT</CODE></B>
+<DD>If the pages cannot be allocated, panic the kernel.  This is only
+appropriate during kernel initialization.  User processes
+should never be permitted to panic the kernel.
+</DL>
+<P>
+
+<A NAME="IDX104"></A>
+</P>
+<DL>
+<DT><U>Page Allocator Flag:</U> <B><CODE>PAL_ZERO</CODE></B>
+<DD>Zero all the bytes in the allocated pages before returning them.  If not
+set, the contents of newly allocated pages are unpredictable.
+</DL>
+<P>
+
+<A NAME="IDX105"></A>
+</P>
+<DL>
+<DT><U>Page Allocator Flag:</U> <B><CODE>PAL_USER</CODE></B>
+<DD>Obtain the pages from the user pool.  If not set, pages are allocated
+from the kernel pool.
+</DL>
+</DL>
+<P>
+
+<A NAME="IDX106"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>palloc_free_page</B> (void *<VAR>page</VAR>)
+<DD><A NAME="IDX107"></A>
+<DT><U>Function:</U> void <B>palloc_free_multiple</B> (void *<VAR>pages</VAR>, size_t <VAR>page_cnt</VAR>)
+<DD>Frees one page, or <VAR>page_cnt</VAR> contiguous pages, respectively,
+starting at <VAR>pages</VAR>.  All of the pages must have been obtained using
+<CODE>palloc_get_page()</CODE> or <CODE>palloc_get_multiple()</CODE>.
+</DL>
+<P>
+
+<A NAME="Block Allocator"></A>
+<HR SIZE="6">
+<A NAME="SEC113"></A>
+<H3> A.5.2 Block Allocator </H3>
+<!--docid::SEC113::-->
+<P>
+
+The block allocator, declared in <Q><TT>threads/malloc.h</TT></Q>, can allocate
+blocks of any size.  It is layered on top of the page allocator
+described in the previous section.  Blocks returned by the block
+allocator are obtained from the kernel pool.
+</P>
+<P>
+
+The block allocator uses two different strategies for allocating memory.
+The first strategy applies to blocks that are 1 kB or smaller
+(one-fourth of the page size).  These allocations are rounded up to the
+nearest power of 2, or 16 bytes, whichever is larger.  Then they are
+grouped into a page used only for allocations of that size.
+</P>
+<P>
+
+The second strategy applies to blocks larger than 1 kB.
+These allocations (plus a small amount of overhead) are rounded up to
+the nearest page in size, and then the block allocator requests that
+number of contiguous pages from the page allocator.
+</P>
+<P>
+
+In either case, the difference between the allocation requested size
+and the actual block size is wasted.  A real operating system would
+carefully tune its allocator to minimize this waste, but this is
+unimportant in an instructional system like Pintos.
+</P>
+<P>
+
+As long as a page can be obtained from the page allocator, small
+allocations always succeed.  Most small allocations do not require a
+new page from the page allocator at all, because they are satisfied
+using part of a page already allocated.  However, large allocations
+always require calling into the page allocator, and any allocation
+that needs more than one contiguous page can fail due to fragmentation,
+as already discussed in the previous section.  Thus, you should
+minimize the number of large allocations in your code, especially
+those over approximately 4 kB each.
+</P>
+<P>
+
+When a block is freed, all of its bytes are cleared to <TT>0xcc</TT>, as
+a debugging aid (see section <A HREF="pintos_10.html#SEC157">E.8 Tips</A>).
+</P>
+<P>
+
+The block allocator may not be called from interrupt context.
+</P>
+<P>
+
+The block allocator functions are described below.  Their interfaces are
+the same as the standard C library functions of the same names.
+</P>
+<P>
+
+<A NAME="IDX108"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>malloc</B> (size_t <VAR>size</VAR>)
+<DD>Obtains and returns a new block, from the kernel pool, at least
+<VAR>size</VAR> bytes long.  Returns a null pointer if <VAR>size</VAR> is zero or
+if memory is not available.
+</DL>
+<P>
+
+<A NAME="IDX109"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>calloc</B> (size_t <VAR>a</VAR>, size_t <VAR>b</VAR>)
+<DD>Obtains a returns a new block, from the kernel pool, at least
+<CODE><VAR>a</VAR> * <VAR>b</VAR></CODE> bytes long.  The block's contents will be
+cleared to zeros.  Returns a null pointer if <VAR>a</VAR> or <VAR>b</VAR> is zero
+or if insufficient memory is available.
+</DL>
+<P>
+
+<A NAME="IDX110"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>realloc</B> (void *<VAR>block</VAR>, size_t <VAR>new_size</VAR>)
+<DD>Attempts to resize <VAR>block</VAR> to <VAR>new_size</VAR> bytes, possibly moving
+it in the process.  If successful, returns the new block, in which case
+the old block must no longer be accessed.  On failure, returns a null
+pointer, and the old block remains valid.
+<P>
+
+A call with <VAR>block</VAR> null is equivalent to <CODE>malloc()</CODE>.  A call
+with <VAR>new_size</VAR> zero is equivalent to <CODE>free()</CODE>.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX111"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>free</B> (void *<VAR>block</VAR>)
+<DD>Frees <VAR>block</VAR>, which must have been previously returned by
+<CODE>malloc()</CODE>, <CODE>calloc()</CODE>, or <CODE>realloc()</CODE> (and not yet freed).
+</DL>
+<P>
+
+<A NAME="Virtual Addresses"></A>
+<HR SIZE="6">
+<A NAME="SEC114"></A>
+<H2> A.6 Virtual Addresses </H2>
+<!--docid::SEC114::-->
+<P>
+
+A 32-bit virtual address can be divided into a 20-bit <EM>page number</EM>
+and a 12-bit <EM>page offset</EM> (or just <EM>offset</EM>), like this:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>               31               12 11        0
+              +-------------------+-----------+
+              |    Page Number    |   Offset  |
+              +-------------------+-----------+
+                       Virtual Address
+</pre></td></tr></table><P>
+
+Header <Q><TT>threads/vaddr.h</TT></Q> defines these functions and macros for
+working with virtual addresses:
+</P>
+<P>
+
+<A NAME="IDX112"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PGSHIFT</B>
+<DD><A NAME="IDX113"></A>
+<DT><U>Macro:</U> <B>PGBITS</B>
+<DD>The bit index (0) and number of bits (12) of the offset part of a
+virtual address, respectively.
+</DL>
+<P>
+
+<A NAME="IDX114"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PGMASK</B>
+<DD>A bit mask with the bits in the page offset set to 1, the rest set to 0
+(<TT>0xfff</TT>).
+</DL>
+<P>
+
+<A NAME="IDX115"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PGSIZE</B>
+<DD>The page size in bytes (4,096).
+</DL>
+<P>
+
+<A NAME="IDX116"></A>
+</P>
+<DL>
+<DT><U>Function:</U> unsigned <B>pg_ofs</B> (const void *<VAR>va</VAR>)
+<DD>Extracts and returns the page offset in virtual address <VAR>va</VAR>.
+</DL>
+<P>
+
+<A NAME="IDX117"></A>
+</P>
+<DL>
+<DT><U>Function:</U> uintptr_t <B>pg_no</B> (const void *<VAR>va</VAR>)
+<DD>Extracts and returns the page number in virtual address <VAR>va</VAR>.
+</DL>
+<P>
+
+<A NAME="IDX118"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>pg_round_down</B> (const void *<VAR>va</VAR>)
+<DD>Returns the start of the virtual page that <VAR>va</VAR> points within, that
+is, <VAR>va</VAR> with the page offset set to 0.
+</DL>
+<P>
+
+<A NAME="IDX119"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>pg_round_up</B> (const void *<VAR>va</VAR>)
+<DD>Returns <VAR>va</VAR> rounded up to the nearest page boundary.
+</DL>
+<P>
+
+Virtual memory in Pintos is divided into two regions: user virtual
+memory and kernel virtual memory (see section <A HREF="pintos_3.html#SEC37">3.1.4 Virtual Memory Layout</A>).  The
+boundary between them is <CODE>PHYS_BASE</CODE>:
+</P>
+<P>
+
+<A NAME="IDX120"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PHYS_BASE</B>
+<DD>Base address of kernel virtual memory.  It defaults to <TT>0xc0000000</TT> (3
+GB), but it may be changed to any multiple of <TT>0x10000000</TT> from
+<TT>0x80000000</TT> to <TT>0xf0000000</TT>.
+<P>
+
+User virtual memory ranges from virtual address 0 up to
+<CODE>PHYS_BASE</CODE>.  Kernel virtual memory occupies the rest of the
+virtual address space, from <CODE>PHYS_BASE</CODE> up to 4 GB.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX121"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>is_user_vaddr</B> (const void *<VAR>va</VAR>)
+<DD><A NAME="IDX122"></A>
+<DT><U>Function:</U> bool <B>is_kernel_vaddr</B> (const void *<VAR>va</VAR>)
+<DD>Returns true if <VAR>va</VAR> is a user or kernel virtual address,
+respectively, false otherwise.
+</DL>
+<P>
+
+The 80<VAR>x</VAR>86 doesn't provide any way to directly access memory given
+a physical address.  This ability is often necessary in an operating
+system kernel, so Pintos works around it by mapping kernel virtual
+memory one-to-one to physical memory.  That is, virtual address
+<CODE>PHYS_BASE</CODE> accesses physical address 0, virtual address
+<CODE>PHYS_BASE</CODE> + <TT>0x1234</TT> accesses physical address <TT>0x1234</TT>, and
+so on up to the size of the machine's physical memory.  Thus, adding
+<CODE>PHYS_BASE</CODE> to a physical address obtains a kernel virtual address
+that accesses that address; conversely, subtracting <CODE>PHYS_BASE</CODE>
+from a kernel virtual address obtains the corresponding physical
+address.  Header <Q><TT>threads/vaddr.h</TT></Q> provides a pair of functions to
+do these translations:
+</P>
+<P>
+
+<A NAME="IDX123"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>ptov</B> (uintptr_t <VAR>pa</VAR>)
+<DD>Returns the kernel virtual address corresponding to physical address
+<VAR>pa</VAR>, which should be between 0 and the number of bytes of physical
+memory.
+</DL>
+<P>
+
+<A NAME="IDX124"></A>
+</P>
+<DL>
+<DT><U>Function:</U> uintptr_t <B>vtop</B> (void *<VAR>va</VAR>)
+<DD>Returns the physical address corresponding to <VAR>va</VAR>, which must be a
+kernel virtual address.
+</DL>
+<P>
+
+<A NAME="Page Table"></A>
+<HR SIZE="6">
+<A NAME="SEC115"></A>
+<H2> A.7 Page Table </H2>
+<!--docid::SEC115::-->
+<P>
+
+The code in <Q><TT>pagedir.c</TT></Q> is an abstract interface to the 80<VAR>x</VAR>86
+hardware page table, also called a &quot;page directory&quot; by Intel processor
+documentation.  The page table interface uses a <CODE>uint32_t *</CODE> to
+represent a page table because this is convenient for accessing their
+internal structure.
+</P>
+<P>
+
+The sections below describe the page table interface and internals.
+</P>
+<P>
+
+<A NAME="Page Table Creation Destruction Activation"></A>
+<HR SIZE="6">
+<A NAME="SEC116"></A>
+<H3> A.7.1 Creation, Destruction, and Activation </H3>
+<!--docid::SEC116::-->
+<P>
+
+These functions create, destroy, and activate page tables.  The base
+Pintos code already calls these functions where necessary, so it should
+not be necessary to call them yourself.
+</P>
+<P>
+
+<A NAME="IDX125"></A>
+</P>
+<DL>
+<DT><U>Function:</U> uint32_t *<B>pagedir_create</B> (void)
+<DD>Creates and returns a new page table.  The new page table contains
+Pintos's normal kernel virtual page mappings, but no user virtual
+mappings.
+<P>
+
+Returns a null pointer if memory cannot be obtained.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX126"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>pagedir_destroy</B> (uint32_t *<VAR>pd</VAR>)
+<DD>Frees all of the resources held by <VAR>pd</VAR>, including the page table
+itself and the frames that it maps.
+</DL>
+<P>
+
+<A NAME="IDX127"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>pagedir_activate</B> (uint32_t *<VAR>pd</VAR>)
+<DD>Activates <VAR>pd</VAR>.  The active page table is the one used by the CPU to
+translate memory references.
+</DL>
+<P>
+
+<A NAME="Page Tables Inspection and Updates"></A>
+<HR SIZE="6">
+<A NAME="SEC117"></A>
+<H3> A.7.2 Inspection and Updates </H3>
+<!--docid::SEC117::-->
+<P>
+
+These functions examine or update the mappings from pages to frames
+encapsulated by a page table.  They work on both active and inactive
+page tables (that is, those for running and suspended processes),
+flushing the TLB as necessary.
+</P>
+<P>
+
+<A NAME="IDX128"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>pagedir_set_page</B> (uint32_t *<VAR>pd</VAR>, void *<VAR>upage</VAR>, void *<VAR>kpage</VAR>, bool <VAR>writable</VAR>)
+<DD>Adds to <VAR>pd</VAR> a mapping from user page <VAR>upage</VAR> to the frame identified
+by kernel virtual address <VAR>kpage</VAR>.  If <VAR>writable</VAR> is true, the
+page is mapped read/write; otherwise, it is mapped read-only.
+<P>
+
+User page <VAR>upage</VAR> must not already be mapped in <VAR>pd</VAR>.
+</P>
+<P>
+
+Kernel page <VAR>kpage</VAR> should be a kernel virtual address obtained from
+the user pool with <CODE>palloc_get_page(PAL_USER)</CODE> (see  <A HREF="pintos_4.html#Why PAL_USER?">Why PAL_USER?</A>).
+</P>
+<P>
+
+Returns true if successful, false on failure.  Failure will occur if
+additional memory required for the page table cannot be obtained.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX129"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>pagedir_get_page</B> (uint32_t *<VAR>pd</VAR>, const void *<VAR>uaddr</VAR>)
+<DD>Looks up the frame mapped to <VAR>uaddr</VAR> in <VAR>pd</VAR>.  Returns the
+kernel virtual address for that frame, if <VAR>uaddr</VAR> is mapped, or a
+null pointer if it is not.
+</DL>
+<P>
+
+<A NAME="IDX130"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>pagedir_clear_page</B> (uint32_t *<VAR>pd</VAR>, void *<VAR>page</VAR>)
+<DD>Marks <VAR>page</VAR> &quot;not present&quot; in <VAR>pd</VAR>.  Later accesses to
+the page will fault.
+<P>
+
+Other bits in the page table for <VAR>page</VAR> are preserved, permitting
+the accessed and dirty bits (see the next section) to be checked.
+</P>
+<P>
+
+This function has no effect if <VAR>page</VAR> is not mapped.
+</P>
+</DL>
+<P>
+
+<A NAME="Page Table Accessed and Dirty Bits"></A>
+<HR SIZE="6">
+<A NAME="SEC118"></A>
+<H3> A.7.3 Accessed and Dirty Bits </H3>
+<!--docid::SEC118::-->
+<P>
+
+80<VAR>x</VAR>86 hardware provides some assistance for implementing page
+replacement algorithms, through a pair of bits in the page table entry
+(PTE) for each page.  On any read or write to a page, the CPU sets the
+<EM>accessed bit</EM> to 1 in the page's PTE, and on any write, the CPU
+sets the <EM>dirty bit</EM> to 1.  The CPU never resets these bits to 0,
+but the OS may do so.
+</P>
+<P>
+
+Proper interpretation of these bits requires understanding of
+<EM>aliases</EM>, that is, two (or more) pages that refer to the same
+frame.  When an aliased frame is accessed, the accessed and dirty bits
+are updated in only one page table entry (the one for the page used for
+access).  The accessed and dirty bits for the other aliases are not
+updated.
+</P>
+<P>
+
+See section <A HREF="pintos_4.html#SEC64">4.1.5.1 Accessed and Dirty Bits</A>, on applying these bits in implementing
+page replacement algorithms.
+</P>
+<P>
+
+<A NAME="IDX131"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>pagedir_is_dirty</B> (uint32_t *<VAR>pd</VAR>, const void *<VAR>page</VAR>)
+<DD><A NAME="IDX132"></A>
+<DT><U>Function:</U> bool <B>pagedir_is_accessed</B> (uint32_t *<VAR>pd</VAR>, const void *<VAR>page</VAR>)
+<DD>Returns true if page directory <VAR>pd</VAR> contains a page table entry for
+<VAR>page</VAR> that is marked dirty (or accessed).  Otherwise,
+returns false.
+</DL>
+<P>
+
+<A NAME="IDX133"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>pagedir_set_dirty</B> (uint32_t *<VAR>pd</VAR>, const void *<VAR>page</VAR>, bool <VAR>value</VAR>)
+<DD><A NAME="IDX134"></A>
+<DT><U>Function:</U> void <B>pagedir_set_accessed</B> (uint32_t *<VAR>pd</VAR>, const void *<VAR>page</VAR>, bool <VAR>value</VAR>)
+<DD>If page directory <VAR>pd</VAR> has a page table entry for <VAR>page</VAR>, then
+its dirty (or accessed) bit is set to <VAR>value</VAR>.
+</DL>
+<P>
+
+<A NAME="Page Table Details"></A>
+<HR SIZE="6">
+<A NAME="SEC119"></A>
+<H3> A.7.4 Page Table Details </H3>
+<!--docid::SEC119::-->
+<P>
+
+The functions provided with Pintos are sufficient to implement the
+projects.  However, you may still find it worthwhile to understand the
+hardware page table format, so we'll go into a little detail in this
+section.
+</P>
+<P>
+
+<A NAME="Page Table Structure"></A>
+<HR SIZE="6">
+<A NAME="SEC120"></A>
+<H4> A.7.4.1 Structure </H4>
+<!--docid::SEC120::-->
+<P>
+
+The top-level paging data structure is a page called the &quot;page
+directory&quot; (PD) arranged as an array of 1,024 32-bit page directory
+entries (PDEs), each of which represents 4 MB of virtual memory.  Each
+PDE may point to the physical address of another page called a
+&quot;page table&quot; (PT) arranged, similarly, as an array of 1,024
+32-bit page table entries (PTEs), each of which translates a single 4
+kB virtual page to a physical page.
+</P>
+<P>
+
+Translation of a virtual address into a physical address follows
+the three-step process illustrated in the diagram
+below:<A NAME="DOCF6" HREF="pintos_fot.html#FOOT6">(6)</A>
+</P>
+<P>
+
+<OL>
+<LI>
+The most-significant 10 bits of the virtual address (bits 22<small>...</small>31)
+index the page directory.  If the PDE is marked &quot;present,&quot; the
+physical address of a page table is read from the PDE thus obtained.
+If the PDE is marked &quot;not present&quot; then a page fault occurs.
+<P>
+
+</P>
+<LI>
+The next 10 bits of the virtual address (bits 12<small>...</small>21) index
+the page table.  If the PTE is marked &quot;present,&quot; the physical
+address of a data page is read from the PTE thus obtained.  If the PTE
+is marked &quot;not present&quot; then a page fault occurs.
+<P>
+
+</P>
+<LI>
+The least-significant 12 bits of the virtual address (bits 0<small>...</small>11)
+are added to the data page's physical base address, yielding the final
+physical address.
+</OL>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre> 31                  22 21                  12 11                   0
++----------------------+----------------------+----------------------+
+| Page Directory Index |   Page Table Index   |    Page Offset       |
++----------------------+----------------------+----------------------+
+             |                    |                     |
+     _______/             _______/                _____/
+    /                    /                       /
+   /    Page Directory  /      Page Table       /    Data Page
+  /     .____________. /     .____________.    /   .____________.
+  |1,023|____________| |1,023|____________|    |   |____________|
+  |1,022|____________| |1,022|____________|    |   |____________|
+  |1,021|____________| |1,021|____________|    \__\|____________|
+  |1,020|____________| |1,020|____________|       /|____________|
+  |     |            | |     |            |        |            |
+  |     |            | \____\|            |_       |            |
+  |     |      .     |      /|      .     | \      |      .     |
+  \____\|      .     |_      |      .     |  |     |      .     |
+       /|      .     | \     |      .     |  |     |      .     |
+        |      .     |  |    |      .     |  |     |      .     |
+        |            |  |    |            |  |     |            |
+        |____________|  |    |____________|  |     |____________|
+       4|____________|  |   4|____________|  |     |____________|
+       3|____________|  |   3|____________|  |     |____________|
+       2|____________|  |   2|____________|  |     |____________|
+       1|____________|  |   1|____________|  |     |____________|
+       0|____________|  \__\0|____________|  \____\|____________|
+                           /                      /
+</pre></td></tr></table><P>
+
+Pintos provides some macros and functions that are useful for working
+with raw page tables:
+</P>
+<P>
+
+<A NAME="IDX135"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTSHIFT</B>
+<DD><A NAME="IDX136"></A>
+<DT><U>Macro:</U> <B>PTBITS</B>
+<DD>The starting bit index (12) and number of bits (10), respectively, in a
+page table index.
+</DL>
+<P>
+
+<A NAME="IDX137"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTMASK</B>
+<DD>A bit mask with the bits in the page table index set to 1 and the rest
+set to 0 (<TT>0x3ff000</TT>).
+</DL>
+<P>
+
+<A NAME="IDX138"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTSPAN</B>
+<DD>The number of bytes of virtual address space that a single page table
+page covers (4,194,304 bytes, or 4 MB).
+</DL>
+<P>
+
+<A NAME="IDX139"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PDSHIFT</B>
+<DD><A NAME="IDX140"></A>
+<DT><U>Macro:</U> <B>PDBITS</B>
+<DD>The starting bit index (22) and number of bits (10), respectively, in a
+page directory index.
+</DL>
+<P>
+
+<A NAME="IDX141"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PDMASK</B>
+<DD>A bit mask with the bits in the page directory index set to 1 and other
+bits set to 0 (<TT>0xffc00000</TT>).
+</DL>
+<P>
+
+<A NAME="IDX142"></A>
+</P>
+<DL>
+<DT><U>Function:</U> uintptr_t <B>pd_no</B> (const void *<VAR>va</VAR>)
+<DD><A NAME="IDX143"></A>
+<DT><U>Function:</U> uintptr_t <B>pt_no</B> (const void *<VAR>va</VAR>)
+<DD>Returns the page directory index or page table index, respectively, for
+virtual address <VAR>va</VAR>.  These functions are defined in
+<Q><TT>threads/pte.h</TT></Q>.
+</DL>
+<P>
+
+<A NAME="IDX144"></A>
+</P>
+<DL>
+<DT><U>Function:</U> unsigned <B>pg_ofs</B> (const void *<VAR>va</VAR>)
+<DD>Returns the page offset for virtual address <VAR>va</VAR>.  This function is
+defined in <Q><TT>threads/vaddr.h</TT></Q>.
+</DL>
+<P>
+
+<A NAME="Page Table Entry Format"></A>
+<HR SIZE="6">
+<A NAME="SEC121"></A>
+<H4> A.7.4.2 Page Table Entry Format </H4>
+<!--docid::SEC121::-->
+<P>
+
+You do not need to understand the PTE format to do the Pintos
+projects, unless you wish to incorporate the page table into your
+supplemental page table (see section <A HREF="pintos_4.html#SEC62">4.1.4 Managing the Supplemental Page Table</A>).
+</P>
+<P>
+
+The actual format of a page table entry is summarized below.  For
+complete information, refer to section 3.7, &quot;Page Translation Using
+32-Bit Physical Addressing,&quot; in [ <A HREF="pintos_13.html#IA32-v3a">IA32-v3a</A>].
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre> 31                                   12 11 9      6 5     2 1 0
++---------------------------------------+----+----+-+-+---+-+-+-+
+|           Physical Address            | AVL|    |D|A|   |U|W|P|
++---------------------------------------+----+----+-+-+---+-+-+-+
+</pre></td></tr></table><P>
+
+Some more information on each bit is given below.  The names are
+<Q><TT>threads/pte.h</TT></Q> macros that represent the bits' values:
+</P>
+<P>
+
+<A NAME="IDX145"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTE_P</B>
+<DD>Bit 0, the &quot;present&quot; bit.  When this bit is 1, the
+other bits are interpreted as described below.  When this bit is 0, any
+attempt to access the page will page fault.  The remaining bits are then
+not used by the CPU and may be used by the OS for any purpose.
+</DL>
+<P>
+
+<A NAME="IDX146"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTE_W</B>
+<DD>Bit 1, the &quot;read/write&quot; bit.  When it is 1, the page
+is writable.  When it is 0, write attempts will page fault.
+</DL>
+<P>
+
+<A NAME="IDX147"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTE_U</B>
+<DD>Bit 2, the &quot;user/supervisor&quot; bit.  When it is 1, user
+processes may access the page.  When it is 0, only the kernel may access
+the page (user accesses will page fault).
+<P>
+
+Pintos clears this bit in PTEs for kernel virtual memory, to prevent
+user processes from accessing them.
+</P>
+</DL>
+ 
+<A NAME="IDX148"></A>
+<DL>
+<DT><U>Macro:</U> <B>PTE_A</B>
+<DD>Bit 5, the &quot;accessed&quot; bit.  See section <A HREF="pintos_6.html#SEC118">A.7.3 Accessed and Dirty Bits</A>.
+</DL>
+<P>
+
+<A NAME="IDX149"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTE_D</B>
+<DD>Bit 6, the &quot;dirty&quot; bit.  See section <A HREF="pintos_6.html#SEC118">A.7.3 Accessed and Dirty Bits</A>.
+</DL>
+<P>
+
+<A NAME="IDX150"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTE_AVL</B>
+<DD>Bits 9<small>...</small>11, available for operating system use.
+Pintos, as provided, does not use them and sets them to 0.
+</DL>
+<P>
+
+<A NAME="IDX151"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <B>PTE_ADDR</B>
+<DD>Bits 12<small>...</small>31, the top 20 bits of the physical address of a frame.
+The low 12 bits of the frame's address are always 0.
+</DL>
+<P>
+
+Other bits are either reserved or uninteresting in a Pintos context and
+should be set to@tie{}0.
+</P>
+<P>
+
+Header <Q><TT>threads/pte.h</TT></Q> defines three functions for working with
+page table entries:
+</P>
+<P>
+
+<A NAME="IDX152"></A>
+</P>
+<DL>
+<DT><U>Function:</U> uint32_t <B>pte_create_kernel</B> (uint32_t *<VAR>page</VAR>, bool <VAR>writable</VAR>)
+<DD>Returns a page table entry that points to <VAR>page</VAR>, which should be a
+kernel virtual address.  The PTE's present bit will be set.  It will be
+marked for kernel-only access.  If <VAR>writable</VAR> is true, the PTE will
+also be marked read/write; otherwise, it will be read-only.
+</DL>
+<P>
+
+<A NAME="IDX153"></A>
+</P>
+<DL>
+<DT><U>Function:</U> uint32_t <B>pte_create_user</B> (uint32_t *<VAR>page</VAR>, bool <VAR>writable</VAR>)
+<DD>Returns a page table entry that points to <VAR>page</VAR>, which should be
+the kernel virtual address of a frame in the user pool (see  <A HREF="pintos_4.html#Why PAL_USER?">Why PAL_USER?</A>).  The PTE's present bit will be set and it will be marked to
+allow user-mode access.  If <VAR>writable</VAR> is true, the PTE will also be
+marked read/write; otherwise, it will be read-only.
+</DL>
+<P>
+
+<A NAME="IDX154"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void *<B>pte_get_page</B> (uint32_t <VAR>pte</VAR>)
+<DD>Returns the kernel virtual address for the frame that <VAR>pte</VAR> points
+to.  The <VAR>pte</VAR> may be present or not-present; if it is not-present
+then the pointer returned is only meaningful if the address bits in the PTE
+actually represent a physical address.
+</DL>
+<P>
+
+<A NAME="Page Directory Entry Format"></A>
+<HR SIZE="6">
+<A NAME="SEC122"></A>
+<H4> A.7.4.3 Page Directory Entry Format </H4>
+<!--docid::SEC122::-->
+<P>
+
+Page directory entries have the same format as PTEs, except that the
+physical address points to a page table page instead of a frame.  Header
+<Q><TT>threads/pte.h</TT></Q> defines two functions for working with page
+directory entries:
+</P>
+<P>
+
+<A NAME="IDX155"></A>
+</P>
+<DL>
+<DT><U>Function:</U> uint32_t <B>pde_create</B> (uint32_t *<VAR>pt</VAR>)
+<DD>Returns a page directory that points to <VAR>page</VAR>, which should be the
+kernel virtual address of a page table page.  The PDE's present bit will
+be set, it will be marked to allow user-mode access, and it will be
+marked read/write.
+</DL>
+<P>
+
+<A NAME="IDX156"></A>
+</P>
+<DL>
+<DT><U>Function:</U> uint32_t *<B>pde_get_pt</B> (uint32_t <VAR>pde</VAR>)
+<DD>Returns the kernel virtual address for the page table page that
+<VAR>pde</VAR>, which must be marked present, points to.
+</DL>
+<P>
+
+<A NAME="Hash Table"></A>
+<HR SIZE="6">
+<A NAME="SEC123"></A>
+<H2> A.8 Hash Table </H2>
+<!--docid::SEC123::-->
+<P>
+
+Pintos provides a hash table data structure in <Q><TT>lib/kernel/hash.c</TT></Q>.
+To use it you will need to include its header file,
+<Q><TT>lib/kernel/hash.h</TT></Q>, with <CODE>#include &lt;hash.h&gt;</CODE>.
+No code provided with Pintos uses the hash table, which means that you
+are free to use it as is, modify its implementation for your own
+purposes, or ignore it, as you wish.
+</P>
+<P>
+
+Most implementations of the virtual memory project use a hash table to
+translate pages to frames.  You may find other uses for hash tables as
+well.
+</P>
+<P>
+
+<A NAME="Hash Data Types"></A>
+<HR SIZE="6">
+<A NAME="SEC124"></A>
+<H3> A.8.1 Data Types </H3>
+<!--docid::SEC124::-->
+<P>
+
+A hash table is represented by <CODE>struct hash</CODE>.
+</P>
+<P>
+
+<A NAME="IDX157"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>struct hash</B>
+<DD>Represents an entire hash table.  The actual members of <CODE>struct hash</CODE>
+are &quot;opaque.&quot;  That is, code that uses a hash table should not access
+<CODE>struct hash</CODE> members directly, nor should it need to.  Instead, use
+hash table functions and macros.
+</DL>
+<P>
+
+The hash table operates on elements of type <CODE>struct hash_elem</CODE>.
+</P>
+<P>
+
+<A NAME="IDX158"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>struct hash_elem</B>
+<DD>Embed a <CODE>struct hash_elem</CODE> member in the structure you want to include
+in a hash table.  Like <CODE>struct hash</CODE>, <CODE>struct hash_elem</CODE> is opaque.
+All functions for operating on hash table elements actually take and
+return pointers to <CODE>struct hash_elem</CODE>, not pointers to your hash table's
+real element type.
+</DL>
+<P>
+
+You will often need to obtain a <CODE>struct hash_elem</CODE> given a real element
+of the hash table, and vice versa.  Given a real element of the hash
+table, you may use the <Q><SAMP>&amp;</SAMP></Q> operator to obtain a pointer to its
+<CODE>struct hash_elem</CODE>.  Use the <CODE>hash_entry()</CODE> macro to go the other
+direction.
+</P>
+<P>
+
+<A NAME="IDX159"></A>
+</P>
+<DL>
+<DT><U>Macro:</U> <VAR>type</VAR> *<B>hash_entry</B> (struct hash_elem *<VAR>elem</VAR>, <VAR>type</VAR>, <VAR>member</VAR>)
+<DD>Returns a pointer to the structure that <VAR>elem</VAR>, a pointer to a
+<CODE>struct hash_elem</CODE>, is embedded within.  You must provide <VAR>type</VAR>,
+the name of the structure that <VAR>elem</VAR> is inside, and <VAR>member</VAR>,
+the name of the member in <VAR>type</VAR> that <VAR>elem</VAR> points to.
+<P>
+
+For example, suppose <CODE>h</CODE> is a <CODE>struct hash_elem *</CODE> variable
+that points to a <CODE>struct thread</CODE> member (of type <CODE>struct hash_elem</CODE>)
+named <CODE>h_elem</CODE>.  Then, <CODE>hash_entry@tie{</CODE>(h, struct thread, h_elem)}
+yields the address of the <CODE>struct thread</CODE> that <CODE>h</CODE> points within.
+</P>
+</DL>
+<P>
+
+See section <A HREF="pintos_6.html#SEC128">A.8.5 Hash Table Example</A>, for an example.
+</P>
+<P>
+
+Each hash table element must contain a key, that is, data that
+identifies and distinguishes elements, which must be unique
+among elements in the hash table.  (Elements may
+also contain non-key data that need not be unique.)  While an element is
+in a hash table, its key data must not be changed.  Instead, if need be,
+remove the element from the hash table, modify its key, then reinsert
+the element.
+</P>
+<P>
+
+For each hash table, you must write two functions that act on keys: a
+hash function and a comparison function.  These functions must match the
+following prototypes:
+</P>
+<P>
+
+<A NAME="IDX160"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>unsigned hash_hash_func (const struct hash_elem *<VAR>element</VAR>, void *<VAR>aux</VAR>)</B>
+<DD>Returns a hash of <VAR>element</VAR>'s data, as a value anywhere in the range
+of <CODE>unsigned int</CODE>.  The hash of an element should be a
+pseudo-random function of the element's key.  It must not depend on
+non-key data in the element or on any non-constant data other than the
+key.  Pintos provides the following functions as a suitable basis for
+hash functions.
+<P>
+
+<A NAME="IDX161"></A>
+</P>
+<DL>
+<DT><U>Function:</U> unsigned <B>hash_bytes</B> (const void *<VAR>buf</VAR>, size_t *<VAR>size</VAR>)
+<DD>Returns a hash of the <VAR>size</VAR> bytes starting at <VAR>buf</VAR>.  The
+implementation is the general-purpose
+<A HREF="http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash">Fowler-Noll-Vo
+hash</A> for 32-bit words.
+</DL>
+<P>
+
+<A NAME="IDX162"></A>
+</P>
+<DL>
+<DT><U>Function:</U> unsigned <B>hash_string</B> (const char *<VAR>s</VAR>)
+<DD>Returns a hash of null-terminated string <VAR>s</VAR>.
+</DL>
+<P>
+
+<A NAME="IDX163"></A>
+</P>
+<DL>
+<DT><U>Function:</U> unsigned <B>hash_int</B> (int <VAR>i</VAR>)
+<DD>Returns a hash of integer <VAR>i</VAR>.
+</DL>
+<P>
+
+If your key is a single piece of data of an appropriate type, it is
+sensible for your hash function to directly return the output of one of
+these functions.  For multiple pieces of data, you may wish to combine
+the output of more than one call to them using, e.g., the <Q><SAMP>^</SAMP></Q>
+(exclusive or)
+operator.  Finally, you may entirely ignore these functions and write
+your own hash function from scratch, but remember that your goal is to
+build an operating system kernel, not to design a hash function.
+</P>
+<P>
+
+See section <A HREF="pintos_6.html#SEC129">A.8.6 Auxiliary Data</A>, for an explanation of <VAR>aux</VAR>.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX164"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>bool hash_less_func (const struct hash_elem *<VAR>a</VAR>, const struct hash_elem *<VAR>b</VAR>, void *<VAR>aux</VAR>)</B>
+<DD>Compares the keys stored in elements <VAR>a</VAR> and <VAR>b</VAR>.  Returns
+true if <VAR>a</VAR> is less than <VAR>b</VAR>, false if <VAR>a</VAR> is greater than
+or equal to <VAR>b</VAR>.
+<P>
+
+If two elements compare equal, then they must hash to equal values.
+</P>
+<P>
+
+See section <A HREF="pintos_6.html#SEC129">A.8.6 Auxiliary Data</A>, for an explanation of <VAR>aux</VAR>.
+</P>
+</DL>
+<P>
+
+See section <A HREF="pintos_6.html#SEC128">A.8.5 Hash Table Example</A>, for hash and comparison function examples.
+</P>
+<P>
+
+A few functions accept a pointer to a third kind of
+function as an argument:
+</P>
+<P>
+
+<A NAME="IDX165"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>void hash_action_func (struct hash_elem *<VAR>element</VAR>, void *<VAR>aux</VAR>)</B>
+<DD>Performs some kind of action, chosen by the caller, on <VAR>element</VAR>.
+<P>
+
+See section <A HREF="pintos_6.html#SEC129">A.8.6 Auxiliary Data</A>, for an explanation of <VAR>aux</VAR>.
+</P>
+</DL>
+<P>
+
+<A NAME="Basic Hash Functions"></A>
+<HR SIZE="6">
+<A NAME="SEC125"></A>
+<H3> A.8.2 Basic Functions </H3>
+<!--docid::SEC125::-->
+<P>
+
+These functions create, destroy, and inspect hash tables.
+</P>
+<P>
+
+<A NAME="IDX166"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>hash_init</B> (struct hash *<VAR>hash</VAR>, hash_hash_func *<VAR>hash_func</VAR>, hash_less_func *<VAR>less_func</VAR>, void *<VAR>aux</VAR>)
+<DD>Initializes <VAR>hash</VAR> as a hash table with <VAR>hash_func</VAR> as hash
+function, <VAR>less_func</VAR> as comparison function, and <VAR>aux</VAR> as
+auxiliary data.
+Returns true if successful, false on failure.  <CODE>hash_init()</CODE> calls
+<CODE>malloc()</CODE> and fails if memory cannot be allocated.
+<P>
+
+See section <A HREF="pintos_6.html#SEC129">A.8.6 Auxiliary Data</A>, for an explanation of <VAR>aux</VAR>, which is
+most often a null pointer.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX167"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>hash_clear</B> (struct hash *<VAR>hash</VAR>, hash_action_func *<VAR>action</VAR>)
+<DD>Removes all the elements from <VAR>hash</VAR>, which must have been
+previously initialized with <CODE>hash_init()</CODE>.
+<P>
+
+If <VAR>action</VAR> is non-null, then it is called once for each element in
+the hash table, which gives the caller an opportunity to deallocate any
+memory or other resources used by the element.  For example, if the hash
+table elements are dynamically allocated using <CODE>malloc()</CODE>, then
+<VAR>action</VAR> could <CODE>free()</CODE> the element.  This is safe because
+<CODE>hash_clear()</CODE> will not access the memory in a given hash element
+after calling <VAR>action</VAR> on it.  However, <VAR>action</VAR> must not call
+any function that may modify the hash table, such as <CODE>hash_insert()</CODE>
+or <CODE>hash_delete()</CODE>.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX168"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>hash_destroy</B> (struct hash *<VAR>hash</VAR>, hash_action_func *<VAR>action</VAR>)
+<DD>If <VAR>action</VAR> is non-null, calls it for each element in the hash, with
+the same semantics as a call to <CODE>hash_clear()</CODE>.  Then, frees the
+memory held by <VAR>hash</VAR>.  Afterward, <VAR>hash</VAR> must not be passed to
+any hash table function, absent an intervening call to <CODE>hash_init()</CODE>.
+</DL>
+<P>
+
+<A NAME="IDX169"></A>
+</P>
+<DL>
+<DT><U>Function:</U> size_t <B>hash_size</B> (struct hash *<VAR>hash</VAR>)
+<DD>Returns the number of elements currently stored in <VAR>hash</VAR>.
+</DL>
+<P>
+
+<A NAME="IDX170"></A>
+</P>
+<DL>
+<DT><U>Function:</U> bool <B>hash_empty</B> (struct hash *<VAR>hash</VAR>)
+<DD>Returns true if <VAR>hash</VAR> currently contains no elements,
+false if <VAR>hash</VAR> contains at least one element.
+</DL>
+<P>
+
+<A NAME="Hash Search Functions"></A>
+<HR SIZE="6">
+<A NAME="SEC126"></A>
+<H3> A.8.3 Search Functions </H3>
+<!--docid::SEC126::-->
+<P>
+
+Each of these functions searches a hash table for an element that
+compares equal to one provided.  Based on the success of the search,
+they perform some action, such as inserting a new element into the hash
+table, or simply return the result of the search.
+</P>
+<P>
+
+<A NAME="IDX171"></A>
+</P>
+<DL>
+<DT><U>Function:</U> struct hash_elem *<B>hash_insert</B> (struct hash *<VAR>hash</VAR>, struct hash_elem *<VAR>element</VAR>)
+<DD>Searches <VAR>hash</VAR> for an element equal to <VAR>element</VAR>.  If none is
+found, inserts <VAR>element</VAR> into <VAR>hash</VAR> and returns a null pointer.
+If the table already contains an element equal to <VAR>element</VAR>, it is
+returned without modifying <VAR>hash</VAR>.
+</DL>
+<P>
+
+<A NAME="IDX172"></A>
+</P>
+<DL>
+<DT><U>Function:</U> struct hash_elem *<B>hash_replace</B> (struct hash *<VAR>hash</VAR>, struct hash_elem *<VAR>element</VAR>)
+<DD>Inserts <VAR>element</VAR> into <VAR>hash</VAR>.  Any element equal to
+<VAR>element</VAR> already in <VAR>hash</VAR> is removed.  Returns the element
+removed, or a null pointer if <VAR>hash</VAR> did not contain an element
+equal to <VAR>element</VAR>.
+<P>
+
+The caller is responsible for deallocating any resources associated with
+the returned element, as appropriate.  For example, if the hash table
+elements are dynamically allocated using <CODE>malloc()</CODE>, then the caller
+must <CODE>free()</CODE> the element after it is no longer needed.
+</P>
+</DL>
+<P>
+
+The element passed to the following functions is only used for hashing
+and comparison purposes.  It is never actually inserted into the hash
+table.  Thus, only key data in the element needs to be initialized, and
+other data in the element will not be used.  It often makes sense to
+declare an instance of the element type as a local variable, initialize
+the key data, and then pass the address of its <CODE>struct hash_elem</CODE> to
+<CODE>hash_find()</CODE> or <CODE>hash_delete()</CODE>.  See section <A HREF="pintos_6.html#SEC128">A.8.5 Hash Table Example</A>, for
+an example.  (Large structures should not be
+allocated as local variables.  See section <A HREF="pintos_6.html#SEC97">A.2.1 <CODE>struct thread</CODE></A>, for more
+information.)
+</P>
+<P>
+
+<A NAME="IDX173"></A>
+</P>
+<DL>
+<DT><U>Function:</U> struct hash_elem *<B>hash_find</B> (struct hash *<VAR>hash</VAR>, struct hash_elem *<VAR>element</VAR>)
+<DD>Searches <VAR>hash</VAR> for an element equal to <VAR>element</VAR>.  Returns the
+element found, if any, or a null pointer otherwise.
+</DL>
+<P>
+
+<A NAME="IDX174"></A>
+</P>
+<DL>
+<DT><U>Function:</U> struct hash_elem *<B>hash_delete</B> (struct hash *<VAR>hash</VAR>, struct hash_elem *<VAR>element</VAR>)
+<DD>Searches <VAR>hash</VAR> for an element equal to <VAR>element</VAR>.  If one is
+found, it is removed from <VAR>hash</VAR> and returned.  Otherwise, a null
+pointer is returned and <VAR>hash</VAR> is unchanged.
+<P>
+
+The caller is responsible for deallocating any resources associated with
+the returned element, as appropriate.  For example, if the hash table
+elements are dynamically allocated using <CODE>malloc()</CODE>, then the caller
+must <CODE>free()</CODE> the element after it is no longer needed.
+</P>
+</DL>
+<P>
+
+<A NAME="Hash Iteration Functions"></A>
+<HR SIZE="6">
+<A NAME="SEC127"></A>
+<H3> A.8.4 Iteration Functions </H3>
+<!--docid::SEC127::-->
+<P>
+
+These functions allow iterating through the elements in a hash table.
+Two interfaces are supplied.  The first requires writing and supplying a
+<VAR>hash_action_func</VAR> to act on each element (see section <A HREF="pintos_6.html#SEC124">A.8.1 Data Types</A>).
+</P>
+<P>
+
+<A NAME="IDX175"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>hash_apply</B> (struct hash *<VAR>hash</VAR>, hash_action_func *<VAR>action</VAR>)
+<DD>Calls <VAR>action</VAR> once for each element in <VAR>hash</VAR>, in arbitrary
+order.  <VAR>action</VAR> must not call any function that may modify the hash
+table, such as <CODE>hash_insert()</CODE> or <CODE>hash_delete()</CODE>.  <VAR>action</VAR>
+must not modify key data in elements, although it may modify any other
+data.
+</DL>
+<P>
+
+The second interface is based on an &quot;iterator&quot; data type.
+Idiomatically, iterators are used as follows:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>struct hash_iterator i;
+
+hash_first (&amp;i, h);
+while (hash_next (&amp;i))
+  {
+    struct foo *f = hash_entry (hash_cur (&amp;i), struct foo, elem);
+    <small>...</small>do something with <I>f</I><small>...</small>
+  }
+</pre></td></tr></table><P>
+
+<A NAME="IDX176"></A>
+</P>
+<DL>
+<DT><U>Type:</U> <B>struct hash_iterator</B>
+<DD>Represents a position within a hash table.  Calling any function that
+may modify a hash table, such as <CODE>hash_insert()</CODE> or
+<CODE>hash_delete()</CODE>, invalidates all iterators within that hash table.
+<P>
+
+Like <CODE>struct hash</CODE> and <CODE>struct hash_elem</CODE>, <CODE>struct hash_elem</CODE> is opaque.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX177"></A>
+</P>
+<DL>
+<DT><U>Function:</U> void <B>hash_first</B> (struct hash_iterator *<VAR>iterator</VAR>, struct hash *<VAR>hash</VAR>)
+<DD>Initializes <VAR>iterator</VAR> to just before the first element in
+<VAR>hash</VAR>.
+</DL>
+<P>
+
+<A NAME="IDX178"></A>
+</P>
+<DL>
+<DT><U>Function:</U> struct hash_elem *<B>hash_next</B> (struct hash_iterator *<VAR>iterator</VAR>)
+<DD>Advances <VAR>iterator</VAR> to the next element in <VAR>hash</VAR>, and returns
+that element.  Returns a null pointer if no elements remain.  After
+<CODE>hash_next()</CODE> returns null for <VAR>iterator</VAR>, calling it again
+yields undefined behavior.
+</DL>
+<P>
+
+<A NAME="IDX179"></A>
+</P>
+<DL>
+<DT><U>Function:</U> struct hash_elem *<B>hash_cur</B> (struct hash_iterator *<VAR>iterator</VAR>)
+<DD>Returns the value most recently returned by <CODE>hash_next()</CODE> for
+<VAR>iterator</VAR>.  Yields undefined behavior after <CODE>hash_first()</CODE> has
+been called on <VAR>iterator</VAR> but before <CODE>hash_next()</CODE> has been
+called for the first time.
+</DL>
+<P>
+
+<A NAME="Hash Table Example"></A>
+<HR SIZE="6">
+<A NAME="SEC128"></A>
+<H3> A.8.5 Hash Table Example </H3>
+<!--docid::SEC128::-->
+<P>
+
+Suppose you have a structure, called <CODE>struct page</CODE>, that you
+want to put into a hash table.  First, define <CODE>struct page</CODE> to include a
+<CODE>struct hash_elem</CODE> member:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>struct page
+  {
+    struct hash_elem hash_elem; /* Hash table element. */
+    void *addr;                 /* Virtual address. */
+    /* <small>...</small>other members<small>...</small> */
+  };
+</pre></td></tr></table><P>
+
+We write a hash function and a comparison function using <VAR>addr</VAR> as
+the key.  A pointer can be hashed based on its bytes, and the <Q><SAMP>&lt;</SAMP></Q>
+operator works fine for comparing pointers:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>/* Returns a hash value for page <VAR>p</VAR>. */
+unsigned
+page_hash (const struct hash_elem *p_, void *aux UNUSED)
+{
+  const struct page *p = hash_entry (p_, struct page, hash_elem);
+  return hash_bytes (&amp;p-&gt;addr, sizeof p-&gt;addr);
+}
+
+/* Returns true if page <VAR>a</VAR> precedes page <VAR>b</VAR>. */
+bool
+page_less (const struct hash_elem *a_, const struct hash_elem *b_,
+           void *aux UNUSED)
+{
+  const struct page *a = hash_entry (a_, struct page, hash_elem);
+  const struct page *b = hash_entry (b_, struct page, hash_elem);
+
+  return a-&gt;addr &lt; b-&gt;addr;
+}
+</pre></td></tr></table><P>
+
+(The use of <CODE>UNUSED</CODE> in these functions' prototypes suppresses a
+warning that <VAR>aux</VAR> is unused.  See section <A HREF="pintos_10.html#SEC148">E.3 Function and Parameter Attributes</A>, for information about <CODE>UNUSED</CODE>.  See section <A HREF="pintos_6.html#SEC129">A.8.6 Auxiliary Data</A>, for an explanation of <VAR>aux</VAR>.)
+</P>
+<P>
+
+Then, we can create a hash table like this:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>struct hash pages;
+
+hash_init (&amp;pages, page_hash, page_less, NULL);
+</pre></td></tr></table><P>
+
+Now we can manipulate the hash table we've created.  If <CODE><VAR>p</VAR></CODE>
+is a pointer to a <CODE>struct page</CODE>, we can insert it into the hash table
+with:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>hash_insert (&amp;pages, &amp;p-&gt;hash_elem);
+</pre></td></tr></table><P>
+
+If there's a chance that <VAR>pages</VAR> might already contain a
+page with the same <VAR>addr</VAR>, then we should check <CODE>hash_insert()</CODE>'s
+return value.
+</P>
+<P>
+
+To search for an element in the hash table, use <CODE>hash_find()</CODE>.  This
+takes a little setup, because <CODE>hash_find()</CODE> takes an element to
+compare against.  Here's a function that will find and return a page
+based on a virtual address, assuming that <VAR>pages</VAR> is defined at file
+scope:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>/* Returns the page containing the given virtual <VAR>address</VAR>,
+   or a null pointer if no such page exists. */
+struct page *
+page_lookup (const void *address)
+{
+  struct page p;
+  struct hash_elem *e;
+
+  p.addr = address;
+  e = hash_find (&amp;pages, &amp;p.hash_elem);
+  return e != NULL ? hash_entry (e, struct page, hash_elem) : NULL;
+}
+</pre></td></tr></table><P>
+
+<CODE>struct page</CODE> is allocated as a local variable here on the assumption
+that it is fairly small.  Large structures should not be allocated as
+local variables.  See section <A HREF="pintos_6.html#SEC97">A.2.1 <CODE>struct thread</CODE></A>, for more information.
+</P>
+<P>
+
+A similar function could delete a page by address using
+<CODE>hash_delete()</CODE>.
+</P>
+<P>
+
+<A NAME="Hash Auxiliary Data"></A>
+<HR SIZE="6">
+<A NAME="SEC129"></A>
+<H3> A.8.6 Auxiliary Data </H3>
+<!--docid::SEC129::-->
+<P>
+
+In simple cases like the example above, there's no need for the
+<VAR>aux</VAR> parameters.  In these cases, just pass a null pointer to
+<CODE>hash_init()</CODE> for <VAR>aux</VAR> and ignore the values passed to the hash
+function and comparison functions.  (You'll get a compiler warning if
+you don't use the <VAR>aux</VAR> parameter, but you can turn that off with
+the <CODE>UNUSED</CODE> macro, as shown in the example, or you can just ignore
+it.)
+</P>
+<P>
+
+<VAR>aux</VAR> is useful when you have some property of the data in the
+hash table is both constant and needed for hashing or comparison,
+but not stored in the data items themselves.  For example, if
+the items in a hash table are fixed-length strings, but the items
+themselves don't indicate what that fixed length is, you could pass
+the length as an <VAR>aux</VAR> parameter.
+</P>
+<P>
+
+<A NAME="Hash Synchronization"></A>
+<HR SIZE="6">
+<A NAME="SEC130"></A>
+<H3> A.8.7 Synchronization </H3>
+<!--docid::SEC130::-->
+<P>
+
+The hash table does not do any internal synchronization.  It is the
+caller's responsibility to synchronize calls to hash table functions.
+In general, any number of functions that examine but do not modify the
+hash table, such as <CODE>hash_find()</CODE> or <CODE>hash_next()</CODE>, may execute
+simultaneously.  However, these function cannot safely execute at the
+same time as any function that may modify a given hash table, such as
+<CODE>hash_insert()</CODE> or <CODE>hash_delete()</CODE>, nor may more than one function
+that can modify a given hash table execute safely at once.
+</P>
+<P>
+
+It is also the caller's responsibility to synchronize access to data in
+hash table elements.  How to synchronize access to this data depends on
+how it is designed and organized, as with any other data structure.
+</P>
+<P>
+
+<A NAME="4.4BSD Scheduler"></A>
+<HR SIZE="6">
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_6.html#SEC90"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_7.html#SEC131"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>

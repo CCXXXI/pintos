@@ -1,0 +1,1647 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html40/loose.dtd">
+<HTML>
+<!-- Created on October, 26 2020 by texi2html 1.66 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<HEAD>
+<TITLE>Pintos Projects: Project 2--User Programs</TITLE>
+
+<META NAME="description" CONTENT="Pintos Projects: Project 2--User Programs">
+<META NAME="keywords" CONTENT="Pintos Projects: Project 2--User Programs">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META NAME="Generator" CONTENT="texi2html 1.66">
+<LINK REL="stylesheet" HREF="pintos.css">
+</HEAD>
+
+<BODY >
+
+<A NAME="SEC32"></A>
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_2.html#SEC15"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_4.html#SEC53"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+
+<HR SIZE=2>
+<H1> 3. Project 2: User Programs </H1>
+<!--docid::SEC32::-->
+<P>
+
+Now that you've worked with Pintos and are becoming familiar with its
+infrastructure and thread package, it's time to start working on the
+parts of the system that allow running user programs.
+The base code already supports loading and
+running user programs, but no I/O or interactivity
+is possible.  In this project, you will enable programs to interact with
+the OS via system calls.
+</P>
+<P>
+
+You will be working out of the <Q><TT>userprog</TT></Q> directory for this
+assignment, but you will also be interacting with almost every
+other part of Pintos.  We will describe the
+relevant parts below.
+</P>
+<P>
+
+You can build project 2 on top of your project 1 submission or you can
+start fresh.  No code from project 1 is required for this
+assignment.  The &quot;alarm clock&quot; functionality may be useful in
+projects 3 and 4, but it is not strictly required.
+</P>
+<P>
+
+You might find it useful to go back and reread how to run the tests
+(see section <A HREF="pintos_1.html#SEC8">1.2.1 Testing</A>).
+</P>
+<P>
+
+<A NAME="Project 2 Background"></A>
+<HR SIZE="6">
+<A NAME="SEC33"></A>
+<H2> 3.1 Background </H2>
+<!--docid::SEC33::-->
+<P>
+
+Up to now, all of the code you have run under Pintos has been part
+of the operating system kernel.  This means, for example, that all the
+test code from the last assignment ran as part of the kernel, with
+full access to privileged parts of the system.  Once we start running
+user programs on top of the operating system, this is no longer true.
+This project deals with the consequences.
+</P>
+<P>
+
+We allow more than one process to run at a time.  Each process has one
+thread (multithreaded processes are not supported).  User programs are
+written under the illusion that they have the entire machine.  This
+means that when you load and run multiple processes at a time, you must
+manage memory, scheduling, and other state correctly to maintain this
+illusion.
+</P>
+<P>
+
+In the previous project, we compiled our test code directly into your
+kernel, so we had to require certain specific function interfaces within
+the kernel.  From now on, we will test your operating system by running
+user programs.  This gives you much greater freedom.  You must make sure
+that the user program interface meets the specifications described here,
+but given that constraint you are free to restructure or rewrite kernel
+code however you wish.
+</P>
+<P>
+
+<A NAME="Project 2 Source Files"></A>
+<HR SIZE="6">
+<A NAME="SEC34"></A>
+<H3> 3.1.1 Source Files </H3>
+<!--docid::SEC34::-->
+<P>
+
+The easiest way to get an overview of the programming you will be
+doing is to simply go over each part you'll be working with.  In
+<Q><TT>userprog</TT></Q>, you'll find a small number of files, but here is
+where the bulk of your work will be:
+</P>
+<P>
+
+</P>
+<DL COMPACT>
+<DT><Q><TT>process.c</TT></Q>
+<DD><DT><Q><TT>process.h</TT></Q>
+<DD>Loads ELF binaries and starts processes.
+<P>
+
+</P>
+<DT><Q><TT>pagedir.c</TT></Q>
+<DD><DT><Q><TT>pagedir.h</TT></Q>
+<DD>A simple manager for 80<VAR>x</VAR>86 hardware page tables.
+Although you probably won't want to modify this code for this project,
+you may want to call some of its functions.
+See section <A HREF="pintos_4.html#SEC59">4.1.2.3 Page Tables</A>, for more information.
+<P>
+
+</P>
+<DT><Q><TT>syscall.c</TT></Q>
+<DD><DT><Q><TT>syscall.h</TT></Q>
+<DD>Whenever a user process wants to access some kernel functionality, it
+invokes a system call.  This is a skeleton system call
+handler.  Currently, it just prints a message and terminates the user
+process.  In part 2 of this project you will add code to do everything
+else needed by system calls.
+<P>
+
+</P>
+<DT><Q><TT>exception.c</TT></Q>
+<DD><DT><Q><TT>exception.h</TT></Q>
+<DD>When a user process performs a privileged or prohibited operation, it
+traps into the kernel as an &quot;exception&quot; or &quot;fault.&quot;<A NAME="DOCF3" HREF="pintos_fot.html#FOOT3">(3)</A>  These files handle
+exceptions.  Currently all exceptions simply print a message and
+terminate the process.  Some, but not all, solutions to project 2
+require modifying <CODE>page_fault()</CODE> in this file.
+<P>
+
+</P>
+<DT><Q><TT>gdt.c</TT></Q>
+<DD><DT><Q><TT>gdt.h</TT></Q>
+<DD>The 80<VAR>x</VAR>86 is a segmented architecture.  The Global Descriptor
+Table (GDT) is a table that describes the segments in use.  These
+files set up the GDT.  You should not need to modify these
+files for any of the projects.  You can read the code if
+you're interested in how the GDT works.
+<P>
+
+</P>
+<DT><Q><TT>tss.c</TT></Q>
+<DD><DT><Q><TT>tss.h</TT></Q>
+<DD>The Task-State Segment (TSS) is used for 80<VAR>x</VAR>86 architectural
+task switching.  Pintos uses the TSS only for switching stacks when a
+user process enters an interrupt handler, as does Linux.  You
+should not need to modify these files for any of the projects.
+You can read the code if you're interested in how the TSS
+works.
+</DL>
+<P>
+
+<A NAME="Using the File System"></A>
+<HR SIZE="6">
+<A NAME="SEC35"></A>
+<H3> 3.1.2 Using the File System </H3>
+<!--docid::SEC35::-->
+<P>
+
+You will need to interface to the file system code for this project,
+because
+user programs are loaded from the file system and many of the
+system calls you must implement deal with the file system.  However,
+the focus of this project is not the file system, so we have
+provided a simple but complete file system in the <Q><TT>filesys</TT></Q>
+directory.  You
+will want to look over the <Q><TT>filesys.h</TT></Q> and <Q><TT>file.h</TT></Q>
+interfaces to understand how to use the file system, and especially
+its many limitations.
+</P>
+<P>
+
+There is no need to modify the file system code for this project, and so
+we recommend that you do not.  Working on the file system is likely to
+distract you from this project's focus.
+</P>
+<P>
+
+Proper use of the file system routines now
+will make life much easier for project 4, when you improve the file
+system implementation.  Until then, you will have to tolerate the
+following limitations:
+</P>
+<P>
+
+<UL>
+<LI>
+No internal synchronization.  Concurrent accesses will interfere with one
+another.  You should use synchronization to ensure that only one process at a
+time is executing file system code.
+<P>
+
+</P>
+<LI>
+File size is fixed at creation time.  The root directory is
+represented as a file, so the number of files that may be created is also
+limited.
+<P>
+
+</P>
+<LI>
+File data is allocated as a single extent, that is, data in a single
+file must occupy a contiguous range of sectors on disk.  External
+fragmentation can therefore become a serious problem as a file system is
+used over time.
+<P>
+
+</P>
+<LI>
+No subdirectories.
+<P>
+
+</P>
+<LI>
+File names are limited to 14 characters.
+<P>
+
+</P>
+<LI>
+A system crash mid-operation may corrupt the disk in a way
+that cannot be repaired automatically.  There is no file system repair
+tool anyway.
+</UL>
+<P>
+
+One important feature is included:
+</P>
+<P>
+
+<UL>
+<LI>
+Unix-like semantics for <CODE>filesys_remove()</CODE> are implemented.
+That is, if a file is open when it is removed, its blocks
+are not deallocated and it may still be accessed by any
+threads that have it open, until the last one closes it.  See  <A HREF="pintos_3.html#Removing an Open File">Removing an Open File</A>, for more information.
+</UL>
+<P>
+
+You need to be able to create a simulated disk with a file system
+partition.  The <CODE>pintos-mkdisk</CODE> program provides this
+functionality.  From the <Q><TT>userprog/build</TT></Q> directory, execute
+<CODE>pintos-mkdisk filesys.dsk --filesys-size=2</CODE>.  This command
+creates a simulated disk named <Q><TT>filesys.dsk</TT></Q> that contains a 2
+MB Pintos file system partition.  Then format the file system
+partition by passing <Q><SAMP>-f -q</SAMP></Q> on the kernel's command line:
+<CODE>pintos -f -q</CODE>.  The <Q><SAMP>-f</SAMP></Q> option causes the file system to
+be formatted, and <Q><SAMP>-q</SAMP></Q> causes Pintos to exit as soon as the
+format is done.
+</P>
+<P>
+
+You'll need a way to copy files in and out of the simulated file system.
+The <CODE>pintos</CODE> <Q><SAMP>-p</SAMP></Q> (&quot;put&quot;) and <Q><SAMP>-g</SAMP></Q> (&quot;get&quot;)
+options do this.  To copy <Q><TT><VAR>file</VAR></TT></Q> into the
+Pintos file system, use the command <Q><TT>pintos -p <VAR>file</VAR> -- -q</TT></Q>.
+(The <Q><SAMP>--</SAMP></Q> is needed because <Q><SAMP>-p</SAMP></Q> is for the <CODE>pintos</CODE>
+script, not for the simulated kernel.)  To copy it to the Pintos file
+system under the name <Q><TT><VAR>newname</VAR></TT></Q>, add <Q><SAMP>-a
+<VAR>newname</VAR></SAMP></Q>: <Q><TT>pintos -p <VAR>file</VAR> -a <VAR>newname</VAR> -- -q</TT></Q>.  The
+commands for copying files out of a VM are similar, but substitute
+<Q><SAMP>-g</SAMP></Q> for <Q><SAMP>-p</SAMP></Q>.
+</P>
+<P>
+
+Incidentally, these commands work by passing special commands
+<CODE>extract</CODE> and <CODE>append</CODE> on the kernel's command line and copying
+to and from a special simulated &quot;scratch&quot; partition.  If you're very
+curious, you can look at the <CODE>pintos</CODE> script as well as
+<Q><TT>filesys/fsutil.c</TT></Q> to learn the implementation details.
+</P>
+<P>
+
+Here's a summary of how to create a disk with a file system partition,
+format the file system, copy the <CODE>echo</CODE> program into the new
+disk, and then run <CODE>echo</CODE>, passing argument <CODE>x</CODE>.
+(Argument passing won't work until you implemented it.)  It assumes
+that you've already built the examples in <Q><TT>examples</TT></Q> and that the
+current directory is <Q><TT>userprog/build</TT></Q>:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>pintos-mkdisk filesys.dsk --filesys-size=2
+pintos -f -q
+pintos -p ../../examples/echo -a echo -- -q
+pintos -q run 'echo x'
+</pre></td></tr></table><P>
+
+The three final steps can actually be combined into a single command:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>pintos-mkdisk filesys.dsk --filesys-size=2
+pintos -p ../../examples/echo -a echo -- -f -q run 'echo x'
+</pre></td></tr></table><P>
+
+If you don't want to keep the file system disk around for later use or
+inspection, you can even combine all four steps into a single command.
+The <CODE>--filesys-size=<VAR>n</VAR></CODE> option creates a temporary file
+system partition
+approximately <VAR>n</VAR> megabytes in size just for the duration of the
+<CODE>pintos</CODE> run.  The Pintos automatic test suite makes extensive
+use of this syntax:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>pintos --filesys-size=2 -p ../../examples/echo -a echo -- -f -q run 'echo x'
+</pre></td></tr></table><P>
+
+You can delete a file from the Pintos file system using the <CODE>rm
+<VAR>file</VAR></CODE> kernel action, e.g. <CODE>pintos -q rm <VAR>file</VAR></CODE>.  Also,
+<CODE>ls</CODE> lists the files in the file system and <CODE>cat
+<VAR>file</VAR></CODE> prints a file's contents to the display.
+</P>
+<P>
+
+<A NAME="How User Programs Work"></A>
+<HR SIZE="6">
+<A NAME="SEC36"></A>
+<H3> 3.1.3 How User Programs Work </H3>
+<!--docid::SEC36::-->
+<P>
+
+Pintos can run normal C programs, as long as they fit into memory and use
+only the system calls you implement.  Notably, <CODE>malloc()</CODE> cannot be
+implemented because none of the system calls required for this project
+allow for memory allocation.  Pintos also can't run programs that use
+floating point operations, since the kernel doesn't save and restore the
+processor's floating-point unit when switching threads.
+</P>
+<P>
+
+The <Q><TT>src/examples</TT></Q> directory contains a few sample user
+programs.  The <Q><TT>Makefile</TT></Q> in this directory
+compiles the provided examples, and you can edit it to
+compile your own programs as well.  Some of the example programs will
+only work once projects 3 or 4 have been implemented.
+</P>
+<P>
+
+Pintos can load <EM>ELF</EM> executables with the loader provided for you
+in <Q><TT>userprog/process.c</TT></Q>.  ELF is a file format used by Linux,
+Solaris, and many other operating systems for object files,
+shared libraries, and executables.  You can actually use any compiler
+and linker that output 80<VAR>x</VAR>86 ELF executables to produce programs
+for Pintos.  (We've provided compilers and linkers that should do just
+fine.)
+</P>
+<P>
+
+You should realize immediately that, until you copy a
+test program to the simulated file system, Pintos will be unable to do
+useful work.  You won't be able to do
+interesting things until you copy a variety of programs to the file system.
+You might want to create a clean reference file system disk and copy that
+over whenever you trash your <Q><TT>filesys.dsk</TT></Q> beyond a useful state,
+which may happen occasionally while debugging.
+</P>
+<P>
+
+<A NAME="Virtual Memory Layout"></A>
+<HR SIZE="6">
+<A NAME="SEC37"></A>
+<H3> 3.1.4 Virtual Memory Layout </H3>
+<!--docid::SEC37::-->
+<P>
+
+Virtual memory in Pintos is divided into two regions: user virtual
+memory and kernel virtual memory.  User virtual memory ranges from
+virtual address 0 up to <CODE>PHYS_BASE</CODE>, which is defined in
+<Q><TT>threads/vaddr.h</TT></Q> and defaults to <TT>0xc0000000</TT> (3 GB).  Kernel
+virtual memory occupies the rest of the virtual address space, from
+<CODE>PHYS_BASE</CODE> up to 4 GB.
+</P>
+<P>
+
+User virtual memory is per-process.
+When the kernel switches from one process to another, it
+also switches user virtual address spaces by changing the processor's
+page directory base register (see <CODE>pagedir_activate()</CODE> in
+<Q><TT>userprog/pagedir.c</TT></Q>).  <CODE>struct thread</CODE> contains a pointer to a
+process's page table.
+</P>
+<P>
+
+Kernel virtual memory is global.  It is always mapped the same way,
+regardless of what user process or kernel thread is running.  In
+Pintos, kernel virtual memory is mapped one-to-one to physical
+memory, starting at <CODE>PHYS_BASE</CODE>.  That is, virtual address
+<CODE>PHYS_BASE</CODE> accesses physical
+address 0, virtual address <CODE>PHYS_BASE</CODE> + <TT>0x1234</TT> accesses
+physical address <TT>0x1234</TT>, and so on up to the size of the machine's
+physical memory.
+</P>
+<P>
+
+A user program can only access its own user virtual memory.  An attempt to
+access kernel virtual memory causes a page fault, handled by
+<CODE>page_fault()</CODE> in <Q><TT>userprog/exception.c</TT></Q>, and the process
+will be terminated.  Kernel threads can access both kernel virtual
+memory and, if a user process is running, the user virtual memory of
+the running process.  However, even in the kernel, an attempt to
+access memory at an unmapped user virtual address
+will cause a page fault.
+</P>
+<P>
+
+<A NAME="Typical Memory Layout"></A>
+<HR SIZE="6">
+<A NAME="SEC38"></A>
+<H4> 3.1.4.1 Typical Memory Layout </H4>
+<!--docid::SEC38::-->
+<P>
+
+Conceptually, each process is
+free to lay out its own user virtual memory however it
+chooses.  In practice, user virtual memory is laid out like this:
+</P>
+<P>
+
+<CENTER>
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>   PHYS_BASE +----------------------------------+
+             |            user stack            |
+             |                 |                |
+             |                 |                |
+             |                 V                |
+             |          grows downward          |
+             |                                  |
+             |                                  |
+             |                                  |
+             |                                  |
+             |           grows upward           |
+             |                 ^                |
+             |                 |                |
+             |                 |                |
+             +----------------------------------+
+             | uninitialized data segment (BSS) |
+             +----------------------------------+
+             |     initialized data segment     |
+             +----------------------------------+
+             |           code segment           |
+  0x08048000 +----------------------------------+
+             |                                  |
+             |                                  |
+             |                                  |
+             |                                  |
+             |                                  |
+           0 +----------------------------------+
+</pre></td></tr></table></CENTER>
+<P>
+
+In this project, the user stack is fixed in size, but in project 3 it
+will be allowed to grow.  Traditionally, the size of the uninitialized
+data segment can be adjusted with a system call, but you will not have
+to implement this.
+</P>
+<P>
+
+The code segment in Pintos starts at user virtual address
+<TT>0x08048000</TT>, approximately 128 MB from the bottom of the address
+space.  This value is specified in [ <A HREF="pintos_13.html#SysV-i386">SysV-i386</A>] and has no deep
+significance.
+</P>
+<P>
+
+The linker sets the layout of a user program in memory, as directed by a
+&quot;linker script&quot; that tells it the names and locations of the various
+program segments.  You can learn more about linker scripts by reading
+the &quot;Scripts&quot; chapter in the linker manual, accessible via <Q><SAMP>info
+ld</SAMP></Q>.
+</P>
+<P>
+
+To view the layout of a particular executable, run <CODE>objdump</CODE>
+(80<VAR>x</VAR>86) or <CODE>i386-elf-objdump</CODE> (SPARC) with the <Q><SAMP>-p</SAMP></Q>
+option.
+</P>
+<P>
+
+<A NAME="Accessing User Memory"></A>
+<HR SIZE="6">
+<A NAME="SEC39"></A>
+<H3> 3.1.5 Accessing User Memory </H3>
+<!--docid::SEC39::-->
+<P>
+
+As part of a system
+call, the kernel must often access memory through pointers provided by a user
+program.  The kernel must be very careful about doing so, because
+the user can pass a null pointer, a pointer to
+unmapped virtual memory, or a pointer to kernel virtual address space
+(above <CODE>PHYS_BASE</CODE>).  All of these types of invalid pointers must
+be rejected without harm to the kernel or other running processes, by
+terminating the offending process and freeing its resources.
+</P>
+<P>
+
+There are at least two reasonable ways to do this correctly.  The
+first method is to verify
+the validity of a user-provided pointer, then dereference it.  If you
+choose this route, you'll want to look at the functions in
+<Q><TT>userprog/pagedir.c</TT></Q> and in <Q><TT>threads/vaddr.h</TT></Q>.  This is the
+simplest way to handle user memory access.
+</P>
+<P>
+
+The second method is to check only that a user
+pointer points below <CODE>PHYS_BASE</CODE>, then dereference it.
+An invalid user pointer will cause a &quot;page fault&quot; that you can
+handle by modifying the code for <CODE>page_fault()</CODE> in
+<Q><TT>userprog/exception.c</TT></Q>.  This technique is normally faster
+because it takes advantage of the processor's MMU, so it tends to be
+used in real kernels (including Linux).
+</P>
+<P>
+
+In either case, you need to make sure not to &quot;leak&quot; resources.  For
+example, suppose that your system call has acquired a lock or
+allocated memory with <CODE>malloc()</CODE>.  If you encounter an invalid user pointer
+afterward, you must still be sure to release the lock or free the page
+of memory.  If you choose to verify user pointers before dereferencing
+them, this should be straightforward.  It's more difficult to handle
+if an invalid pointer causes a page fault,
+because there's no way to return an error code from a memory access.
+Therefore, for those who want to try the latter technique, we'll
+provide a little bit of helpful code:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>/* Reads a byte at user virtual address UADDR.
+   UADDR must be below PHYS_BASE.
+   Returns the byte value if successful, -1 if a segfault
+   occurred. */
+static int
+get_user (const uint8_t *uaddr)
+{
+  int result;
+  asm (&quot;movl $1f, %0; movzbl %1, %0; 1:&quot;
+       : &quot;=&amp;a&quot; (result) : &quot;m&quot; (*uaddr));
+  return result;
+}
+ 
+/* Writes BYTE to user address UDST.
+   UDST must be below PHYS_BASE.
+   Returns true if successful, false if a segfault occurred. */
+static bool
+put_user (uint8_t *udst, uint8_t byte)
+{
+  int error_code;
+  asm (&quot;movl $1f, %0; movb %b2, %1; 1:&quot;
+       : &quot;=&amp;a&quot; (error_code), &quot;=m&quot; (*udst) : &quot;q&quot; (byte));
+  return error_code != -1;
+}
+</pre></td></tr></table><P>
+
+Each of these functions assumes that the user address has already been
+verified to be below <CODE>PHYS_BASE</CODE>.  They also assume that you've
+modified <CODE>page_fault()</CODE> so that a page fault in the kernel merely
+sets <CODE>eax</CODE> to <TT>0xffffffff</TT> and copies its former value
+into <CODE>eip</CODE>.
+</P>
+<P>
+
+<A NAME="Project 2 Suggested Order of Implementation"></A>
+<HR SIZE="6">
+<A NAME="SEC40"></A>
+<H2> 3.2 Suggested Order of Implementation </H2>
+<!--docid::SEC40::-->
+<P>
+
+We suggest first implementing the following, which can happen in
+parallel:
+</P>
+<P>
+
+<UL>
+<LI>
+Argument passing (see section <A HREF="pintos_3.html#SEC44">3.3.3 Argument Passing</A>).  Every user program will
+page fault immediately until argument passing is implemented.
+<P>
+
+For now, you may simply wish to change
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>*esp = PHYS_BASE;
+</pre></td></tr></table>to
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>*esp = PHYS_BASE - 12;
+</pre></td></tr></table>in <CODE>setup_stack()</CODE>.  That will work for any test program that doesn't
+examine its arguments, although its name will be printed as
+<CODE>(null)</CODE>.
+<P>
+
+Until you implement argument passing, you should only run programs
+without passing command-line arguments.  Attempting to pass arguments to
+a program will include those arguments in the name of the program, which
+will probably fail.
+</P>
+<P>
+
+</P>
+<LI>
+User memory access (see section <A HREF="pintos_3.html#SEC39">3.1.5 Accessing User Memory</A>).  All system calls
+need to read user memory.  Few system calls need to write to user
+memory.
+<P>
+
+</P>
+<LI>
+System call infrastructure (see section <A HREF="pintos_3.html#SEC45">3.3.4 System Calls</A>).  Implement enough
+code to read the system call number from the user stack and dispatch to
+a handler based on it.
+<P>
+
+</P>
+<LI>
+The <CODE>exit</CODE> system call.  Every user program that finishes in the
+normal way calls <CODE>exit</CODE>.  Even a program that returns from
+<CODE>main()</CODE> calls <CODE>exit</CODE> indirectly (see <CODE>_start()</CODE> in
+<Q><TT>lib/user/entry.c</TT></Q>).
+<P>
+
+</P>
+<LI>
+The <CODE>write</CODE> system call for writing to fd 1, the system console.
+All of our test programs write to the console (the user process version
+of <CODE>printf()</CODE> is implemented this way), so they will all malfunction
+until <CODE>write</CODE> is available.
+<P>
+
+</P>
+<LI>
+For now, change <CODE>process_wait()</CODE> to an infinite loop (one that waits
+forever).  The provided implementation returns immediately, so Pintos
+will power off before any processes actually get to run.  You will
+eventually need to provide a correct implementation.
+</UL>
+<P>
+
+After the above are implemented, user processes should work minimally.
+At the very least, they can write to the console and exit correctly.
+You can then refine your implementation so that some of the tests start
+to pass.
+</P>
+<P>
+
+<A NAME="Project 2 Requirements"></A>
+<HR SIZE="6">
+<A NAME="SEC41"></A>
+<H2> 3.3 Requirements </H2>
+<!--docid::SEC41::-->
+<P>
+
+<A NAME="Project 2 Design Document"></A>
+<HR SIZE="6">
+<A NAME="SEC42"></A>
+<H3> 3.3.1 Design Document </H3>
+<!--docid::SEC42::-->
+<P>
+
+Before you turn in your project, you must copy <A HREF="userprog.tmpl">the project 2 design document template</A> into your source tree under the
+name <Q><TT>pintos/src/userprog/DESIGNDOC</TT></Q> and fill it in.  We recommend
+that you read the design document template before you start working on
+the project.  See section <A HREF="pintos_9.html#SEC142">D. Project Documentation</A>, for a sample design document
+that goes along with a fictitious project.
+</P>
+<P>
+
+<A NAME="Process Termination Messages"></A>
+<HR SIZE="6">
+<A NAME="SEC43"></A>
+<H3> 3.3.2 Process Termination Messages </H3>
+<!--docid::SEC43::-->
+<P>
+
+Whenever a user process terminates, because it called <CODE>exit</CODE>
+or for any other reason, print the process's name
+and exit code, formatted as if printed by <CODE>printf (&quot;%s:
+exit(%d)\n&quot;, <small>...</small>);</CODE>.  The name printed should be the full name
+passed to <CODE>process_execute()</CODE>, omitting command-line arguments.
+Do not print these messages when a kernel thread that is not a user
+process terminates, or
+when the <CODE>halt</CODE> system call is invoked.  The message is optional
+when a process fails to load.
+</P>
+<P>
+
+Aside from this, don't print any other
+messages that Pintos as provided doesn't already print.  You may find
+extra messages useful during debugging, but they will confuse the
+grading scripts and thus lower your score.
+</P>
+<P>
+
+<A NAME="Argument Passing"></A>
+<HR SIZE="6">
+<A NAME="SEC44"></A>
+<H3> 3.3.3 Argument Passing </H3>
+<!--docid::SEC44::-->
+<P>
+
+Currently, <CODE>process_execute()</CODE> does not support passing arguments to
+new processes.  Implement this functionality, by extending
+<CODE>process_execute()</CODE> so that instead of simply taking a program file
+name as its argument, it divides it into words at spaces.  The first
+word is the program name, the second word is the first argument, and so
+on.  That is, <CODE>process_execute(&quot;grep foo bar&quot;)</CODE> should run
+<CODE>grep</CODE> passing two arguments <CODE>foo</CODE> and <CODE>bar</CODE>.
+</P>
+<P>
+
+Within a command line, multiple spaces are equivalent to a single
+space, so that <CODE>process_execute(&quot;grep  foo   bar&quot;)</CODE>
+is equivalent to our original example.  You can impose a reasonable
+limit on the length of the command line arguments.  For example, you
+could limit the arguments to those that will fit in a single page (4
+kB).  (There is an unrelated limit of 128 bytes on command-line
+arguments that the <CODE>pintos</CODE> utility can pass to the kernel.)
+</P>
+<P>
+
+You can parse argument strings any way you like.  If you're lost,
+look at <CODE>strtok_r()</CODE>, prototyped in <Q><TT>lib/string.h</TT></Q> and
+implemented with thorough comments in <Q><TT>lib/string.c</TT></Q>.  You can
+find more about it by looking at the man page (run <CODE>man strtok_r</CODE>
+at the prompt).
+</P>
+<P>
+
+See section <A HREF="pintos_3.html#SEC51">3.5.1 Program Startup Details</A>, for information on exactly how you
+need to set up the stack.
+</P>
+<P>
+
+<A NAME="System Calls"></A>
+<HR SIZE="6">
+<A NAME="SEC45"></A>
+<H3> 3.3.4 System Calls </H3>
+<!--docid::SEC45::-->
+<P>
+
+Implement the system call handler in <Q><TT>userprog/syscall.c</TT></Q>.  The
+skeleton implementation we provide &quot;handles&quot; system calls by
+terminating the process.  It will need to retrieve the system call
+number, then any system call arguments, and carry out appropriate actions.
+</P>
+<P>
+
+Implement the following system calls.  The prototypes listed are those
+seen by a user program that includes <Q><TT>lib/user/syscall.h</TT></Q>.  (This
+header, and all others in <Q><TT>lib/user</TT></Q>, are for use by user
+programs only.)  System call numbers for each system call are defined in
+<Q><TT>lib/syscall-nr.h</TT></Q>:
+</P>
+<P>
+
+<A NAME="IDX4"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> void <B>halt</B> (void)
+<DD>Terminates Pintos by calling <CODE>shutdown_power_off()</CODE> (declared in
+<Q><TT>devices/shutdown.h</TT></Q>).  This should be seldom used, because you lose
+some information about possible deadlock situations, etc.
+</DL>
+<P>
+
+<A NAME="IDX5"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> void <B>exit</B> (int <VAR>status</VAR>)
+<DD>Terminates the current user program, returning <VAR>status</VAR> to the
+kernel.  If the process's parent <CODE>wait</CODE>s for it (see below), this
+is the status
+that will be returned.  Conventionally, a <VAR>status</VAR> of 0 indicates
+success and nonzero values indicate errors.
+</DL>
+<P>
+
+<A NAME="IDX6"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> pid_t <B>exec</B> (const char *<VAR>cmd_line</VAR>)
+<DD>Runs the executable whose name is given in <VAR>cmd_line</VAR>, passing any
+given arguments, and returns the new process's program id (pid).  Must
+return pid -1, which otherwise should not be a valid pid, if
+the program cannot load or run for any reason.
+Thus, the parent process cannot return from the <CODE>exec</CODE> until it
+knows whether the child process successfully loaded its executable.
+You must use appropriate synchronization to ensure this.
+</DL>
+<P>
+
+<A NAME="IDX7"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> int <B>wait</B> (pid_t <VAR>pid</VAR>)
+<DD>Waits for a child process <VAR>pid</VAR> and retrieves the child's exit status.
+<P>
+
+If <VAR>pid</VAR> is still alive, waits until it terminates.  Then, returns
+the status that <VAR>pid</VAR> passed to <CODE>exit</CODE>.  If <VAR>pid</VAR> did not
+call <CODE>exit()</CODE>, but was terminated by the kernel (e.g. killed
+due to an exception), <CODE>wait(pid)</CODE> must return -1.  It is perfectly
+legal for a parent process to wait for child processes that have already
+terminated by the time the parent calls <CODE>wait</CODE>, but the kernel must
+still allow the parent to retrieve its child's exit status, or learn
+that the child was terminated by the kernel.
+</P>
+<P>
+
+<CODE>wait</CODE> must fail and return -1 immediately if any of the
+following conditions is true:
+<UL>
+<LI>
+<VAR>pid</VAR> does not refer to a direct child of the calling process.
+<VAR>pid</VAR> is a direct child of the calling process if and
+only if the calling process received <VAR>pid</VAR> as a return value
+from a successful call to <CODE>exec</CODE>.
+<P>
+
+Note that children are not inherited: if <VAR>A</VAR> spawns child <VAR>B</VAR>
+and <VAR>B</VAR> spawns child process <VAR>C</VAR>, then <VAR>A</VAR> cannot wait for
+<VAR>C</VAR>, even if <VAR>B</VAR> is dead.  A call to <CODE>wait(C)</CODE> by process
+<VAR>A</VAR> must fail.  Similarly, orphaned processes are not assigned to
+a new parent if their parent process exits before they do.
+</P>
+<P>
+
+</P>
+<LI>
+The process that calls <CODE>wait</CODE> has already called <CODE>wait</CODE> on
+<VAR>pid</VAR>.  That is, a process may wait for any given child at most
+once.
+</UL>
+<P>
+
+Processes may spawn any number of children, wait for them in any order,
+and may even exit without having waited for some or all of their children.
+Your design should consider all the ways in which waits can occur.
+All of a process's resources, including its <CODE>struct thread</CODE>, must be
+freed whether its parent ever waits for it or not, and regardless of
+whether the child exits before or after its parent.
+</P>
+<P>
+
+You must ensure that Pintos does not terminate until the initial
+process exits.  The supplied Pintos code tries to do this by calling
+<CODE>process_wait()</CODE> (in <Q><TT>userprog/process.c</TT></Q>) from <CODE>main()</CODE>
+(in <Q><TT>threads/init.c</TT></Q>).  We suggest that you implement
+<CODE>process_wait()</CODE> according to the comment at the top of the
+function and then implement the <CODE>wait</CODE> system call in terms of
+<CODE>process_wait()</CODE>.
+</P>
+<P>
+
+Implementing this system call requires considerably more work than any
+of the rest.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX8"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> bool <B>create</B> (const char *<VAR>file</VAR>, unsigned <VAR>initial_size</VAR>)
+<DD>Creates a new file called <VAR>file</VAR> initially <VAR>initial_size</VAR> bytes
+in size.  Returns true if successful, false otherwise.
+Creating a new file does not open it: opening the new file is a
+separate operation which would require a <CODE>open</CODE> system call.
+</DL>
+<P>
+
+<A NAME="IDX9"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> bool <B>remove</B> (const char *<VAR>file</VAR>)
+<DD>Deletes the file called <VAR>file</VAR>.  Returns true if successful, false
+otherwise.
+A file may be removed regardless of whether it is open or closed, and
+removing an open file does not close it.  See  <A HREF="pintos_3.html#Removing an Open File">Removing an Open File</A>, for details.
+</DL>
+<P>
+
+<A NAME="IDX10"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> int <B>open</B> (const char *<VAR>file</VAR>)
+<DD>Opens the file called <VAR>file</VAR>.  Returns a nonnegative integer handle
+called a &quot;file descriptor&quot; (fd), or -1 if the file could not be
+opened.  
+<P>
+
+File descriptors numbered 0 and 1 are reserved for the console: fd 0
+(<CODE>STDIN_FILENO</CODE>) is standard input, fd 1 (<CODE>STDOUT_FILENO</CODE>) is
+standard output.  The <CODE>open</CODE> system call will never return either
+of these file descriptors, which are valid as system call arguments only
+as explicitly described below.
+</P>
+<P>
+
+Each process has an independent set of file descriptors.  File
+descriptors are not inherited by child processes.
+</P>
+<P>
+
+When a single file is opened more than once, whether by a single
+process or different processes, each <CODE>open</CODE> returns a new file
+descriptor.  Different file descriptors for a single file are closed
+independently in separate calls to <CODE>close</CODE> and they do not share
+a file position.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX11"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> int <B>filesize</B> (int <VAR>fd</VAR>)
+<DD>Returns the size, in bytes, of the file open as <VAR>fd</VAR>.
+</DL>
+<P>
+
+<A NAME="IDX12"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> int <B>read</B> (int <VAR>fd</VAR>, void *<VAR>buffer</VAR>, unsigned <VAR>size</VAR>)
+<DD>Reads <VAR>size</VAR> bytes from the file open as <VAR>fd</VAR> into
+<VAR>buffer</VAR>.  Returns the number of bytes actually read (0 at end of
+file), or -1 if the file could not be read (due to a condition other
+than end of file).  Fd 0 reads from the keyboard using
+<CODE>input_getc()</CODE>.
+</DL>
+<P>
+
+<A NAME="IDX13"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> int <B>write</B> (int <VAR>fd</VAR>, const void *<VAR>buffer</VAR>, unsigned <VAR>size</VAR>)
+<DD>Writes <VAR>size</VAR> bytes from <VAR>buffer</VAR> to the open file <VAR>fd</VAR>.
+Returns the number of bytes actually written, which may be less than
+<VAR>size</VAR> if some bytes could not be written.
+<P>
+
+Writing past end-of-file would normally extend the file, but file growth
+is not implemented by the basic file system.  The expected behavior is
+to write as many bytes as possible up to end-of-file and return the
+actual number written, or 0 if no bytes could be written at all.
+</P>
+<P>
+
+Fd 1 writes to the console.  Your code to write to the console should
+write all of <VAR>buffer</VAR> in one call to <CODE>putbuf()</CODE>, at least as
+long as <VAR>size</VAR> is not bigger than a few hundred bytes.  (It is
+reasonable to break up larger buffers.)  Otherwise,
+lines of text output by different processes may end up interleaved on
+the console, confusing both human readers and our grading scripts.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX14"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> void <B>seek</B> (int <VAR>fd</VAR>, unsigned <VAR>position</VAR>)
+<DD>Changes the next byte to be read or written in open file <VAR>fd</VAR> to
+<VAR>position</VAR>, expressed in bytes from the beginning of the file.
+(Thus, a <VAR>position</VAR> of 0 is the file's start.)
+<P>
+
+A seek past the current end of a file is not an error.  A later read
+obtains 0 bytes, indicating end of file.  A later write extends the
+file, filling any unwritten gap with zeros.  (However, in Pintos files
+have a fixed length until project 4 is complete, so writes past end of
+file will return an error.)  These semantics are implemented in the
+file system and do not require any special effort in system call
+implementation.
+</P>
+</DL>
+<P>
+
+<A NAME="IDX15"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> unsigned <B>tell</B> (int <VAR>fd</VAR>)
+<DD>Returns the position of the next byte to be read or written in open
+file <VAR>fd</VAR>, expressed in bytes from the beginning of the file.
+</DL>
+<P>
+
+<A NAME="IDX16"></A>
+</P>
+<DL>
+<DT><U>System Call:</U> void <B>close</B> (int <VAR>fd</VAR>)
+<DD>Closes file descriptor <VAR>fd</VAR>.  
+Exiting or terminating a process implicitly closes all its open file
+descriptors, as if by calling this function for each one.
+</DL>
+<P>
+
+The file defines other syscalls.  Ignore them for now.  You will
+implement some of them in project 3 and the rest in project 4, so be
+sure to design your system with extensibility in mind.
+</P>
+<P>
+
+To implement syscalls, you need to provide ways to read and write data
+in user virtual address space.
+You need this ability before you can
+even obtain the system call number, because the system call number is
+on the user's stack in the user's virtual address space.
+This can be a bit tricky: what if the user provides an invalid
+pointer, a pointer into kernel memory, or a block
+partially in one of those regions?  You should handle these cases by
+terminating the user process.  We recommend
+writing and testing this code before implementing any other system
+call functionality.  See section <A HREF="pintos_3.html#SEC39">3.1.5 Accessing User Memory</A>, for more information.
+</P>
+<P>
+
+You must synchronize system calls so that
+any number of user processes can make them at once.  In particular, it
+is not safe to call into the file system code provided in the
+<Q><TT>filesys</TT></Q> directory from multiple threads at once.  Your system
+call implementation must treat the file system code as a critical
+section.  Don't forget
+that <CODE>process_execute()</CODE> also accesses files.  For now, we
+recommend against modifying code in the <Q><TT>filesys</TT></Q> directory.
+</P>
+<P>
+
+We have provided you a user-level function for each system call in
+<Q><TT>lib/user/syscall.c</TT></Q>.  These provide a way for user processes to
+invoke each system call from a C program.  Each uses a little inline
+assembly code to invoke the system call and (if appropriate) returns the
+system call's return value.
+</P>
+<P>
+
+When you're done with this part, and forevermore, Pintos should be
+bulletproof.  Nothing that a user program can do should ever cause the
+OS to crash, panic, fail an assertion, or otherwise malfunction.  It is
+important to emphasize this point: our tests will try to break your
+system calls in many, many ways.  You need to think of all the corner
+cases and handle them.  The sole way a user program should be able to
+cause the OS to halt is by invoking the <CODE>halt</CODE> system call.
+</P>
+<P>
+
+If a system call is passed an invalid argument, acceptable options
+include returning an error value (for those calls that return a
+value), returning an undefined value, or terminating the process.
+</P>
+<P>
+
+See section <A HREF="pintos_3.html#SEC52">3.5.2 System Call Details</A>, for details on how system calls work.
+</P>
+<P>
+
+<A NAME="Denying Writes to Executables"></A>
+<HR SIZE="6">
+<A NAME="SEC46"></A>
+<H3> 3.3.5 Denying Writes to Executables </H3>
+<!--docid::SEC46::-->
+<P>
+
+Add code to deny writes to files in use as executables.  Many OSes do
+this because of the unpredictable results if a process tried to run code
+that was in the midst of being changed on disk.  This is especially
+important once virtual memory is implemented in project 3, but it can't
+hurt even now.
+</P>
+<P>
+
+You can use <CODE>file_deny_write()</CODE> to prevent writes to an open file.
+Calling <CODE>file_allow_write()</CODE> on the file will re-enable them (unless
+the file is denied writes by another opener).  Closing a file will also
+re-enable writes.  Thus, to deny writes to a process's executable, you
+must keep it open as long as the process is still running.
+</P>
+<P>
+
+<A NAME="Project 2 FAQ"></A>
+<HR SIZE="6">
+<A NAME="SEC47"></A>
+<H2> 3.4 FAQ </H2>
+<!--docid::SEC47::-->
+<P>
+
+</P>
+<DL COMPACT>
+<DT>How much code will I need to write?
+<DD><P>
+
+Here's a summary of our reference solution, produced by the
+<CODE>diffstat</CODE> program.  The final row gives total lines inserted
+and deleted; a changed line counts as both an insertion and a deletion.
+</P>
+<P>
+
+The reference solution represents just one possible solution.  Many
+other solutions are also possible and many of those differ greatly from
+the reference solution.  Some excellent solutions may not modify all the
+files modified by the reference solution, and some may modify files not
+modified by the reference solution.
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre> threads/thread.c     |   13 
+ threads/thread.h     |   26 +
+ userprog/exception.c |    8 
+ userprog/process.c   |  247 ++++++++++++++--
+ userprog/syscall.c   |  468 ++++++++++++++++++++++++++++++-
+ userprog/syscall.h   |    1 
+ 6 files changed, 725 insertions(+), 38 deletions(-)
+</pre></td></tr></table><P>
+
+</P>
+<DT>The kernel always panics when I run <CODE>pintos -p <VAR>file</VAR> -- -q</CODE>.
+<DD><P>
+
+Did you format the file system (with <Q><SAMP>pintos -f</SAMP></Q>)?
+</P>
+<P>
+
+Is your file name too long?  The file system limits file names to 14
+characters.  A command like <Q><SAMP>pintos -p ../../examples/echo -- -q</SAMP></Q>
+will exceed the limit.  Use <Q><SAMP>pintos -p ../../examples/echo -a echo
+-- -q</SAMP></Q> to put the file under the name <Q><TT>echo</TT></Q> instead.
+</P>
+<P>
+
+Is the file system full?
+</P>
+<P>
+
+Does the file system already contain 16 files?  The base Pintos file
+system has a 16-file limit.
+</P>
+<P>
+
+The file system may be so fragmented that there's not enough contiguous
+space for your file.
+</P>
+<P>
+
+</P>
+<DT>When I run <CODE>pintos -p ../file --</CODE>, <Q><TT>file</TT></Q> isn't copied.
+<DD><P>
+
+Files are written under the name you refer to them, by default, so in
+this case the file copied in would be named <Q><TT>../file</TT></Q>.  You
+probably want to run <CODE>pintos -p ../file -a file --</CODE> instead.
+</P>
+<P>
+
+You can list the files in your file system with <CODE>pintos -q ls</CODE>.
+</P>
+<P>
+
+</P>
+<DT>All my user programs die with page faults.
+<DD><P>
+
+This will happen if you haven't implemented argument passing
+(or haven't done so correctly).  The basic C library for user programs tries
+to read <VAR>argc</VAR> and <VAR>argv</VAR> off the stack.  If the stack
+isn't properly set up, this causes a page fault.
+</P>
+<P>
+
+</P>
+<DT>All my user programs die with <CODE>system call!</CODE>
+<DD><P>
+
+You'll have to implement system calls before you see anything else.
+Every reasonable program tries to make at least one system call
+(<CODE>exit()</CODE>) and most programs make more than that.  Notably,
+<CODE>printf()</CODE> invokes the <CODE>write</CODE> system call.  The default system
+call handler just prints <Q><SAMP>system call!</SAMP></Q> and terminates the program.
+Until then, you can use <CODE>hex_dump()</CODE> to convince yourself that
+argument passing is implemented correctly (see section <A HREF="pintos_3.html#SEC51">3.5.1 Program Startup Details</A>).
+</P>
+<P>
+
+</P>
+<DT>How can I disassemble user programs?
+<DD><P>
+
+The <CODE>objdump</CODE> (80<VAR>x</VAR>86) or <CODE>i386-elf-objdump</CODE>
+(SPARC) utility can disassemble entire user
+programs or object files.  Invoke it as <CODE>objdump -d
+<VAR>file</VAR></CODE>.  You can use GDB's
+<CODE>disassemble</CODE> command to disassemble individual functions
+(see section <A HREF="pintos_10.html#SEC151">E.5 GDB</A>).
+</P>
+<P>
+
+</P>
+<DT>Why do many C include files not work in Pintos programs?
+<DD><DT>Can I use lib<VAR>foo</VAR> in my Pintos programs?
+<DD><P>
+
+The C library we provide is very limited.  It does not include many of
+the features that are expected of a real operating system's C library.
+The C library must be built specifically for the operating system (and
+architecture), since it must make system calls for I/O and memory
+allocation.  (Not all functions do, of course, but usually the library
+is compiled as a unit.)
+</P>
+<P>
+
+The chances are good that the library you want uses parts of the C library
+that Pintos doesn't implement.  It will probably take at least some
+porting effort to make it work under Pintos.  Notably, the Pintos
+user program C library does not have a <CODE>malloc()</CODE> implementation.
+</P>
+<P>
+
+</P>
+<DT>How do I compile new user programs?
+<DD><P>
+
+Modify <Q><TT>src/examples/Makefile</TT></Q>, then run <CODE>make</CODE>.
+</P>
+<P>
+
+</P>
+<DT>Can I run user programs under a debugger?
+<DD><P>
+
+Yes, with some limitations.  See section <A HREF="pintos_10.html#SEC151">E.5 GDB</A>.
+</P>
+<P>
+
+</P>
+<DT>What's the difference between <CODE>tid_t</CODE> and <CODE>pid_t</CODE>?
+<DD><P>
+
+A <CODE>tid_t</CODE> identifies a kernel thread, which may have a user
+process running in it (if created with <CODE>process_execute()</CODE>) or not
+(if created with <CODE>thread_create()</CODE>).  It is a data type used only
+in the kernel.
+</P>
+<P>
+
+A <CODE>pid_t</CODE> identifies a user process.  It is used by user
+processes and the kernel in the <CODE>exec</CODE> and <CODE>wait</CODE> system
+calls.
+</P>
+<P>
+
+You can choose whatever suitable types you like for <CODE>tid_t</CODE> and
+<CODE>pid_t</CODE>.  By default, they're both <CODE>int</CODE>.  You can make them
+a one-to-one mapping, so that the same values in both identify the
+same process, or you can use a more complex mapping.  It's up to you.
+</DL>
+<P>
+
+<A NAME="Argument Passing FAQ"></A>
+<HR SIZE="6">
+<A NAME="SEC48"></A>
+<H3> 3.4.1 Argument Passing FAQ </H3>
+<!--docid::SEC48::-->
+<P>
+
+</P>
+<DL COMPACT>
+<DT>Isn't the top of stack in kernel virtual memory?
+<DD><P>
+
+The top of stack is at <CODE>PHYS_BASE</CODE>, typically <TT>0xc0000000</TT>, which
+is also where kernel virtual memory starts.
+But before the processor pushes data on the stack, it decrements the stack
+pointer.  Thus, the first (4-byte) value pushed on the stack
+will be at address <TT>0xbffffffc</TT>.
+</P>
+<P>
+
+</P>
+<DT>Is <CODE>PHYS_BASE</CODE> fixed?
+<DD><P>
+
+No.  You should be able to support <CODE>PHYS_BASE</CODE> values that are
+any multiple of <TT>0x10000000</TT> from <TT>0x80000000</TT> to <TT>0xf0000000</TT>,
+simply via recompilation.
+</DL>
+<P>
+
+<A NAME="System Calls FAQ"></A>
+<HR SIZE="6">
+<A NAME="SEC49"></A>
+<H3> 3.4.2 System Calls FAQ </H3>
+<!--docid::SEC49::-->
+<P>
+
+</P>
+<DL COMPACT>
+<DT>Can I just cast a <CODE>struct file *</CODE> to get a file descriptor?
+<DD><DT>Can I just cast a <CODE>struct thread *</CODE> to a <CODE>pid_t</CODE>?
+<DD><P>
+
+You will have to make these design decisions yourself.
+Most operating systems do distinguish between file
+descriptors (or pids) and the addresses of their kernel data
+structures.  You might want to give some thought as to why they do so
+before committing yourself.
+</P>
+<P>
+
+</P>
+<DT>Can I set a maximum number of open files per process?
+<DD><P>
+
+It is better not to set an arbitrary limit.  You may impose a limit of
+128 open files per process, if necessary.
+</P>
+<P>
+
+</P>
+<DT>What happens when an open file is removed?
+<DD><A NAME="Removing an Open File"></A>
+<P>
+
+You should implement the standard Unix semantics for files.  That is, when
+a file is removed any process which has a file descriptor for that file
+may continue to use that descriptor.  This means that
+they can read and write from the file.  The file will not have a name,
+and no other processes will be able to open it, but it will continue
+to exist until all file descriptors referring to the file are closed
+or the machine shuts down.
+</P>
+<P>
+
+</P>
+<DT>How can I run user programs that need more than 4 kB stack space?
+<DD><P>
+
+You may modify the stack setup code to allocate more than one page of
+stack space for each process.  In the next project, you will implement a
+better solution.
+</P>
+<P>
+
+</P>
+<DT>What should happen if an <CODE>exec</CODE> fails midway through loading?
+<DD><P>
+
+<CODE>exec</CODE> should return -1 if the child process fails to load for
+any reason.  This includes the case where the load fails part of the
+way through the process (e.g. where it runs out of memory in the
+<CODE>multi-oom</CODE> test).  Therefore, the parent process cannot return
+from the <CODE>exec</CODE> system call until it is established whether the
+load was successful or not.  The child must communicate this
+information to its parent using appropriate synchronization, such as a
+semaphore (see section <A HREF="pintos_6.html#SEC102">A.3.2 Semaphores</A>), to ensure that the information is
+communicated without race conditions.
+</DL>
+<P>
+
+<A NAME="80x86 Calling Convention"></A>
+<HR SIZE="6">
+<A NAME="SEC50"></A>
+<H2> 3.5 80<VAR>x</VAR>86 Calling Convention </H2>
+<!--docid::SEC50::-->
+<P>
+
+This section summarizes important points of the convention used for
+normal function calls on 32-bit 80<VAR>x</VAR>86 implementations of Unix.
+Some details are omitted for brevity.  If you do want all the details,
+refer to [ <A HREF="pintos_13.html#SysV-i386">SysV-i386</A>].
+</P>
+<P>
+
+The calling convention works like this:
+</P>
+<P>
+
+<OL>
+<LI>
+The caller pushes each of the function's arguments on the stack one by
+one, normally using the <CODE>PUSH</CODE> assembly language instruction.
+Arguments are pushed in right-to-left order.
+<P>
+
+The stack grows downward: each push decrements the stack pointer, then
+stores into the location it now points to, like the C expression
+<Q><SAMP>*--sp = <VAR>value</VAR></SAMP></Q>.
+</P>
+<P>
+
+</P>
+<LI>
+The caller pushes the address of its next instruction (the <EM>return
+address</EM>) on the stack and jumps to the first instruction of the callee.
+A single 80<VAR>x</VAR>86 instruction, <CODE>CALL</CODE>, does both.
+<P>
+
+</P>
+<LI>
+The callee executes.  When it takes control, the stack pointer points to
+the return address, the first argument is just above it, the second
+argument is just above the first argument, and so on.
+<P>
+
+</P>
+<LI>
+If the callee has a return value, it stores it into register <CODE>EAX</CODE>.
+<P>
+
+</P>
+<LI>
+The callee returns by popping the return address from the stack and
+jumping to the location it specifies, using the 80<VAR>x</VAR>86 <CODE>RET</CODE>
+instruction.
+<P>
+
+</P>
+<LI>
+The caller pops the arguments off the stack.
+</OL>
+<P>
+
+Consider a function <CODE>f()</CODE> that takes three <CODE>int</CODE> arguments.
+This diagram shows a sample stack frame as seen by the callee at the
+beginning of step 3 above, supposing that <CODE>f()</CODE> is invoked as
+<CODE>f(1, 2, 3)</CODE>.  The initial stack address is arbitrary:
+</P>
+<P>
+
+<CENTER>
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>                             +----------------+
+                  0xbffffe7c |        3       |
+                  0xbffffe78 |        2       |
+                  0xbffffe74 |        1       |
+stack pointer --&gt; 0xbffffe70 | return address |
+                             +----------------+
+</pre></td></tr></table></CENTER>
+<P>
+
+<A NAME="Program Startup Details"></A>
+<HR SIZE="6">
+<A NAME="SEC51"></A>
+<H3> 3.5.1 Program Startup Details </H3>
+<!--docid::SEC51::-->
+<P>
+
+The Pintos C library for user programs designates <CODE>_start()</CODE>, in
+<Q><TT>lib/user/entry.c</TT></Q>, as the entry point for user programs.  This
+function is a wrapper around <CODE>main()</CODE> that calls <CODE>exit()</CODE> if
+<CODE>main()</CODE> returns:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>void
+_start (int argc, char *argv[]) 
+{
+  exit (main (argc, argv));
+}
+</pre></td></tr></table><P>
+
+The kernel must put the arguments for the initial function on the stack
+before it allows the user program to begin executing.  The arguments are
+passed in the same way as the normal calling convention (see section <A HREF="pintos_3.html#SEC50">3.5 80<VAR>x</VAR>86 Calling Convention</A>).
+</P>
+<P>
+
+Consider how to handle arguments for the following example command:
+<Q><SAMP>/bin/ls -l foo bar</SAMP></Q>.
+First, break the command into words: <Q><SAMP>/bin/ls</SAMP></Q>,
+<Q><SAMP>-l</SAMP></Q>, <Q><SAMP>foo</SAMP></Q>, <Q><SAMP>bar</SAMP></Q>.  Place the words at the top of the
+stack.  Order doesn't matter, because they will be referenced through
+pointers.
+</P>
+<P>
+
+Then, push the address of each string plus a null pointer sentinel, on
+the stack, in right-to-left order.  These are the elements of
+<CODE>argv</CODE>.  The null pointer sentinel ensures that <CODE>argv[argc]</CODE>
+is a null pointer, as required by the C standard.  The order ensures
+that <CODE>argv[0]</CODE> is at the lowest virtual address.  Word-aligned
+accesses are faster than unaligned accesses, so for best performance
+round the stack pointer down to a multiple of 4 before the first push.
+</P>
+<P>
+
+Then, push <CODE>argv</CODE> (the address of <CODE>argv[0]</CODE>) and <CODE>argc</CODE>,
+in that order.  Finally, push a fake &quot;return address&quot;: although the
+entry function will never return, its stack frame must have the same
+structure as any other.
+</P>
+<P>
+
+The table below shows the state of the stack and the relevant registers
+right before the beginning of the user program, assuming
+<CODE>PHYS_BASE</CODE> is <TT>0xc0000000</TT>:
+</P>
+<P>
+
+<CENTER>
+</P>
+<TABLE>
+<TR><TD>Address </TD><TD> Name </TD><TD> Data </TD><TD> Type</TD>
+</TR>
+<TR><TD><TT>0xbffffffc</TT> </TD><TD> <CODE>argv[3][<small>...</small>]</CODE> </TD><TD> <Q><SAMP>bar\0</SAMP></Q> </TD><TD> <CODE>char[4]</CODE></TD>
+</TR>
+<TR><TD><TT>0xbffffff8</TT> </TD><TD> <CODE>argv[2][<small>...</small>]</CODE> </TD><TD> <Q><SAMP>foo\0</SAMP></Q> </TD><TD> <CODE>char[4]</CODE></TD>
+</TR>
+<TR><TD><TT>0xbffffff5</TT> </TD><TD> <CODE>argv[1][<small>...</small>]</CODE> </TD><TD> <Q><SAMP>-l\0</SAMP></Q> </TD><TD> <CODE>char[3]</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffed</TT> </TD><TD> <CODE>argv[0][<small>...</small>]</CODE> </TD><TD> <Q><SAMP>/bin/ls\0</SAMP></Q> </TD><TD> <CODE>char[8]</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffec</TT> </TD><TD> word-align </TD><TD> 0 </TD><TD> <CODE>uint8_t</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffe8</TT> </TD><TD> <CODE>argv[4]</CODE> </TD><TD> <TT>0</TT> </TD><TD> <CODE>char *</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffe4</TT> </TD><TD> <CODE>argv[3]</CODE> </TD><TD> <TT>0xbffffffc</TT> </TD><TD> <CODE>char *</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffe0</TT> </TD><TD> <CODE>argv[2]</CODE> </TD><TD> <TT>0xbffffff8</TT> </TD><TD> <CODE>char *</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffdc</TT> </TD><TD> <CODE>argv[1]</CODE> </TD><TD> <TT>0xbffffff5</TT> </TD><TD> <CODE>char *</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffd8</TT> </TD><TD> <CODE>argv[0]</CODE> </TD><TD> <TT>0xbfffffed</TT> </TD><TD> <CODE>char *</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffd4</TT> </TD><TD> <CODE>argv</CODE> </TD><TD> <TT>0xbfffffd8</TT> </TD><TD> <CODE>char **</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffd0</TT> </TD><TD> <CODE>argc</CODE> </TD><TD> 4 </TD><TD> <CODE>int</CODE></TD>
+</TR>
+<TR><TD><TT>0xbfffffcc</TT> </TD><TD> return address </TD><TD> 0 </TD><TD> <CODE>void (*) ()</CODE></TD>
+</TR></TABLE>
+</CENTER>
+<P>
+
+In this example, the stack pointer would be initialized to
+<TT>0xbfffffcc</TT>.
+</P>
+<P>
+
+As shown above, your code should start the stack at the very top of
+the user virtual address space, in the page just below virtual address
+<CODE>PHYS_BASE</CODE> (defined in <Q><TT>threads/vaddr.h</TT></Q>).
+</P>
+<P>
+
+You may find the non-standard <CODE>hex_dump()</CODE> function, declared in
+<Q><TT>&lt;stdio.h&gt;</TT></Q>, useful for debugging your argument passing code.
+Here's what it would show in the above example:
+</P>
+<P>
+
+<TABLE><tr><td>&nbsp;</td><td class=example><pre>bfffffc0                                      00 00 00 00 |            ....|
+bfffffd0  04 00 00 00 d8 ff ff bf-ed ff ff bf f5 ff ff bf |................|
+bfffffe0  f8 ff ff bf fc ff ff bf-00 00 00 00 00 2f 62 69 |............./bi|
+bffffff0  6e 2f 6c 73 00 2d 6c 00-66 6f 6f 00 62 61 72 00 |n/ls.-l.foo.bar.|
+</pre></td></tr></table><P>
+
+<A NAME="System Call Details"></A>
+<HR SIZE="6">
+<A NAME="SEC52"></A>
+<H3> 3.5.2 System Call Details </H3>
+<!--docid::SEC52::-->
+<P>
+
+The first project already dealt with one way that the operating system
+can regain control from a user program: interrupts from timers and I/O
+devices.  These are &quot;external&quot; interrupts, because they are caused
+by entities outside the CPU (see section <A HREF="pintos_6.html#SEC110">A.4.3 External Interrupt Handling</A>).
+</P>
+<P>
+
+The operating system also deals with software exceptions, which are
+events that occur in program code (see section <A HREF="pintos_6.html#SEC109">A.4.2 Internal Interrupt Handling</A>).  These can be errors such as a page fault or division by
+zero.  Exceptions are also the means by which a user program
+can request services (&quot;system calls&quot;) from the operating system.
+</P>
+<P>
+
+In the 80<VAR>x</VAR>86 architecture, the <Q><SAMP>int</SAMP></Q> instruction is the
+most commonly used means for invoking system calls.  This instruction
+is handled in the same way as other software exceptions.  In Pintos,
+user programs invoke <Q><SAMP>int $0x30</SAMP></Q> to make a system call.  The
+system call number and any additional arguments are expected to be
+pushed on the stack in the normal fashion before invoking the
+interrupt (see section <A HREF="pintos_3.html#SEC50">3.5 80<VAR>x</VAR>86 Calling Convention</A>).
+</P>
+<P>
+
+Thus, when the system call handler <CODE>syscall_handler()</CODE> gets control,
+the system call number is in the 32-bit word at the caller's stack
+pointer, the first argument is in the 32-bit word at the next higher
+address, and so on.  The caller's stack pointer is accessible to
+<CODE>syscall_handler()</CODE> as the <Q><SAMP>esp</SAMP></Q> member of the
+<CODE>struct intr_frame</CODE> passed to it.  (<CODE>struct intr_frame</CODE> is on the kernel
+stack.)
+</P>
+<P>
+
+The 80<VAR>x</VAR>86 convention for function return values is to place them
+in the <CODE>EAX</CODE> register.  System calls that return a value can do
+so by modifying the <Q><SAMP>eax</SAMP></Q> member of <CODE>struct intr_frame</CODE>.
+</P>
+<P>
+
+You should try to avoid writing large amounts of repetitive code for
+implementing system calls.  Each system call argument, whether an
+integer or a pointer, takes up 4 bytes on the stack.  You should be able
+to take advantage of this to avoid writing much near-identical code for
+retrieving each system call's arguments from the stack.
+<A NAME="Project 3--Virtual Memory"></A>
+<HR SIZE="6">
+<TABLE CELLPADDING=1 CELLSPACING=1 BORDER=0>
+<TR><TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_3.html#SEC32"> &lt;&lt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_4.html#SEC53"> &gt;&gt; </A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT"> &nbsp; <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Top">Top</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos.html#SEC_Contents">Contents</A>]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[Index]</TD>
+<TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="pintos_abt.html#SEC_About"> ? </A>]</TD>
+</TR></TABLE>
+<BR>
+<FONT SIZE="-1">
+This document was generated
+by on <I>October, 26 2020</I>
+using <A HREF="http://texi2html.cvshome.org"><I>texi2html</I></A>
+</FONT>
+
+</BODY>
+</HTML>
