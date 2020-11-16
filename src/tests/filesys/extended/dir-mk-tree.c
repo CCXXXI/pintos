@@ -5,8 +5,7 @@
 #include "tests/main.h"
 
 void
-test_main (void) 
+test_main(void)
 {
-  make_tree (4, 3, 3, 4);
+    make_tree(4, 3, 3, 4);
 }
-

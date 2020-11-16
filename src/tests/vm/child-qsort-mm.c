@@ -8,17 +8,17 @@
 #include "tests/vm/qsort.h"
 
 int
-main (int argc UNUSED, char *argv[]) 
+main(int argc UNUSED, char* argv[])
 {
-  int handle;
-  unsigned char *p = (unsigned char *) 0x10000000;
+    int handle;
+    unsigned char* p = (unsigned char*)0x10000000;
 
-  test_name = "child-qsort-mm";
-  quiet = true;
+    test_name = "child-qsort-mm";
+    quiet = true;
 
-  CHECK ((handle = open (argv[1])) > 1, "open \"%s\"", argv[1]);
-  CHECK (mmap (handle, p) != MAP_FAILED, "mmap \"%s\"", argv[1]);
-  qsort_bytes (p, 1024 * 128);
-  
-  return 80;
+    CHECK((handle = open(argv[1])) > 1, "open \"%s\"", argv[1]);
+    CHECK(mmap(handle, p) != MAP_FAILED, "mmap \"%s\"", argv[1]);
+    qsort_bytes(p, 1024 * 128);
+
+    return 80;
 }

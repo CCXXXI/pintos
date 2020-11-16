@@ -11,25 +11,25 @@
 char buf[BUF_SIZE];
 
 int
-main (int argc, char *argv[])
+main(int argc, char* argv[])
 {
-  int child_idx;
-  int fd;
+    int child_idx;
+    int fd;
 
-  quiet = true;
-  
-  CHECK (argc == 2, "argc must be 2, actually %d", argc);
-  child_idx = atoi (argv[1]);
+    quiet = true;
 
-  random_init (0);
-  random_bytes (buf, sizeof buf);
+    CHECK(argc == 2, "argc must be 2, actually %d", argc);
+    child_idx = atoi(argv[1]);
 
-  CHECK ((fd = open (file_name)) > 1, "open \"%s\"", file_name);
-  seek (fd, CHUNK_SIZE * child_idx);
-  CHECK (write (fd, buf + CHUNK_SIZE * child_idx, CHUNK_SIZE) > 0,
-         "write \"%s\"", file_name);
-  msg ("close \"%s\"", file_name);
-  close (fd);
+    random_init(0);
+    random_bytes(buf, sizeof buf);
 
-  return child_idx;
+    CHECK((fd = open(file_name)) > 1, "open \"%s\"", file_name);
+    seek(fd, CHUNK_SIZE * child_idx);
+    CHECK(write(fd, buf + CHUNK_SIZE * child_idx, CHUNK_SIZE) > 0,
+          "write \"%s\"", file_name);
+    msg("close \"%s\"", file_name);
+    close(fd);
+
+    return child_idx;
 }

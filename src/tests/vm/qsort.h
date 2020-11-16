@@ -3,6 +3,6 @@
 
 #include <stddef.h>
 
-void qsort_bytes (unsigned char *buf, size_t size);
+void qsort_bytes(unsigned char* buf, size_t size);
 
 #endif /* tests/vm/qsort.h */

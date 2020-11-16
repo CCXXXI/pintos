@@ -5,10 +5,10 @@
 #include "tests/main.h"
 
 void
-test_main (void) 
+test_main(void)
 {
-  int handle;
-  CHECK ((handle = open ("sample.txt")) > 1, "open \"sample.txt\"");
-  msg ("close \"sample.txt\"");
-  close (handle);
+    int handle;
+    CHECK((handle = open("sample.txt")) > 1, "open \"sample.txt\"");
+    msg("close \"sample.txt\"");
+    close(handle);
 }

@@ -6,8 +6,8 @@
 #include "tests/main.h"
 
 void
-test_main (void) 
+test_main(void)
 {
-  CHECK (!remove ("/"), "remove \"/\" (must fail)");
-  CHECK (create ("/a", 243), "create \"/a\"");
+    CHECK(!remove("/"), "remove \"/\" (must fail)");
+    CHECK(create("/a", 243), "create \"/a\"");
 }

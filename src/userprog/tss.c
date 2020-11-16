@@ -49,16 +49,16 @@
    Interrupt-Handler Procedures" for a description of when and
    how stack switching occurs during an interrupt. */
 struct tss
-  {
+{
     uint16_t back_link, :16;
-    void *esp0;                         /* Ring 0 stack virtual address. */
-    uint16_t ss0, :16;                  /* Ring 0 stack segment selector. */
-    void *esp1;
+    void* esp0; /* Ring 0 stack virtual address. */
+    uint16_t ss0, :16; /* Ring 0 stack segment selector. */
+    void* esp1;
     uint16_t ss1, :16;
-    void *esp2;
+    void* esp2;
     uint16_t ss2, :16;
     uint32_t cr3;
-    void (*eip) (void);
+    void (*eip)(void);
     uint32_t eflags;
     uint32_t eax, ecx, edx, ebx;
     uint32_t esp, ebp, esi, edi;
@@ -70,37 +70,37 @@ struct tss
     uint16_t gs, :16;
     uint16_t ldt, :16;
     uint16_t trace, bitmap;
-  };
+};
 
 /* Kernel TSS. */
-static struct tss *tss;
+static struct tss* tss;
 
 /* Initializes the kernel TSS. */
 void
-tss_init (void) 
+tss_init(void)
 {
-  /* Our TSS is never used in a call gate or task gate, so only a
-     few fields of it are ever referenced, and those are the only
-     ones we initialize. */
-  tss = palloc_get_page (PAL_ASSERT | PAL_ZERO);
-  tss->ss0 = SEL_KDSEG;
-  tss->bitmap = 0xdfff;
-  tss_update ();
+    /* Our TSS is never used in a call gate or task gate, so only a
+       few fields of it are ever referenced, and those are the only
+       ones we initialize. */
+    tss = palloc_get_page(PAL_ASSERT | PAL_ZERO);
+    tss->ss0 = SEL_KDSEG;
+    tss->bitmap = 0xdfff;
+    tss_update();
 }
 
 /* Returns the kernel TSS. */
-struct tss *
-tss_get (void) 
+struct tss*
+tss_get(void)
 {
-  ASSERT (tss != NULL);
-  return tss;
+    ASSERT(tss != NULL);
+    return tss;
 }
 
 /* Sets the ring 0 stack pointer in the TSS to point to the end
    of the thread stack. */
 void
-tss_update (void) 
+tss_update(void)
 {
-  ASSERT (tss != NULL);
-  tss->esp0 = (uint8_t *) thread_current () + PGSIZE;
+    ASSERT(tss != NULL);
+    tss->esp0 = (uint8_t*)thread_current() + PGSIZE;
 }

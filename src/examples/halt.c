@@ -7,8 +7,8 @@
 #include <syscall.h>
 
 int
-main (void)
+main(void)
 {
-  halt ();
-  /* not reached */
+    halt();
+    /* not reached */
 }

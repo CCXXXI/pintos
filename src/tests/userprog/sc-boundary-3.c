@@ -8,13 +8,19 @@
 #include "tests/main.h"
 
 void
-test_main (void) 
+test_main(void)
 {
-  char *p = get_bad_boundary ();
-  p--;
-  *p = 100;
+    char* p = get_bad_boundary();
+    p--;
+    *p = 100;
 
-  /* Invoke the system call. */
-  asm volatile ("movl %0, %%esp; int $0x30" : : "g" (p));
-  fail ("should have killed process");
+    /* Invoke the system call. */
+    asm volatile (
+    "movl %0, %%esp; int $0x30"
+    :
+    :
+    "g"(p)
+    )
+    ;
+    fail("should have killed process");
 }

@@ -5,7 +5,7 @@
 #include "tests/main.h"
 
 void
-test_main (void)
+test_main(void)
 {
-  fail ("bad addr read as %d", *(int *) 0x04000000);
+    fail("bad addr read as %d", *(int*)0x04000000);
 }

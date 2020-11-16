@@ -13,9 +13,9 @@
 
 /* Current state of shift keys.
    True if depressed, false otherwise. */
-static bool left_shift, right_shift;    /* Left and right Shift keys. */
-static bool left_alt, right_alt;        /* Left and right Alt keys. */
-static bool left_ctrl, right_ctrl;      /* Left and right Ctl keys. */
+static bool left_shift, right_shift; /* Left and right Shift keys. */
+static bool left_alt, right_alt; /* Left and right Alt keys. */
+static bool left_ctrl, right_ctrl; /* Left and right Ctl keys. */
 
 /* Status of Caps Lock.
    True when on, false when off. */
@@ -28,33 +28,33 @@ static intr_handler_func keyboard_interrupt;
 
 /* Initializes the keyboard. */
 void
-kbd_init (void) 
+kbd_init(void)
 {
-  intr_register_ext (0x21, keyboard_interrupt, "8042 Keyboard");
+    intr_register_ext(0x21, keyboard_interrupt, "8042 Keyboard");
 }
 
 /* Prints keyboard statistics. */
 void
-kbd_print_stats (void) 
+kbd_print_stats(void)
 {
-  printf ("Keyboard: %lld keys pressed\n", key_cnt);
+    printf("Keyboard: %lld keys pressed\n", key_cnt);
 }
-
+
 /* Maps a set of contiguous scancodes into characters. */
 struct keymap
-  {
-    uint8_t first_scancode;     /* First scancode. */
-    const char *chars;          /* chars[0] has scancode first_scancode,
+{
+    uint8_t first_scancode; /* First scancode. */
+    const char* chars; /* chars[0] has scancode first_scancode,
                                    chars[1] has scancode first_scancode + 1,
                                    and so on to the end of the string. */
-  };
-  
+};
+
 /* Keys that produce the same characters regardless of whether
    the Shift keys are down.  Case of letters is an exception
    that we handle elsewhere.  */
-static const struct keymap invariant_keymap[] = 
-  {
-    {0x01, "\033"},             /* Escape. */
+static const struct keymap invariant_keymap[] =
+{
+    {0x01, "\033"}, /* Escape. */
     {0x0e, "\b"},
     {0x0f, "\tQWERTYUIOP"},
     {0x1c, "\r"},
@@ -62,135 +62,135 @@ static const struct keymap invariant_keymap[] =
     {0x2c, "ZXCVBNM"},
     {0x37, "*"},
     {0x39, " "},
-    {0x53, "\177"},             /* Delete. */
+    {0x53, "\177"}, /* Delete. */
     {0, NULL},
-  };
+};
 
 /* Characters for keys pressed without Shift, for those keys
    where it matters. */
-static const struct keymap unshifted_keymap[] = 
-  {
+static const struct keymap unshifted_keymap[] =
+{
     {0x02, "1234567890-="},
     {0x1a, "[]"},
     {0x27, ";'`"},
     {0x2b, "\\"},
     {0x33, ",./"},
     {0, NULL},
-  };
-  
+};
+
 /* Characters for keys pressed with Shift, for those keys where
    it matters. */
-static const struct keymap shifted_keymap[] = 
-  {
+static const struct keymap shifted_keymap[] =
+{
     {0x02, "!@#$%^&*()_+"},
     {0x1a, "{}"},
     {0x27, ":\"~"},
     {0x2b, "|"},
     {0x33, "<>?"},
     {0, NULL},
-  };
+};
 
-static bool map_key (const struct keymap[], unsigned scancode, uint8_t *);
+static bool map_key(const struct keymap [], unsigned scancode, uint8_t*);
 
 static void
-keyboard_interrupt (struct intr_frame *args UNUSED) 
+keyboard_interrupt(struct intr_frame*args UNUSED)
 {
-  /* Status of shift keys. */
-  bool shift = left_shift || right_shift;
-  bool alt = left_alt || right_alt;
-  bool ctrl = left_ctrl || right_ctrl;
+    /* Status of shift keys. */
+    bool shift = left_shift || right_shift;
+    bool alt = left_alt || right_alt;
+    bool ctrl = left_ctrl || right_ctrl;
 
-  /* Keyboard scancode. */
-  unsigned code;
+    /* Keyboard scancode. */
+    unsigned code;
 
-  /* False if key pressed, true if key released. */
-  bool release;
+    /* False if key pressed, true if key released. */
+    bool release;
 
-  /* Character that corresponds to `code'. */
-  uint8_t c;
+    /* Character that corresponds to `code'. */
+    uint8_t c;
 
-  /* Read scancode, including second byte if prefix code. */
-  code = inb (DATA_REG);
-  if (code == 0xe0)
-    code = (code << 8) | inb (DATA_REG);
+    /* Read scancode, including second byte if prefix code. */
+    code = inb(DATA_REG);
+    if (code == 0xe0)
+        code = (code << 8) | inb(DATA_REG);
 
-  /* Bit 0x80 distinguishes key press from key release
-     (even if there's a prefix). */
-  release = (code & 0x80) != 0;
-  code &= ~0x80u;
+    /* Bit 0x80 distinguishes key press from key release
+       (even if there's a prefix). */
+    release = (code & 0x80) != 0;
+    code &= ~0x80u;
 
-  /* Interpret key. */
-  if (code == 0x3a) 
+    /* Interpret key. */
+    if (code == 0x3a)
     {
-      /* Caps Lock. */
-      if (!release)
-        caps_lock = !caps_lock;
+        /* Caps Lock. */
+        if (!release)
+            caps_lock = !caps_lock;
     }
-  else if (map_key (invariant_keymap, code, &c)
-           || (!shift && map_key (unshifted_keymap, code, &c))
-           || (shift && map_key (shifted_keymap, code, &c)))
+    else if (map_key(invariant_keymap, code, &c)
+        || (!shift && map_key(unshifted_keymap, code, &c))
+        || (shift && map_key(shifted_keymap, code, &c)))
     {
-      /* Ordinary character. */
-      if (!release) 
+        /* Ordinary character. */
+        if (!release)
         {
-          /* Reboot if Ctrl+Alt+Del pressed. */
-          if (c == 0177 && ctrl && alt)
-            shutdown_reboot ();
+            /* Reboot if Ctrl+Alt+Del pressed. */
+            if (c == 0177 && ctrl && alt)
+                shutdown_reboot();
 
-          /* Handle Ctrl, Shift.
-             Note that Ctrl overrides Shift. */
-          if (ctrl && c >= 0x40 && c < 0x60) 
+            /* Handle Ctrl, Shift.
+               Note that Ctrl overrides Shift. */
+            if (ctrl && c >= 0x40 && c < 0x60)
             {
-              /* A is 0x41, Ctrl+A is 0x01, etc. */
-              c -= 0x40; 
+                /* A is 0x41, Ctrl+A is 0x01, etc. */
+                c -= 0x40;
             }
-          else if (shift == caps_lock)
-            c = tolower (c);
+            else if (shift == caps_lock)
+                c = tolower(c);
 
-          /* Handle Alt by setting the high bit.
-             This 0x80 is unrelated to the one used to
-             distinguish key press from key release. */
-          if (alt)
-            c += 0x80;
+            /* Handle Alt by setting the high bit.
+               This 0x80 is unrelated to the one used to
+               distinguish key press from key release. */
+            if (alt)
+                c += 0x80;
 
-          /* Append to keyboard buffer. */
-          if (!input_full ())
+            /* Append to keyboard buffer. */
+            if (!input_full())
             {
-              key_cnt++;
-              input_putc (c);
+                key_cnt++;
+                input_putc(c);
             }
         }
     }
-  else
+    else
     {
-      /* Maps a keycode into a shift state variable. */
-      struct shift_key 
+        /* Maps a keycode into a shift state variable. */
+        struct shift_key
         {
-          unsigned scancode;
-          bool *state_var;
+            unsigned scancode;
+            bool* state_var;
         };
 
-      /* Table of shift keys. */
-      static const struct shift_key shift_keys[] = 
+        /* Table of shift keys. */
+        static const struct shift_key shift_keys[] =
         {
-          {  0x2a, &left_shift},
-          {  0x36, &right_shift},
-          {  0x38, &left_alt},
-          {0xe038, &right_alt},
-          {  0x1d, &left_ctrl},
-          {0xe01d, &right_ctrl},
-          {0,      NULL},
+            {0x2a, &left_shift},
+            {0x36, &right_shift},
+            {0x38, &left_alt},
+            {0xe038, &right_alt},
+            {0x1d, &left_ctrl},
+            {0xe01d, &right_ctrl},
+            {0, NULL},
         };
-  
-      const struct shift_key *key;
 
-      /* Scan the table. */
-      for (key = shift_keys; key->scancode != 0; key++) 
-        if (key->scancode == code)
-          {
-            *key->state_var = !release;
-            break;
-          }
+        const struct shift_key* key;
+
+        /* Scan the table. */
+        for (key = shift_keys; key->scancode != 0; key++)
+            if (key->scancode == code)
+            {
+                *key->state_var = !release;
+                break;
+            }
     }
 }
 
@@ -199,15 +199,15 @@ keyboard_interrupt (struct intr_frame *args UNUSED)
    true.
    If not found, returns false and C is ignored. */
 static bool
-map_key (const struct keymap k[], unsigned scancode, uint8_t *c) 
+map_key(const struct keymap k[], unsigned scancode, uint8_t* c)
 {
-  for (; k->first_scancode != 0; k++)
-    if (scancode >= k->first_scancode
-        && scancode < k->first_scancode + strlen (k->chars)) 
-      {
-        *c = k->chars[scancode - k->first_scancode];
-        return true; 
-      }
+    for (; k->first_scancode != 0; k++)
+        if (scancode >= k->first_scancode
+            && scancode < k->first_scancode + strlen(k->chars))
+        {
+            *c = k->chars[scancode - k->first_scancode];
+            return true;
+        }
 
-  return false;
+    return false;
 }

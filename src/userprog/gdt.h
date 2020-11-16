@@ -10,6 +10,6 @@
 #define SEL_TSS         0x28    /* Task-state segment. */
 #define SEL_CNT         6       /* Number of segments. */
 
-void gdt_init (void);
+void gdt_init(void);
 
 #endif /* userprog/gdt.h */

@@ -13,78 +13,78 @@
 #include <string.h>
 
 static bool
-list_dir (const char *dir, bool verbose) 
+list_dir(const char* dir, bool verbose)
 {
-  int dir_fd = open (dir);
-  if (dir_fd == -1) 
+    int dir_fd = open(dir);
+    if (dir_fd == -1)
     {
-      printf ("%s: not found\n", dir);
-      return false;
+        printf("%s: not found\n", dir);
+        return false;
     }
 
-  if (isdir (dir_fd))
+    if (isdir(dir_fd))
     {
-      char name[READDIR_MAX_LEN];
+        char name[READDIR_MAX_LEN];
 
-      printf ("%s", dir);
-      if (verbose)
-        printf (" (inumber %d)", inumber (dir_fd));
-      printf (":\n");
+        printf("%s", dir);
+        if (verbose)
+            printf(" (inumber %d)", inumber(dir_fd));
+        printf(":\n");
 
-      while (readdir (dir_fd, name)) 
+        while (readdir(dir_fd, name))
         {
-          printf ("%s", name); 
-          if (verbose) 
+            printf("%s", name);
+            if (verbose)
             {
-              char full_name[128];
-              int entry_fd;
+                char full_name[128];
+                int entry_fd;
 
-              snprintf (full_name, sizeof full_name, "%s/%s", dir, name);
-              entry_fd = open (full_name);
+                snprintf(full_name, sizeof full_name, "%s/%s", dir, name);
+                entry_fd = open(full_name);
 
-              printf (": ");
-              if (entry_fd != -1)
+                printf(": ");
+                if (entry_fd != -1)
                 {
-                  if (isdir (entry_fd))
-                    printf ("directory");
-                  else
-                    printf ("%d-byte file", filesize (entry_fd));
-                  printf (", inumber %d", inumber (entry_fd));
+                    if (isdir(entry_fd))
+                        printf("directory");
+                    else
+                        printf("%d-byte file", filesize(entry_fd));
+                    printf(", inumber %d", inumber(entry_fd));
                 }
-              else
-                printf ("open failed");
-              close (entry_fd);
+                else
+                    printf("open failed");
+                close(entry_fd);
             }
-          printf ("\n");
+            printf("\n");
         }
     }
-  else 
-    printf ("%s: not a directory\n", dir);
-  close (dir_fd);
-  return true;
+    else
+        printf("%s: not a directory\n", dir);
+    close(dir_fd);
+    return true;
 }
 
 int
-main (int argc, char *argv[]) 
+main(int argc, char* argv[])
 {
-  bool success = true;
-  bool verbose = false;
-  
-  if (argc > 1 && !strcmp (argv[1], "-l")) 
+    bool success = true;
+    bool verbose = false;
+
+    if (argc > 1 && !strcmp(argv[1], "-l"))
     {
-      verbose = true;
-      argv++;
-      argc--;
+        verbose = true;
+        argv++;
+        argc--;
     }
-  
-  if (argc <= 1)
-    success = list_dir (".", verbose);
-  else 
+
+    if (argc <= 1)
+        success = list_dir(".", verbose);
+    else
     {
-      int i;
-      for (i = 1; i < argc; i++)
-        if (!list_dir (argv[i], verbose))
-          success = false;
+        int i;
+        for (i = 1; i < argc; i++)
+            if (!list_dir(argv[i], verbose))
+                success = false;
     }
-  return success ? EXIT_SUCCESS : EXIT_FAILURE;
+    return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

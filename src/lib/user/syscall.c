@@ -62,123 +62,123 @@
         })
 
 void
-halt (void) 
+halt(void)
 {
-  syscall0 (SYS_HALT);
-  NOT_REACHED ();
+    syscall0(SYS_HALT);
+    NOT_REACHED();
 }
 
 void
-exit (int status)
+exit(int status)
 {
-  syscall1 (SYS_EXIT, status);
-  NOT_REACHED ();
+    syscall1(SYS_EXIT, status);
+    NOT_REACHED();
 }
 
 pid_t
-exec (const char *file)
+exec(const char* file)
 {
-  return (pid_t) syscall1 (SYS_EXEC, file);
+    return (pid_t) syscall1(SYS_EXEC, file);
 }
 
 int
-wait (pid_t pid)
+wait(pid_t pid)
 {
-  return syscall1 (SYS_WAIT, pid);
+    return syscall1(SYS_WAIT, pid);
 }
 
 bool
-create (const char *file, unsigned initial_size)
+create(const char* file, unsigned initial_size)
 {
-  return syscall2 (SYS_CREATE, file, initial_size);
+    return syscall2(SYS_CREATE, file, initial_size);
 }
 
 bool
-remove (const char *file)
+remove(const char* file)
 {
-  return syscall1 (SYS_REMOVE, file);
+    return syscall1(SYS_REMOVE, file);
 }
 
 int
-open (const char *file)
+open(const char* file)
 {
-  return syscall1 (SYS_OPEN, file);
+    return syscall1(SYS_OPEN, file);
 }
 
 int
-filesize (int fd) 
+filesize(int fd)
 {
-  return syscall1 (SYS_FILESIZE, fd);
+    return syscall1(SYS_FILESIZE, fd);
 }
 
 int
-read (int fd, void *buffer, unsigned size)
+read(int fd, void* buffer, unsigned size)
 {
-  return syscall3 (SYS_READ, fd, buffer, size);
+    return syscall3(SYS_READ, fd, buffer, size);
 }
 
 int
-write (int fd, const void *buffer, unsigned size)
+write(int fd, const void* buffer, unsigned size)
 {
-  return syscall3 (SYS_WRITE, fd, buffer, size);
+    return syscall3(SYS_WRITE, fd, buffer, size);
 }
 
 void
-seek (int fd, unsigned position) 
+seek(int fd, unsigned position)
 {
-  syscall2 (SYS_SEEK, fd, position);
+    syscall2(SYS_SEEK, fd, position);
 }
 
 unsigned
-tell (int fd) 
+tell(int fd)
 {
-  return syscall1 (SYS_TELL, fd);
+    return syscall1(SYS_TELL, fd);
 }
 
 void
-close (int fd)
+close(int fd)
 {
-  syscall1 (SYS_CLOSE, fd);
+    syscall1(SYS_CLOSE, fd);
 }
 
 mapid_t
-mmap (int fd, void *addr)
+mmap(int fd, void* addr)
 {
-  return syscall2 (SYS_MMAP, fd, addr);
+    return syscall2(SYS_MMAP, fd, addr);
 }
 
 void
-munmap (mapid_t mapid)
+munmap(mapid_t mapid)
 {
-  syscall1 (SYS_MUNMAP, mapid);
+    syscall1(SYS_MUNMAP, mapid);
 }
 
 bool
-chdir (const char *dir)
+chdir(const char* dir)
 {
-  return syscall1 (SYS_CHDIR, dir);
+    return syscall1(SYS_CHDIR, dir);
 }
 
 bool
-mkdir (const char *dir)
+mkdir(const char* dir)
 {
-  return syscall1 (SYS_MKDIR, dir);
+    return syscall1(SYS_MKDIR, dir);
 }
 
 bool
-readdir (int fd, char name[READDIR_MAX_LEN + 1]) 
+readdir(int fd, char name[READDIR_MAX_LEN + 1])
 {
-  return syscall2 (SYS_READDIR, fd, name);
+    return syscall2(SYS_READDIR, fd, name);
 }
 
 bool
-isdir (int fd) 
+isdir(int fd)
 {
-  return syscall1 (SYS_ISDIR, fd);
+    return syscall1(SYS_ISDIR, fd);
 }
 
 int
-inumber (int fd) 
+inumber(int fd)
 {
-  return syscall1 (SYS_INUMBER, fd);
+    return syscall1(SYS_INUMBER, fd);
 }

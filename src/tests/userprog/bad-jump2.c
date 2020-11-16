@@ -5,9 +5,9 @@
 #include "tests/main.h"
 
 void
-test_main (void) 
+test_main(void)
 {
-  msg ("Congratulations - you have successfully called kernel code: %d", 
+    msg("Congratulations - you have successfully called kernel code: %d",
         ((int (*)(void))0xC0000000)());
-  fail ("should have exited with -1");
+    fail("should have exited with -1");
 }
