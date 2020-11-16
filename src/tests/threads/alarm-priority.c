@@ -13,8 +13,7 @@ static thread_func alarm_priority_thread;
 static int64_t wake_time;
 static struct semaphore wait_sema;
 
-void
-test_alarm_priority(void)
+void test_alarm_priority(void)
 {
     int i;
 
@@ -39,7 +38,7 @@ test_alarm_priority(void)
 }
 
 static void
-alarm_priority_thread(void*aux UNUSED)
+alarm_priority_thread(void *aux UNUSED)
 {
     /* Busy-wait until the current time changes. */
     int64_t start_time = timer_ticks();

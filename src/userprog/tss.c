@@ -50,34 +50,33 @@
    how stack switching occurs during an interrupt. */
 struct tss
 {
-    uint16_t back_link, :16;
-    void* esp0; /* Ring 0 stack virtual address. */
-    uint16_t ss0, :16; /* Ring 0 stack segment selector. */
-    void* esp1;
-    uint16_t ss1, :16;
-    void* esp2;
-    uint16_t ss2, :16;
+    uint16_t back_link, : 16;
+    void *esp0;         /* Ring 0 stack virtual address. */
+    uint16_t ss0, : 16; /* Ring 0 stack segment selector. */
+    void *esp1;
+    uint16_t ss1, : 16;
+    void *esp2;
+    uint16_t ss2, : 16;
     uint32_t cr3;
     void (*eip)(void);
     uint32_t eflags;
     uint32_t eax, ecx, edx, ebx;
     uint32_t esp, ebp, esi, edi;
-    uint16_t es, :16;
-    uint16_t cs, :16;
-    uint16_t ss, :16;
-    uint16_t ds, :16;
-    uint16_t fs, :16;
-    uint16_t gs, :16;
-    uint16_t ldt, :16;
+    uint16_t es, : 16;
+    uint16_t cs, : 16;
+    uint16_t ss, : 16;
+    uint16_t ds, : 16;
+    uint16_t fs, : 16;
+    uint16_t gs, : 16;
+    uint16_t ldt, : 16;
     uint16_t trace, bitmap;
 };
 
 /* Kernel TSS. */
-static struct tss* tss;
+static struct tss *tss;
 
 /* Initializes the kernel TSS. */
-void
-tss_init(void)
+void tss_init(void)
 {
     /* Our TSS is never used in a call gate or task gate, so only a
        few fields of it are ever referenced, and those are the only
@@ -89,7 +88,7 @@ tss_init(void)
 }
 
 /* Returns the kernel TSS. */
-struct tss*
+struct tss *
 tss_get(void)
 {
     ASSERT(tss != NULL);
@@ -98,9 +97,8 @@ tss_get(void)
 
 /* Sets the ring 0 stack pointer in the TSS to point to the end
    of the thread stack. */
-void
-tss_update(void)
+void tss_update(void)
 {
     ASSERT(tss != NULL);
-    tss->esp0 = (uint8_t*)thread_current() + PGSIZE;
+    tss->esp0 = (uint8_t *)thread_current() + PGSIZE;
 }

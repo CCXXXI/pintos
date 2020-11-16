@@ -5,11 +5,11 @@
 #include <string.h>
 #include <syscall.h>
 
-const char* test_name;
+const char *test_name;
 bool quiet = false;
 
 static void
-vmsg(const char* format, va_list args, const char* suffix)
+vmsg(const char *format, va_list args, const char *suffix)
 {
     /* We go to some trouble to stuff the entire message into a
        single buffer and output it in a single system call, because
@@ -24,8 +24,7 @@ vmsg(const char* format, va_list args, const char* suffix)
     write(STDOUT_FILENO, buf, strlen(buf));
 }
 
-void
-msg(const char* format, ...)
+void msg(const char *format, ...)
 {
     va_list args;
 
@@ -36,8 +35,7 @@ msg(const char* format, ...)
     va_end(args);
 }
 
-void
-fail(const char* format, ...)
+void fail(const char *format, ...)
 {
     va_list args;
 
@@ -49,10 +47,10 @@ fail(const char* format, ...)
 }
 
 static void
-swap(void* a_, void* b_, size_t size)
+swap(void *a_, void *b_, size_t size)
 {
-    uint8_t* a = a_;
-    uint8_t* b = b_;
+    uint8_t *a = a_;
+    uint8_t *b = b_;
     size_t i;
 
     for (i = 0; i < size; i++)
@@ -63,10 +61,9 @@ swap(void* a_, void* b_, size_t size)
     }
 }
 
-void
-shuffle(void* buf_, size_t cnt, size_t size)
+void shuffle(void *buf_, size_t cnt, size_t size)
 {
-    char* buf = buf_;
+    char *buf = buf_;
     size_t i;
 
     for (i = 0; i < cnt; i++)
@@ -76,8 +73,7 @@ shuffle(void* buf_, size_t cnt, size_t size)
     }
 }
 
-void
-exec_children(const char* child_name, pid_t pids[], size_t child_cnt)
+void exec_children(const char *child_name, pid_t pids[], size_t child_cnt)
 {
     size_t i;
 
@@ -90,8 +86,7 @@ exec_children(const char* child_name, pid_t pids[], size_t child_cnt)
     }
 }
 
-void
-wait_children(pid_t pids[], size_t child_cnt)
+void wait_children(pid_t pids[], size_t child_cnt)
 {
     size_t i;
 
@@ -104,11 +99,10 @@ wait_children(pid_t pids[], size_t child_cnt)
     }
 }
 
-void
-check_file_handle(int fd,
-                  const char* file_name, const void* buf_, size_t size)
+void check_file_handle(int fd,
+                       const char *file_name, const void *buf_, size_t size)
 {
-    const char* buf = buf_;
+    const char *buf = buf_;
     size_t ofs = 0;
     size_t file_size;
 
@@ -147,8 +141,7 @@ check_file_handle(int fd,
     msg("verified contents of \"%s\"", file_name);
 }
 
-void
-check_file(const char* file_name, const void* buf, size_t size)
+void check_file(const char *file_name, const void *buf, size_t size)
 {
     int fd;
 
@@ -159,12 +152,11 @@ check_file(const char* file_name, const void* buf, size_t size)
     close(fd);
 }
 
-void
-compare_bytes(const void* read_data_, const void* expected_data_, size_t size,
-              size_t ofs, const char* file_name)
+void compare_bytes(const void *read_data_, const void *expected_data_, size_t size,
+                   size_t ofs, const char *file_name)
 {
-    const uint8_t* read_data = read_data_;
-    const uint8_t* expected_data = expected_data_;
+    const uint8_t *read_data = read_data_;
+    const uint8_t *expected_data = expected_data_;
     size_t i, j;
     size_t show_cnt;
 
@@ -180,7 +172,8 @@ compare_bytes(const void* read_data_, const void* expected_data_, size_t size,
 
     quiet = false;
     msg("%zu bytes read starting at offset %zu in \"%s\" differ "
-        "from expected.", j - i, ofs + i, file_name);
+        "from expected.",
+        j - i, ofs + i, file_name);
     show_cnt = j - i;
     if (j - i > 64)
     {
@@ -192,5 +185,6 @@ compare_bytes(const void* read_data_, const void* expected_data_, size_t size,
     msg("Expected data:");
     hex_dump(ofs + i, expected_data + i, show_cnt, true);
     fail("%zu bytes read starting at offset %zu in \"%s\" differ "
-         "from expected", j - i, ofs + i, file_name);
+         "from expected",
+         j - i, ofs + i, file_name);
 }

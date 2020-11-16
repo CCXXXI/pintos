@@ -5,8 +5,7 @@ Copies one file to another. */
 #include <stdio.h>
 #include <syscall.h>
 
-int
-main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int in_fd, out_fd;
 

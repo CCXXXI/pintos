@@ -6,13 +6,12 @@
 #include <string.h>
 #include <syscall.h>
 
-int
-main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int in_fd, out_fd;
     mapid_t in_map, out_map;
-    void* in_data = (void*)0x10000000;
-    void* out_data = (void*)0x20000000;
+    void *in_data = (void *)0x10000000;
+    void *out_data = (void *)0x20000000;
     int size;
 
     if (argc != 3)

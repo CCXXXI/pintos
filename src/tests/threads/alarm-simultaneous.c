@@ -12,8 +12,7 @@
 
 static void test_sleep(int thread_cnt, int iterations);
 
-void
-test_alarm_simultaneous(void)
+void test_alarm_simultaneous(void)
 {
     test_sleep(3, 5);
 }
@@ -21,19 +20,19 @@ test_alarm_simultaneous(void)
 /* Information about the test. */
 struct sleep_test
 {
-    int64_t start; /* Current time at start of test. */
-    int iterations; /* Number of iterations per thread. */
-    int* output_pos; /* Current position in output buffer. */
+    int64_t start;   /* Current time at start of test. */
+    int iterations;  /* Number of iterations per thread. */
+    int *output_pos; /* Current position in output buffer. */
 };
 
-static void sleeper(void*);
+static void sleeper(void *);
 
 /* Runs THREAD_CNT threads thread sleep ITERATIONS times each. */
 static void
 test_sleep(int thread_cnt, int iterations)
 {
     struct sleep_test test;
-    int* output;
+    int *output;
     int i;
 
     /* This test does not work with the MLFQS. */
@@ -76,9 +75,9 @@ test_sleep(int thread_cnt, int iterations)
 
 /* Sleeper thread. */
 static void
-sleeper(void* test_)
+sleeper(void *test_)
 {
-    struct sleep_test* test = test_;
+    struct sleep_test *test = test_;
     int i;
 
     /* Make sure we're at the beginning of a timer tick. */

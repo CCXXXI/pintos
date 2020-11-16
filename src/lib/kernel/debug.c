@@ -15,9 +15,8 @@
 
 /* Halts the OS, printing the source file name, line number, and
    function name, plus a user-specific message. */
-void
-debug_panic(const char* file, int line, const char* function,
-            const char* message, ...)
+void debug_panic(const char *file, int line, const char *function,
+                 const char *message, ...)
 {
     static int level;
     va_list args;
@@ -47,16 +46,17 @@ debug_panic(const char* file, int line, const char* function,
 
     serial_flush();
     shutdown();
-    for (;;);
+    for (;;)
+        ;
 }
 
 /* Print call stack of a thread.
    The thread may be running, ready, or blocked. */
 static void
-print_stacktrace(struct thread* t, void*aux UNUSED)
+print_stacktrace(struct thread *t, void *aux UNUSED)
 {
     void *retaddr = NULL, **frame = NULL;
-    const char* status = "UNKNOWN";
+    const char *status = "UNKNOWN";
 
     switch (t->status)
     {
@@ -87,9 +87,9 @@ print_stacktrace(struct thread* t, void*aux UNUSED)
     {
         /* Retrieve the values of the base and instruction pointers
            as they were saved when this thread called switch_threads. */
-        struct switch_threads_frame* saved_frame;
+        struct switch_threads_frame *saved_frame;
 
-        saved_frame = (struct switch_threads_frame*)t->stack;
+        saved_frame = (struct switch_threads_frame *)t->stack;
 
         /* Skip threads if they have been added to the all threads
            list, but have never been scheduled.
@@ -97,14 +97,14 @@ print_stacktrace(struct thread* t, void*aux UNUSED)
            at the top of their kernel stack page, or the 
            switch_threads_frame's 'eip' member points at switch_entry.
            See also threads.c. */
-        if (t->stack == (uint8_t*)t + PGSIZE || saved_frame->eip == switch_entry)
+        if (t->stack == (uint8_t *)t + PGSIZE || saved_frame->eip == switch_entry)
         {
             printf(" thread was never scheduled.\n");
             return;
         }
 
-        frame = (void**)saved_frame->ebp;
-        retaddr = (void*)saved_frame->eip;
+        frame = (void **)saved_frame->ebp;
+        retaddr = (void *)saved_frame->eip;
     }
 
     printf(" %p", retaddr);
@@ -114,8 +114,7 @@ print_stacktrace(struct thread* t, void*aux UNUSED)
 }
 
 /* Prints call stack of all threads. */
-void
-debug_backtrace_all(void)
+void debug_backtrace_all(void)
 {
     enum intr_level oldlevel = intr_disable();
 

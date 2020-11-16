@@ -106,8 +106,7 @@
 /* Sensitive to assumption that recent_cpu updates happen exactly
    when timer_ticks() % TIMER_FREQ == 0. */
 
-void
-test_mlfqs_recent_1(void)
+void test_mlfqs_recent_1(void)
 {
     int64_t start_time;
     int last_elapsed = 0;
@@ -118,10 +117,8 @@ test_mlfqs_recent_1(void)
     {
         msg("Sleeping 10 seconds to allow recent_cpu to decay, please wait...");
         start_time = timer_ticks();
-        timer_sleep(DIV_ROUND_UP(start_time, TIMER_FREQ) - start_time
-            + 10 * TIMER_FREQ);
-    }
-    while (thread_get_recent_cpu() > 700);
+        timer_sleep(DIV_ROUND_UP(start_time, TIMER_FREQ) - start_time + 10 * TIMER_FREQ);
+    } while (thread_get_recent_cpu() > 700);
 
     start_time = timer_ticks();
     for (;;)

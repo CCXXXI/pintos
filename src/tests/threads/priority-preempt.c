@@ -14,8 +14,7 @@
 
 static thread_func simple_thread_func;
 
-void
-test_priority_preempt(void)
+void test_priority_preempt(void)
 {
     /* This test does not work with the MLFQS. */
     ASSERT(!thread_mlfqs);
@@ -28,7 +27,7 @@ test_priority_preempt(void)
 }
 
 static void
-simple_thread_func(void*aux UNUSED)
+simple_thread_func(void *aux UNUSED)
 {
     int i;
 

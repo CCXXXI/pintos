@@ -27,26 +27,22 @@
 
 static void test_mlfqs_fair(int thread_cnt, int nice_min, int nice_step);
 
-void
-test_mlfqs_fair_2(void)
+void test_mlfqs_fair_2(void)
 {
     test_mlfqs_fair(2, 0, 0);
 }
 
-void
-test_mlfqs_fair_20(void)
+void test_mlfqs_fair_20(void)
 {
     test_mlfqs_fair(20, 0, 0);
 }
 
-void
-test_mlfqs_nice_2(void)
+void test_mlfqs_nice_2(void)
 {
     test_mlfqs_fair(2, 0, 5);
 }
 
-void
-test_mlfqs_nice_10(void)
+void test_mlfqs_nice_10(void)
 {
     test_mlfqs_fair(10, 0, 1);
 }
@@ -60,7 +56,7 @@ struct thread_info
     int nice;
 };
 
-static void load_thread(void* aux);
+static void load_thread(void *aux);
 
 static void
 test_mlfqs_fair(int thread_cnt, int nice_min, int nice_step)
@@ -83,7 +79,7 @@ test_mlfqs_fair(int thread_cnt, int nice_min, int nice_step)
     nice = nice_min;
     for (i = 0; i < thread_cnt; i++)
     {
-        struct thread_info* ti = &info[i];
+        struct thread_info *ti = &info[i];
         char name[16];
 
         ti->start_time = start_time;
@@ -95,7 +91,7 @@ test_mlfqs_fair(int thread_cnt, int nice_min, int nice_step)
 
         nice += nice_step;
     }
-    msg("Starting threads took %"PRId64" ticks.", timer_elapsed(start_time));
+    msg("Starting threads took %" PRId64 " ticks.", timer_elapsed(start_time));
 
     msg("Sleeping 40 seconds to let threads run, please wait...");
     timer_sleep(40 * TIMER_FREQ);
@@ -105,9 +101,9 @@ test_mlfqs_fair(int thread_cnt, int nice_min, int nice_step)
 }
 
 static void
-load_thread(void* ti_)
+load_thread(void *ti_)
 {
-    struct thread_info* ti = ti_;
+    struct thread_info *ti = ti_;
     int64_t sleep_time = 5 * TIMER_FREQ;
     int64_t spin_time = sleep_time + 30 * TIMER_FREQ;
     int64_t last_time = 0;

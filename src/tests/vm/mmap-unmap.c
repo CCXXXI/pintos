@@ -6,10 +6,9 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-#define ACTUAL ((void *) 0x10000000)
+#define ACTUAL ((void *)0x10000000)
 
-void
-test_main(void)
+void test_main(void)
 {
     int handle;
     mapid_t map;
@@ -19,5 +18,5 @@ test_main(void)
 
     munmap(map);
 
-    fail("unmapped memory is readable (%d)", *(int*)ACTUAL);
+    fail("unmapped memory is readable (%d)", *(int *)ACTUAL);
 }

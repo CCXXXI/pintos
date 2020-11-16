@@ -10,10 +10,9 @@
 #define SIZE (1024 * 1024)
 static char buf[SIZE];
 
-int
-main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    const char* key = argv[argc - 1];
+    const char *key = argv[argc - 1];
     struct arc4 arc4;
     size_t i;
 

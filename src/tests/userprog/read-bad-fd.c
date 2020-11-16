@@ -7,8 +7,7 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void
-test_main(void)
+void test_main(void)
 {
     char buf;
     read(0x20101234, &buf, 1);

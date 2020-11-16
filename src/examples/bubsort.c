@@ -11,8 +11,7 @@
 /* Size of array to sort. */
 #define SORT_SIZE 128
 
-int
-main(void)
+int main(void)
 {
     /* Array to sort.  Static to reduce stack usage. */
     static int array[SORT_SIZE];

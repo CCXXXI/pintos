@@ -32,8 +32,7 @@ int A[DIM][DIM];
 int B[DIM][DIM];
 int C[DIM][DIM];
 
-int
-main(void)
+int main(void)
 {
     int i, j, k;
 

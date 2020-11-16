@@ -7,8 +7,7 @@
 #include "threads/thread.h"
 #include "devices/timer.h"
 
-void
-test_alarm_zero(void)
+void test_alarm_zero(void)
 {
     timer_sleep(0);
     pass();

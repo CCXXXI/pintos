@@ -10,11 +10,10 @@
 unsigned char buf[128 * 1024];
 size_t histogram[256];
 
-int
-main(int argc UNUSED, char* argv[])
+int main(int argc UNUSED, char *argv[])
 {
     int handle;
-    unsigned char* p;
+    unsigned char *p;
     size_t size;
     size_t i;
 

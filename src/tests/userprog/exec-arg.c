@@ -3,8 +3,7 @@
 #include <syscall.h>
 #include "tests/main.h"
 
-void
-test_main(void)
+void test_main(void)
 {
     wait(exec("child-args childarg"));
 }

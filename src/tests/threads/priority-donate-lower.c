@@ -12,8 +12,7 @@
 
 static thread_func acquire_thread_func;
 
-void
-test_priority_donate_lower(void)
+void test_priority_donate_lower(void)
 {
     struct lock lock;
 
@@ -40,9 +39,9 @@ test_priority_donate_lower(void)
 }
 
 static void
-acquire_thread_func(void* lock_)
+acquire_thread_func(void *lock_)
 {
-    struct lock* lock = lock_;
+    struct lock *lock = lock_;
 
     lock_acquire(lock);
     msg("acquire: got the lock");

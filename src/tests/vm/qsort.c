@@ -5,7 +5,7 @@
 
 /* Picks a pivot for the quicksort from the SIZE bytes in BUF. */
 static unsigned char
-pick_pivot(unsigned char* buf, size_t size)
+pick_pivot(unsigned char *buf, size_t size)
 {
     ASSERT(size >= 1);
     return buf[random_ulong() % size];
@@ -16,7 +16,7 @@ pick_pivot(unsigned char* buf, size_t size)
    SIZE - LEFT_SIZE elements all greater than or equal to
    PIVOT. */
 static bool
-is_partitioned(const unsigned char* array, size_t size,
+is_partitioned(const unsigned char *array, size_t size,
                unsigned char pivot, size_t left_size)
 {
     size_t i;
@@ -34,7 +34,7 @@ is_partitioned(const unsigned char* array, size_t size,
 
 /* Swaps the bytes at *A and *B. */
 static void
-swap(unsigned char* a, unsigned char* b)
+swap(unsigned char *a, unsigned char *b)
 {
     unsigned char t = *a;
     *a = *b;
@@ -45,11 +45,11 @@ swap(unsigned char* a, unsigned char* b)
    than PIVOT, followed by a run of bytes all greater than or
    equal to PIVOT.  Returns the length of the initial run. */
 static size_t
-partition(unsigned char* array, size_t size, int pivot)
+partition(unsigned char *array, size_t size, int pivot)
 {
     size_t left_size = size;
-    unsigned char* first = array;
-    unsigned char* last = first + left_size;
+    unsigned char *first = array;
+    unsigned char *last = first + left_size;
 
     for (;;)
     {
@@ -97,7 +97,7 @@ partition(unsigned char* array, size_t size, int pivot)
 /* Returns true if the SIZE bytes in BUF are in nondecreasing
    order, false otherwise. */
 static bool
-is_sorted(const unsigned char* buf, size_t size)
+is_sorted(const unsigned char *buf, size_t size)
 {
     size_t i;
 
@@ -110,16 +110,15 @@ is_sorted(const unsigned char* buf, size_t size)
 
 /* Sorts the SIZE bytes in BUF into nondecreasing order, using
    the quick-sort algorithm. */
-void
-qsort_bytes(unsigned char* buf, size_t size)
+void qsort_bytes(unsigned char *buf, size_t size)
 {
     if (!is_sorted(buf, size))
     {
         int pivot = pick_pivot(buf, size);
 
-        unsigned char* left_half = buf;
+        unsigned char *left_half = buf;
         size_t left_size = partition(buf, size, pivot);
-        unsigned char* right_half = left_half + left_size;
+        unsigned char *right_half = left_half + left_size;
         size_t right_size = size - left_size;
 
         if (left_size <= right_size)

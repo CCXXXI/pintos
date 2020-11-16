@@ -13,8 +13,7 @@
 
 static char buf[BUF_SIZE];
 
-int
-main(int argc, const char* argv[])
+int main(int argc, const char *argv[])
 {
     int child_idx;
     int fd;

@@ -107,12 +107,11 @@
 
 static int64_t start_time;
 
-static void load_thread(void* aux);
+static void load_thread(void *aux);
 
 #define THREAD_CNT 60
 
-void
-test_mlfqs_load_60(void)
+void test_mlfqs_load_60(void)
 {
     int i;
 
@@ -141,7 +140,7 @@ test_mlfqs_load_60(void)
 }
 
 static void
-load_thread(void*aux UNUSED)
+load_thread(void *aux UNUSED)
 {
     int64_t sleep_time = 10 * TIMER_FREQ;
     int64_t spin_time = sleep_time + 60 * TIMER_FREQ;

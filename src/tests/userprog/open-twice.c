@@ -6,8 +6,7 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void
-test_main(void)
+void test_main(void)
 {
     int h1 = open("sample.txt");
     int h2 = open("sample.txt");

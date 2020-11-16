@@ -17,15 +17,15 @@
 #include <unistd.h>
 
 static void
-fail_io(const char* msg, ...)
-__attribute__((noreturn))
-__attribute__((format (printf, 1, 2)));
+fail_io(const char *msg, ...)
+    __attribute__((noreturn))
+    __attribute__((format(printf, 1, 2)));
 
 /* Prints MSG, formatting as with printf(),
    plus an error message based on errno,
    and exits. */
 static void
-fail_io(const char* msg, ...)
+fail_io(const char *msg, ...)
 {
     va_list args;
 
@@ -79,7 +79,7 @@ make_nonblocking(int fd, bool nonblocking)
    The system call is named CALL, for use in error messages.
    Sets *FD to -1 if the fd is no longer readable or writable. */
 static void
-handle_error(ssize_t retval, int* fd, bool fd_is_pty, const char* call)
+handle_error(ssize_t retval, int *fd, bool fd_is_pty, const char *call)
 {
     if (fd_is_pty)
     {
@@ -148,7 +148,7 @@ relay(int pty, int dead_child_fd)
         FD_ZERO(&write_fds);
         for (i = 0; i < 2; i++)
         {
-            struct pipe* p = &pipes[i];
+            struct pipe *p = &pipes[i];
 
             /* Don't do anything with the stdin->pty pipe until we
                have some data for the pty->stdout pipe.  If we get
@@ -166,8 +166,7 @@ relay(int pty, int dead_child_fd)
         do
         {
             retval = select(FD_SETSIZE, &read_fds, &write_fds, NULL, NULL);
-        }
-        while (retval < 0 && errno == EINTR);
+        } while (retval < 0 && errno == EINTR);
         if (retval < 0)
             fail_io("select");
 
@@ -176,7 +175,7 @@ relay(int pty, int dead_child_fd)
 
         for (i = 0; i < 2; i++)
         {
-            struct pipe* p = &pipes[i];
+            struct pipe *p = &pipes[i];
             if (p->in != -1 && FD_ISSET(p->in, &read_fds))
             {
                 ssize_t n = read(p->in, p->buf + p->ofs + p->size,
@@ -216,7 +215,7 @@ relay(int pty, int dead_child_fd)
     make_nonblocking(STDOUT_FILENO, false);
     for (;;)
     {
-        struct pipe* p = &pipes[1];
+        struct pipe *p = &pipes[1];
         ssize_t n;
 
         /* Write buffer. */
@@ -247,11 +246,10 @@ sigchld_handler(int signo __attribute__((unused)))
         _exit(1);
 }
 
-int
-main(int argc __attribute__((unused)), char* argv[])
+int main(int argc __attribute__((unused)), char *argv[])
 {
     int master, slave;
-    char* name;
+    char *name;
     pid_t pid;
     struct sigaction sa;
     int pipe_fds[2];
@@ -342,8 +340,7 @@ main(int argc __attribute__((unused)), char* argv[])
             fail_io("setitimer");
         if (dup2(slave, STDOUT_FILENO) < 0)
             fail_io("dup2");
-        if (close(pipe_fds[0]) < 0 || close(pipe_fds[1]) < 0
-            || close(slave) < 0 || close(master) < 0)
+        if (close(pipe_fds[0]) < 0 || close(pipe_fds[1]) < 0 || close(slave) < 0 || close(master) < 0)
             fail_io("close");
         execvp(argv[1], argv + 1);
         fail_io("exec");

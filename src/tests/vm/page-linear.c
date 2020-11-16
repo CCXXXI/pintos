@@ -10,8 +10,7 @@
 
 static char buf[SIZE];
 
-void
-test_main(void)
+void test_main(void)
 {
     struct arc4 arc4;
     size_t i;

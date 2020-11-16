@@ -4,10 +4,9 @@
 #include <syscall.h>
 
 static void read_line(char line[], size_t);
-static bool backspace(char** pos, char line[]);
+static bool backspace(char **pos, char line[]);
 
-int
-main(void)
+int main(void)
 {
     printf("Shell starting...\n");
     for (;;)
@@ -51,7 +50,7 @@ main(void)
 static void
 read_line(char line[], size_t size)
 {
-    char* pos = line;
+    char *pos = line;
     for (;;)
     {
         char c;
@@ -89,7 +88,7 @@ read_line(char line[], size_t size)
    position.  Returns true if successful, false if nothing was
    done. */
 static bool
-backspace(char** pos, char line[])
+backspace(char **pos, char line[])
 {
     if (*pos > line)
     {

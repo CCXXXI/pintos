@@ -9,8 +9,7 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void
-test_main(void)
+void test_main(void)
 {
     char child_cmd[128];
     int handle;

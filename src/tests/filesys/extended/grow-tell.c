@@ -23,8 +23,7 @@ check_tell(int fd, long ofs)
              ofs, pos);
 }
 
-void
-test_main(void)
+void test_main(void)
 {
     seq_test("foobar",
              buf, sizeof buf, 0,

@@ -14,8 +14,7 @@ static inline int isxdigit(int c)
 
 static inline int isspace(int c)
 {
-    return (c == ' ' || c == '\f' || c == '\n'
-        || c == '\r' || c == '\t' || c == '\v');
+    return (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v');
 }
 
 static inline int isblank(int c) { return c == ' ' || c == '\t'; }

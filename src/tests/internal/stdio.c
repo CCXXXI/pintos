@@ -20,7 +20,7 @@
 static int failure_cnt;
 
 static void
-checkf(const char* expect, const char* format, ...)
+checkf(const char *expect, const char *format, ...)
 {
     char output[128];
     va_list args;
@@ -41,8 +41,7 @@ checkf(const char* expect, const char* format, ...)
 }
 
 /* Test printf() implementation. */
-void
-test(void)
+void test(void)
 {
     printf("Testing formats:");
 

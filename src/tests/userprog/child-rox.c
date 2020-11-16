@@ -26,8 +26,7 @@ try_write(void)
     close(handle);
 }
 
-int
-main(int argc UNUSED, char* argv[])
+int main(int argc UNUSED, char *argv[])
 {
     test_name = "child-rox";
 

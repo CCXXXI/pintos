@@ -30,8 +30,8 @@ divl(uint64_t n, uint32_t d)
     uint32_t q, r;
 
     asm("divl %4"
-       : "=d"(r), "=a"(q)
-       : "0"(n1), "1"(n0), "rm"(d));
+        : "=d"(r), "=a"(q)
+        : "0"(n1), "1"(n0), "rm"(d));
 
     return q;
 }

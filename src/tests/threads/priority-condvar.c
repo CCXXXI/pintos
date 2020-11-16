@@ -13,8 +13,7 @@ static thread_func priority_condvar_thread;
 static struct lock lock;
 static struct condition condition;
 
-void
-test_priority_condvar(void)
+void test_priority_condvar(void)
 {
     int i;
 
@@ -43,7 +42,7 @@ test_priority_condvar(void)
 }
 
 static void
-priority_condvar_thread(void*aux UNUSED)
+priority_condvar_thread(void *aux UNUSED)
 {
     msg("Thread %s starting.", thread_name());
     lock_acquire(&lock);

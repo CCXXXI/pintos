@@ -118,12 +118,11 @@
 
 static int64_t start_time;
 
-static void load_thread(void* seq_no);
+static void load_thread(void *seq_no);
 
 #define THREAD_CNT 60
 
-void
-test_mlfqs_load_avg(void)
+void test_mlfqs_load_avg(void)
 {
     int i;
 
@@ -135,7 +134,7 @@ test_mlfqs_load_avg(void)
     {
         char name[16];
         snprintf(name, sizeof name, "load %d", i);
-        thread_create(name, PRI_DEFAULT, load_thread, (void*)i);
+        thread_create(name, PRI_DEFAULT, load_thread, (void *)i);
     }
     msg("Starting threads took %d seconds.",
         timer_elapsed(start_time) / TIMER_FREQ);
@@ -153,7 +152,7 @@ test_mlfqs_load_avg(void)
 }
 
 static void
-load_thread(void* seq_no_)
+load_thread(void *seq_no_)
 {
     int seq_no = (int)seq_no_;
     int sleep_time = TIMER_FREQ * (10 + seq_no);

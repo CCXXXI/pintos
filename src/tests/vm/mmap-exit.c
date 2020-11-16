@@ -6,8 +6,7 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void
-test_main(void)
+void test_main(void)
 {
     pid_t child;
 

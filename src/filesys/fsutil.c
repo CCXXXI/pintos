@@ -12,10 +12,9 @@
 #include "threads/vaddr.h"
 
 /* List files in the root directory. */
-void
-fsutil_ls(char**argv UNUSED)
+void fsutil_ls(char **argv UNUSED)
 {
-    struct dir* dir;
+    struct dir *dir;
     char name[NAME_MAX + 1];
 
     printf("Files in the root directory:\n");
@@ -30,13 +29,12 @@ fsutil_ls(char**argv UNUSED)
 
 /* Prints the contents of file ARGV[1] to the system console as
    hex and ASCII. */
-void
-fsutil_cat(char** argv)
+void fsutil_cat(char **argv)
 {
-    const char* file_name = argv[1];
+    const char *file_name = argv[1];
 
-    struct file* file;
-    char* buffer;
+    struct file *file;
+    char *buffer;
 
     printf("Printing '%s' to the console...\n", file_name);
     file = filesys_open(file_name);
@@ -57,10 +55,9 @@ fsutil_cat(char** argv)
 }
 
 /* Deletes file ARGV[1]. */
-void
-fsutil_rm(char** argv)
+void fsutil_rm(char **argv)
 {
-    const char* file_name = argv[1];
+    const char *file_name = argv[1];
 
     printf("Deleting '%s'...\n", file_name);
     if (!filesys_remove(file_name))
@@ -69,12 +66,11 @@ fsutil_rm(char** argv)
 
 /* Extracts a ustar-format tar archive from the scratch block
    device into the Pintos file system. */
-void
-fsutil_extract(char**argv UNUSED)
+void fsutil_extract(char **argv UNUSED)
 {
     static block_sector_t sector = 0;
 
-    struct block* src;
+    struct block *src;
     void *header, *data;
 
     /* Allocate buffers. */
@@ -89,12 +85,12 @@ fsutil_extract(char**argv UNUSED)
         PANIC("couldn't open scratch device");
 
     printf("Extracting ustar archive from scratch device "
-        "into file system...\n");
+           "into file system...\n");
 
     for (;;)
     {
-        const char* file_name;
-        const char* error;
+        const char *file_name;
+        const char *error;
         enum ustar_type type;
         int size;
 
@@ -102,7 +98,7 @@ fsutil_extract(char**argv UNUSED)
         block_read(src, sector++, header);
         error = ustar_parse_header(header, &file_name, &type, &size);
         if (error != NULL)
-            PANIC("bad ustar header in sector %"PRDSNu" (%s)", sector - 1, error);
+            PANIC("bad ustar header in sector %" PRDSNu " (%s)", sector - 1, error);
 
         if (type == USTAR_EOF)
         {
@@ -113,7 +109,7 @@ fsutil_extract(char**argv UNUSED)
             printf("ignoring directory %s\n", file_name);
         else if (type == USTAR_REGULAR)
         {
-            struct file* dst;
+            struct file *dst;
 
             printf("Putting '%s' into the file system...\n", file_name);
 
@@ -163,15 +159,14 @@ fsutil_extract(char**argv UNUSED)
    the device.  This position is independent of that used for
    fsutil_extract(), so `extract' should precede all
    `append's. */
-void
-fsutil_append(char** argv)
+void fsutil_append(char **argv)
 {
     static block_sector_t sector = 0;
 
-    const char* file_name = argv[1];
-    void* buffer;
-    struct file* src;
-    struct block* dst;
+    const char *file_name = argv[1];
+    void *buffer;
+    struct file *src;
+    struct block *dst;
     off_t size;
 
     printf("Appending '%s' to ustar archive on scratch device...\n", file_name);
@@ -204,7 +199,7 @@ fsutil_append(char** argv)
         if (sector >= block_size(dst))
             PANIC("%s: out of space on scratch device", file_name);
         if (file_read(src, buffer, chunk_size) != chunk_size)
-            PANIC("%s: read failed with %"PROTd" bytes unread", file_name, size);
+            PANIC("%s: read failed with %" PROTd " bytes unread", file_name, size);
         memset(buffer + chunk_size, 0, BLOCK_SECTOR_SIZE - chunk_size);
         block_write(dst, sector++, buffer);
         size -= chunk_size;

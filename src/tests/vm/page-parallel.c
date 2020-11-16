@@ -6,8 +6,7 @@
 
 #define CHILD_CNT 4
 
-void
-test_main(void)
+void test_main(void)
 {
     pid_t children[CHILD_CNT];
     int i;

@@ -3,6 +3,6 @@
 
 struct block;
 
-void partition_scan(struct block*);
+void partition_scan(struct block *);
 
 #endif /* devices/partition.h */

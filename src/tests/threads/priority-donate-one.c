@@ -18,8 +18,7 @@
 static thread_func acquire1_thread_func;
 static thread_func acquire2_thread_func;
 
-void
-test_priority_donate_one(void)
+void test_priority_donate_one(void)
 {
     struct lock lock;
 
@@ -43,9 +42,9 @@ test_priority_donate_one(void)
 }
 
 static void
-acquire1_thread_func(void* lock_)
+acquire1_thread_func(void *lock_)
 {
-    struct lock* lock = lock_;
+    struct lock *lock = lock_;
 
     lock_acquire(lock);
     msg("acquire1: got the lock");
@@ -54,9 +53,9 @@ acquire1_thread_func(void* lock_)
 }
 
 static void
-acquire2_thread_func(void* lock_)
+acquire2_thread_func(void *lock_)
 {
-    struct lock* lock = lock_;
+    struct lock *lock = lock_;
 
     lock_acquire(lock);
     msg("acquire2: got the lock");

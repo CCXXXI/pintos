@@ -13,10 +13,10 @@
 /* Programmable Interrupt Controller (PIC) registers.
    A PC has two PICs, called the master and slave PICs, with the
    slave attached ("cascaded") to the master IRQ line 2. */
-#define PIC0_CTRL	0x20    /* Master PIC control register address. */
-#define PIC0_DATA	0x21    /* Master PIC data register address. */
-#define PIC1_CTRL	0xa0    /* Slave PIC control register address. */
-#define PIC1_DATA	0xa1    /* Slave PIC data register address. */
+#define PIC0_CTRL 0x20 /* Master PIC control register address. */
+#define PIC0_DATA 0x21 /* Master PIC data register address. */
+#define PIC1_CTRL 0xa0 /* Slave PIC control register address. */
+#define PIC1_DATA 0xa1 /* Slave PIC data register address. */
 
 /* Number of x86 interrupts. */
 #define INTR_CNT 256
@@ -28,10 +28,10 @@
 static uint64_t idt[INTR_CNT];
 
 /* Interrupt handler functions for each interrupt. */
-static intr_handler_func* intr_handlers[INTR_CNT];
+static intr_handler_func *intr_handlers[INTR_CNT];
 
 /* Names for each interrupt, for debugging purposes. */
-static const char* intr_names[INTR_CNT];
+static const char *intr_names[INTR_CNT];
 
 /* Number of unexpected interrupts for each vector.  An
    unexpected interrupt is one that has no registered handler. */
@@ -45,7 +45,7 @@ static unsigned int unexpected_cnt[INTR_CNT];
    request that a new process be scheduled just before the
    interrupt returns. */
 static bool in_external_intr; /* Are we processing an external interrupt? */
-static bool yield_on_return; /* Should we yield on interrupt return? */
+static bool yield_on_return;  /* Should we yield on interrupt return? */
 
 /* Programmable Interrupt Controller helpers. */
 static void pic_init(void);
@@ -54,11 +54,11 @@ static void pic_end_of_interrupt(int irq);
 /* Interrupt Descriptor Table helpers. */
 static uint64_t make_intr_gate(void (*)(void), int dpl);
 static uint64_t make_trap_gate(void (*)(void), int dpl);
-static inline uint64_t make_idtr_operand(uint16_t limit, void* base);
+static inline uint64_t make_idtr_operand(uint16_t limit, void *base);
 
 /* Interrupt handlers. */
-void intr_handler(struct intr_frame* args);
-static void unexpected_interrupt(const struct intr_frame*);
+void intr_handler(struct intr_frame *args);
+static void unexpected_interrupt(const struct intr_frame *);
 
 /* Returns the current interrupt status. */
 enum intr_level
@@ -70,12 +70,9 @@ intr_get_level(void)
        value off the stack into `flags'.  See [IA32-v2b] "PUSHF"
        and "POP" and [IA32-v3a] 5.8.1 "Masking Maskable Hardware
        Interrupts". */
-    asm volatile (
-    "pushfl; popl %0"
-    :
-    "=g"(flags)
-    )
-    ;
+    asm volatile(
+        "pushfl; popl %0"
+        : "=g"(flags));
 
     return flags & FLAG_IF ? INTR_ON : INTR_OFF;
 }
@@ -99,10 +96,8 @@ intr_enable(void)
   
        See [IA32-v2b] "STI" and [IA32-v3a] 5.8.1 "Masking Maskable
        Hardware Interrupts". */
-    asm volatile (
-    "sti"
-    )
-    ;
+    asm volatile(
+        "sti");
 
     return old_level;
 }
@@ -116,21 +111,17 @@ intr_disable(void)
     /* Disable interrupts by clearing the interrupt flag.
        See [IA32-v2b] "CLI" and [IA32-v3a] 5.8.1 "Masking Maskable
        Hardware Interrupts". */
-    asm volatile (
-    "cli"
-    :
-    :
-    :
-    "memory"
-    )
-    ;
+    asm volatile(
+        "cli"
+        :
+        :
+        : "memory");
 
     return old_level;
 }
 
 /* Initializes the interrupt system. */
-void
-intr_init(void)
+void intr_init(void)
 {
     uint64_t idtr_operand;
     int i;
@@ -146,13 +137,10 @@ intr_init(void)
        See [IA32-v2a] "LIDT" and [IA32-v3a] 5.10 "Interrupt
        Descriptor Table (IDT)". */
     idtr_operand = make_idtr_operand(sizeof idt - 1, idt);
-    asm volatile (
-    "lidt %0"
-    :
-    :
-    "m"(idtr_operand)
-    )
-    ;
+    asm volatile(
+        "lidt %0"
+        :
+        : "m"(idtr_operand));
 
     /* Initialize intr_names. */
     for (i = 0; i < INTR_CNT; i++)
@@ -184,7 +172,7 @@ intr_init(void)
    interrupt status set to LEVEL. */
 static void
 register_handler(uint8_t vec_no, int dpl, enum intr_level level,
-                 intr_handler_func* handler, const char* name)
+                 intr_handler_func *handler, const char *name)
 {
     ASSERT(intr_handlers[vec_no] == NULL);
     if (level == INTR_ON)
@@ -198,9 +186,8 @@ register_handler(uint8_t vec_no, int dpl, enum intr_level level,
 /* Registers external interrupt VEC_NO to invoke HANDLER, which
    is named NAME for debugging purposes.  The handler will
    execute with interrupts disabled. */
-void
-intr_register_ext(uint8_t vec_no, intr_handler_func* handler,
-                  const char* name)
+void intr_register_ext(uint8_t vec_no, intr_handler_func *handler,
+                       const char *name)
 {
     ASSERT(vec_no >= 0x20 && vec_no <= 0x2f);
     register_handler(vec_no, 0, INTR_OFF, handler, name);
@@ -219,9 +206,8 @@ intr_register_ext(uint8_t vec_no, intr_handler_func* handler,
    [IA32-v3a] sections 4.5 "Privilege Levels" and 4.8.1.1
    "Accessing Nonconforming Code Segments" for further
    discussion. */
-void
-intr_register_int(uint8_t vec_no, int dpl, enum intr_level level,
-                  intr_handler_func* handler, const char* name)
+void intr_register_int(uint8_t vec_no, int dpl, enum intr_level level,
+                       intr_handler_func *handler, const char *name)
 {
     ASSERT(vec_no < 0x20 || vec_no > 0x2f);
     register_handler(vec_no, dpl, level, handler, name);
@@ -229,8 +215,7 @@ intr_register_int(uint8_t vec_no, int dpl, enum intr_level level,
 
 /* Returns true during processing of an external interrupt
    and false at all other times. */
-bool
-intr_context(void)
+bool intr_context(void)
 {
     return in_external_intr;
 }
@@ -239,8 +224,7 @@ intr_context(void)
    interrupt handler to yield to a new process just before
    returning from the interrupt.  May not be called at any other
    time. */
-void
-intr_yield_on_return(void)
+void intr_yield_on_return(void)
 {
     ASSERT(intr_context());
     yield_on_return = true;
@@ -321,13 +305,13 @@ make_gate(void (*function)(void), int dpl, int type)
     ASSERT(type >= 0 && type <= 15);
 
     e0 = (((uint32_t)function & 0xffff) /* Offset 15:0. */
-        | (SEL_KCSEG << 16)); /* Target code segment. */
+          | (SEL_KCSEG << 16));         /* Target code segment. */
 
     e1 = (((uint32_t)function & 0xffff0000) /* Offset 31:16. */
-        | (1 << 15) /* Present. */
-        | ((uint32_t)dpl << 13) /* Descriptor privilege level. */
-        | (0 << 12) /* System. */
-        | ((uint32_t)type << 8)); /* Gate type. */
+          | (1 << 15)                       /* Present. */
+          | ((uint32_t)dpl << 13)           /* Descriptor privilege level. */
+          | (0 << 12)                       /* System. */
+          | ((uint32_t)type << 8));         /* Gate type. */
 
     return e0 | ((uint64_t)e1 << 32);
 }
@@ -351,7 +335,7 @@ make_trap_gate(void (*function)(void), int dpl)
 /* Returns a descriptor that yields the given LIMIT and BASE when
    used as an operand for the LIDT instruction. */
 static inline uint64_t
-make_idtr_operand(uint16_t limit, void* base)
+make_idtr_operand(uint16_t limit, void *base)
 {
     return limit | ((uint64_t)(uint32_t)base << 16);
 }
@@ -362,11 +346,10 @@ make_idtr_operand(uint16_t limit, void* base)
    function is called by the assembly language interrupt stubs in
    intr-stubs.S.  FRAME describes the interrupt and the
    interrupted thread's registers. */
-void
-intr_handler(struct intr_frame* frame)
+void intr_handler(struct intr_frame *frame)
 {
     bool external;
-    intr_handler_func* handler;
+    intr_handler_func *handler;
 
     /* External interrupts are special.
        We only handle one at a time (so interrupts must be off)
@@ -412,7 +395,7 @@ intr_handler(struct intr_frame* frame)
 /* Handles an unexpected interrupt with interrupt frame F.  An
    unexpected interrupt is one that has no registered handler. */
 static void
-unexpected_interrupt(const struct intr_frame* f)
+unexpected_interrupt(const struct intr_frame *f)
 {
     /* Count the number so far. */
     unsigned int n = ++unexpected_cnt[f->vec_no];
@@ -428,8 +411,7 @@ unexpected_interrupt(const struct intr_frame* f)
 }
 
 /* Dumps interrupt frame F to the console, for debugging. */
-void
-intr_dump_frame(const struct intr_frame* f)
+void intr_dump_frame(const struct intr_frame *f)
 {
     uint32_t cr2;
 
@@ -438,21 +420,22 @@ intr_dump_frame(const struct intr_frame* f)
        See [IA32-v2a] "MOV--Move to/from Control Registers" and
        [IA32-v3a] 5.14 "Interrupt 14--Page Fault Exception
        (#PF)". */
-    asm("movl %%cr2, %0": "=r"(cr2));
+    asm("movl %%cr2, %0"
+        : "=r"(cr2));
 
     printf("Interrupt %#04x (%s) at eip=%p\n",
            f->vec_no, intr_names[f->vec_no], f->eip);
-    printf(" cr2=%08"PRIx32" error=%08"PRIx32"\n", cr2, f->error_code);
-    printf(" eax=%08"PRIx32" ebx=%08"PRIx32" ecx=%08"PRIx32" edx=%08"PRIx32"\n",
+    printf(" cr2=%08" PRIx32 " error=%08" PRIx32 "\n", cr2, f->error_code);
+    printf(" eax=%08" PRIx32 " ebx=%08" PRIx32 " ecx=%08" PRIx32 " edx=%08" PRIx32 "\n",
            f->eax, f->ebx, f->ecx, f->edx);
-    printf(" esi=%08"PRIx32" edi=%08"PRIx32" esp=%08"PRIx32" ebp=%08"PRIx32"\n",
+    printf(" esi=%08" PRIx32 " edi=%08" PRIx32 " esp=%08" PRIx32 " ebp=%08" PRIx32 "\n",
            f->esi, f->edi, (uint32_t)f->esp, f->ebp);
-    printf(" cs=%04"PRIx16" ds=%04"PRIx16" es=%04"PRIx16" ss=%04"PRIx16"\n",
+    printf(" cs=%04" PRIx16 " ds=%04" PRIx16 " es=%04" PRIx16 " ss=%04" PRIx16 "\n",
            f->cs, f->ds, f->es, f->ss);
 }
 
 /* Returns the name of interrupt VEC. */
-const char*
+const char *
 intr_name(uint8_t vec)
 {
     return intr_names[vec];

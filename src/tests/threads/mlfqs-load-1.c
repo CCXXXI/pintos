@@ -14,8 +14,7 @@
 #include "threads/thread.h"
 #include "devices/timer.h"
 
-void
-test_mlfqs_load_1(void)
+void test_mlfqs_load_1(void)
 {
     int64_t start_time;
     int elapsed;

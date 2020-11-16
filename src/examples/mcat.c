@@ -6,8 +6,7 @@
 #include <stdio.h>
 #include <syscall.h>
 
-int
-main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int i;
 
@@ -15,7 +14,7 @@ main(int argc, char* argv[])
     {
         int fd;
         mapid_t map;
-        void* data = (void*)0x10000000;
+        void *data = (void *)0x10000000;
         int size;
 
         /* Open input file. */

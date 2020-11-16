@@ -12,8 +12,8 @@
    file system that had 126 direct blocks each pointing to a
    single disk sector.  We could raise it now. */
 #define CHUNK_SIZE (126 * 512)
-#define CHUNK_CNT 16                            /* Number of chunks. */
-#define DATA_SIZE (CHUNK_CNT * CHUNK_SIZE)      /* Buffer size. */
+#define CHUNK_CNT 16                       /* Number of chunks. */
+#define DATA_SIZE (CHUNK_CNT * CHUNK_SIZE) /* Buffer size. */
 
 unsigned char buf1[DATA_SIZE], buf2[DATA_SIZE];
 size_t histogram[256];
@@ -72,9 +72,9 @@ sort_chunks(void)
 static void
 merge(void)
 {
-    unsigned char* mp[CHUNK_CNT];
+    unsigned char *mp[CHUNK_CNT];
     size_t mp_left;
-    unsigned char* op;
+    unsigned char *op;
     size_t i;
 
     msg("merge");
@@ -127,8 +127,7 @@ verify(void)
     msg("success, buf_idx=%'zu", buf_idx);
 }
 
-void
-test_main(void)
+void test_main(void)
 {
     init();
     sort_chunks();

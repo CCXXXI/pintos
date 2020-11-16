@@ -17,10 +17,10 @@
 
 struct simple_thread_data
 {
-    int id; /* Sleeper ID. */
-    int iterations; /* Iterations so far. */
-    struct lock* lock; /* Lock on output. */
-    int** op; /* Output buffer position. */
+    int id;            /* Sleeper ID. */
+    int iterations;    /* Iterations so far. */
+    struct lock *lock; /* Lock on output. */
+    int **op;          /* Output buffer position. */
 };
 
 #define THREAD_CNT 16
@@ -28,8 +28,7 @@ struct simple_thread_data
 
 static thread_func simple_thread_func;
 
-void
-test_priority_fifo(void)
+void test_priority_fifo(void)
 {
     struct simple_thread_data data[THREAD_CNT];
     struct lock lock;
@@ -54,7 +53,7 @@ test_priority_fifo(void)
     for (i = 0; i < THREAD_CNT; i++)
     {
         char name[16];
-        struct simple_thread_data* d = data + i;
+        struct simple_thread_data *d = data + i;
         snprintf(name, sizeof name, "%d", i);
         d->id = i;
         d->iterations = 0;
@@ -70,7 +69,7 @@ test_priority_fifo(void)
     cnt = 0;
     for (; output < op; output++)
     {
-        struct simple_thread_data* d;
+        struct simple_thread_data *d;
 
         ASSERT(*output >= 0 && *output < THREAD_CNT);
         d = data + *output;
@@ -84,9 +83,9 @@ test_priority_fifo(void)
 }
 
 static void
-simple_thread_func(void* data_)
+simple_thread_func(void *data_)
 {
-    struct simple_thread_data* data = data_;
+    struct simple_thread_data *data = data_;
     int i;
 
     for (i = 0; i < ITER_CNT; i++)

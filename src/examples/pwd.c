@@ -7,10 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 
-static bool getcwd(char* cwd, size_t cwd_size);
+static bool getcwd(char *cwd, size_t cwd_size);
 
-int
-main(void)
+int main(void)
 {
     char cwd[128];
     if (getcwd(cwd, sizeof cwd))
@@ -29,7 +28,7 @@ main(void)
    Returns true if successful, false if the file could not be
    opened. */
 static bool
-get_inumber(const char* file_name, int* inum)
+get_inumber(const char *file_name, int *inum)
 {
     int fd = open(file_name);
     if (fd >= 0)
@@ -49,8 +48,8 @@ get_inumber(const char* file_name, int* inum)
    (No null terminator is actually added or depended upon, but
    its space is accounted for.) */
 static bool
-prepend(const char* prefix,
-        char* dst, size_t* dst_len, size_t dst_size)
+prepend(const char *prefix,
+        char *dst, size_t *dst_len, size_t dst_size)
 {
     size_t prefix_len = strlen(prefix);
     if (prefix_len + *dst_len + 1 <= dst_size)
@@ -69,13 +68,13 @@ prepend(const char* prefix,
    system errors, directory trees deeper than MAX_LEVEL levels,
    and insufficient space in CWD. */
 static bool
-getcwd(char* cwd, size_t cwd_size)
+getcwd(char *cwd, size_t cwd_size)
 {
     size_t cwd_len = 0;
 
 #define MAX_LEVEL 20
     char name[MAX_LEVEL * 3 + 1 + READDIR_MAX_LEN + 1];
-    char* namep;
+    char *namep;
 
     int child_inum;
 

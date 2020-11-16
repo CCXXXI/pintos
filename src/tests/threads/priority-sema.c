@@ -12,8 +12,7 @@
 static thread_func priority_sema_thread;
 static struct semaphore sema;
 
-void
-test_priority_sema(void)
+void test_priority_sema(void)
 {
     int i;
 
@@ -38,7 +37,7 @@ test_priority_sema(void)
 }
 
 static void
-priority_sema_thread(void*aux UNUSED)
+priority_sema_thread(void *aux UNUSED)
 {
     sema_down(&sema);
     msg("Thread %s woke up.", thread_name());

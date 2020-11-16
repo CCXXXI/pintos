@@ -11,7 +11,7 @@ struct arc4
     uint8_t i, j;
 };
 
-void arc4_init(struct arc4*, const void*, size_t);
-void arc4_crypt(struct arc4*, void*, size_t);
+void arc4_init(struct arc4 *, const void *, size_t);
+void arc4_crypt(struct arc4 *, void *, size_t);
 
 #endif /* tests/arc4.h */

@@ -7,7 +7,7 @@
 #include "tests/main.h"
 
 static int
-wrap_open(const char* name)
+wrap_open(const char *name)
 {
     static int fds[8], fd_cnt;
     int fd, i;
@@ -20,8 +20,7 @@ wrap_open(const char* name)
     return fd;
 }
 
-void
-test_main(void)
+void test_main(void)
 {
     int root_fd, a_fd0;
     char name[READDIR_MAX_LEN + 1];

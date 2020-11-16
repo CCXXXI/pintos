@@ -37,10 +37,10 @@
 /* Descriptor. */
 struct desc
 {
-    size_t block_size; /* Size of each element in bytes. */
+    size_t block_size;       /* Size of each element in bytes. */
     size_t blocks_per_arena; /* Number of blocks in an arena. */
-    struct list free_list; /* List of free blocks. */
-    struct lock lock; /* Lock. */
+    struct list free_list;   /* List of free blocks. */
+    struct lock lock;        /* Lock. */
 };
 
 /* Magic number for detecting arena corruption. */
@@ -49,9 +49,9 @@ struct desc
 /* Arena. */
 struct arena
 {
-    unsigned magic; /* Always set to ARENA_MAGIC. */
-    struct desc* desc; /* Owning descriptor, null for big block. */
-    size_t free_cnt; /* Free blocks; pages in big block. */
+    unsigned magic;    /* Always set to ARENA_MAGIC. */
+    struct desc *desc; /* Owning descriptor, null for big block. */
+    size_t free_cnt;   /* Free blocks; pages in big block. */
 };
 
 /* Free block. */
@@ -62,20 +62,19 @@ struct block
 
 /* Our set of descriptors. */
 static struct desc descs[10]; /* Descriptors. */
-static size_t desc_cnt; /* Number of descriptors. */
+static size_t desc_cnt;       /* Number of descriptors. */
 
-static struct arena* block_to_arena(struct block*);
-static struct block* arena_to_block(struct arena*, size_t idx);
+static struct arena *block_to_arena(struct block *);
+static struct block *arena_to_block(struct arena *, size_t idx);
 
 /* Initializes the malloc() descriptors. */
-void
-malloc_init(void)
+void malloc_init(void)
 {
     size_t block_size;
 
     for (block_size = 16; block_size < PGSIZE / 2; block_size *= 2)
     {
-        struct desc* d = &descs[desc_cnt++];
+        struct desc *d = &descs[desc_cnt++];
         ASSERT(desc_cnt <= sizeof descs / sizeof *descs);
         d->block_size = block_size;
         d->blocks_per_arena = (PGSIZE - sizeof(struct arena)) / block_size;
@@ -86,12 +85,12 @@ malloc_init(void)
 
 /* Obtains and returns a new block of at least SIZE bytes.
    Returns a null pointer if memory is not available. */
-void*
+void *
 malloc(size_t size)
 {
-    struct desc* d;
-    struct block* b;
-    struct arena* a;
+    struct desc *d;
+    struct block *b;
+    struct arena *a;
 
     /* A null pointer satisfies a request for 0 bytes. */
     if (size == 0)
@@ -140,7 +139,7 @@ malloc(size_t size)
         a->free_cnt = d->blocks_per_arena;
         for (i = 0; i < d->blocks_per_arena; i++)
         {
-            struct block* b = arena_to_block(a, i);
+            struct block *b = arena_to_block(a, i);
             list_push_back(&d->free_list, &b->free_elem);
         }
     }
@@ -155,10 +154,10 @@ malloc(size_t size)
 
 /* Allocates and return A times B bytes initialized to zeroes.
    Returns a null pointer if memory is not available. */
-void*
+void *
 calloc(size_t a, size_t b)
 {
-    void* p;
+    void *p;
     size_t size;
 
     /* Calculate block size and make sure it fits in size_t. */
@@ -176,11 +175,11 @@ calloc(size_t a, size_t b)
 
 /* Returns the number of bytes allocated for BLOCK. */
 static size_t
-block_size(void* block)
+block_size(void *block)
 {
-    struct block* b = block;
-    struct arena* a = block_to_arena(b);
-    struct desc* d = a->desc;
+    struct block *b = block;
+    struct arena *a = block_to_arena(b);
+    struct desc *d = a->desc;
 
     return d != NULL ? d->block_size : PGSIZE * a->free_cnt - pg_ofs(block);
 }
@@ -191,8 +190,8 @@ block_size(void* block)
    null pointer.
    A call with null OLD_BLOCK is equivalent to malloc(NEW_SIZE).
    A call with zero NEW_SIZE is equivalent to free(OLD_BLOCK). */
-void*
-realloc(void* old_block, size_t new_size)
+void *
+realloc(void *old_block, size_t new_size)
 {
     if (new_size == 0)
     {
@@ -201,7 +200,7 @@ realloc(void* old_block, size_t new_size)
     }
     else
     {
-        void* new_block = malloc(new_size);
+        void *new_block = malloc(new_size);
         if (old_block != NULL && new_block != NULL)
         {
             size_t old_size = block_size(old_block);
@@ -215,14 +214,13 @@ realloc(void* old_block, size_t new_size)
 
 /* Frees block P, which must have been previously allocated with
    malloc(), calloc(), or realloc(). */
-void
-free(void* p)
+void free(void *p)
 {
     if (p != NULL)
     {
-        struct block* b = p;
-        struct arena* a = block_to_arena(b);
-        struct desc* d = a->desc;
+        struct block *b = p;
+        struct arena *a = block_to_arena(b);
+        struct desc *d = a->desc;
 
         if (d != NULL)
         {
@@ -246,7 +244,7 @@ free(void* p)
                 ASSERT(a->free_cnt == d->blocks_per_arena);
                 for (i = 0; i < d->blocks_per_arena; i++)
                 {
-                    struct block* b = arena_to_block(a, i);
+                    struct block *b = arena_to_block(a, i);
                     list_remove(&b->free_elem);
                 }
                 palloc_free_page(a);
@@ -264,31 +262,28 @@ free(void* p)
 }
 
 /* Returns the arena that block B is inside. */
-static struct arena*
-block_to_arena(struct block* b)
+static struct arena *
+block_to_arena(struct block *b)
 {
-    struct arena* a = pg_round_down(b);
+    struct arena *a = pg_round_down(b);
 
     /* Check that the arena is valid. */
     ASSERT(a != NULL);
     ASSERT(a->magic == ARENA_MAGIC);
 
     /* Check that the block is properly aligned for the arena. */
-    ASSERT(a->desc == NULL
-        || (pg_ofs(b) - sizeof *a) % a->desc->block_size == 0);
+    ASSERT(a->desc == NULL || (pg_ofs(b) - sizeof *a) % a->desc->block_size == 0);
     ASSERT(a->desc != NULL || pg_ofs(b) == sizeof *a);
 
     return a;
 }
 
 /* Returns the (IDX - 1)'th block within arena A. */
-static struct block*
-arena_to_block(struct arena* a, size_t idx)
+static struct block *
+arena_to_block(struct arena *a, size_t idx)
 {
     ASSERT(a != NULL);
     ASSERT(a->magic == ARENA_MAGIC);
     ASSERT(idx < a->desc->blocks_per_arena);
-    return (struct block*)((uint8_t*)a
-        + sizeof *a
-        + idx * a->desc->block_size);
+    return (struct block *)((uint8_t *)a + sizeof *a + idx * a->desc->block_size);
 }

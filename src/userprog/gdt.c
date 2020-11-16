@@ -27,13 +27,12 @@ static uint64_t gdt[SEL_CNT];
 /* GDT helpers. */
 static uint64_t make_code_desc(int dpl);
 static uint64_t make_data_desc(int dpl);
-static uint64_t make_tss_desc(void* laddr);
-static uint64_t make_gdtr_operand(uint16_t limit, void* base);
+static uint64_t make_tss_desc(void *laddr);
+static uint64_t make_gdtr_operand(uint16_t limit, void *base);
 
 /* Sets up a proper GDT.  The bootstrap loader's GDT didn't
    include user-mode selectors or a TSS, but we need both now. */
-void
-gdt_init(void)
+void gdt_init(void)
 {
     uint64_t gdtr_operand;
 
@@ -49,20 +48,14 @@ gdt_init(void)
        Table Register (GDTR)", 2.4.4 "Task Register (TR)", and
        6.2.4 "Task Register".  */
     gdtr_operand = make_gdtr_operand(sizeof gdt - 1, gdt);
-    asm volatile (
-    "lgdt %0"
-    :
-    :
-    "m"(gdtr_operand)
-    )
-    ;
-    asm volatile (
-    "ltr %w0"
-    :
-    :
-    "q"(SEL_TSS)
-    )
-    ;
+    asm volatile(
+        "lgdt %0"
+        :
+        : "m"(gdtr_operand));
+    asm volatile(
+        "ltr %w0"
+        :
+        : "q"(SEL_TSS));
 }
 
 /* System segment or code/data segment? */
@@ -109,17 +102,17 @@ make_seg_desc(uint32_t base,
     ASSERT(granularity == GRAN_BYTE || granularity == GRAN_PAGE);
 
     e0 = ((limit & 0xffff) /* Limit 15:0. */
-        | (base << 16)); /* Base 15:0. */
+          | (base << 16)); /* Base 15:0. */
 
-    e1 = (((base >> 16) & 0xff) /* Base 23:16. */
-        | (type << 8) /* Segment type. */
-        | (class << 12) /* 0=system, 1=code/data. */
-        | (dpl << 13) /* Descriptor privilege. */
-        | (1 << 15) /* Present. */
-        | (limit & 0xf0000) /* Limit 16:19. */
-        | (1 << 22) /* 32-bit segment. */
-        | (granularity << 23) /* Byte/page granularity. */
-        | (base & 0xff000000)); /* Base 31:24. */
+    e1 = (((base >> 16) & 0xff)   /* Base 23:16. */
+          | (type << 8)           /* Segment type. */
+          | (class << 12)         /* 0=system, 1=code/data. */
+          | (dpl << 13)           /* Descriptor privilege. */
+          | (1 << 15)             /* Present. */
+          | (limit & 0xf0000)     /* Limit 16:19. */
+          | (1 << 22)             /* 32-bit segment. */
+          | (granularity << 23)   /* Byte/page granularity. */
+          | (base & 0xff000000)); /* Base 31:24. */
 
     return e0 | ((uint64_t)e1 << 32);
 }
@@ -145,19 +138,17 @@ make_data_desc(int dpl)
    0x67 bytes (the size of a 32-bit TSS), and a DPL of 0.
    See [IA32-v3a] 6.2.2 "TSS Descriptor". */
 static uint64_t
-make_tss_desc(void* laddr)
+make_tss_desc(void *laddr)
 {
     return make_seg_desc((uint32_t)laddr, 0x67, CLS_SYSTEM, 9, 0, GRAN_BYTE);
 }
 
-
 /* Returns a descriptor that yields the given LIMIT and BASE when
    used as an operand for the LGDT instruction. */
 static uint64_t
-make_gdtr_operand(uint16_t limit, void* base)
+make_gdtr_operand(uint16_t limit, void *base)
 {
     return limit | ((uint64_t)(uint32_t)
-    base << 16
-    )
-    ;
+                        base
+                    << 16);
 }

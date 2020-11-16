@@ -11,8 +11,7 @@
 
 static char buf[SIZE];
 
-void
-test_main(void)
+void test_main(void)
 {
     size_t i;
 

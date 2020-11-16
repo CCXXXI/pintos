@@ -11,8 +11,8 @@
 #include "tests/main.h"
 
 #define CHUNK_SIZE (128 * 1024)
-#define CHUNK_CNT 8                             /* Number of chunks. */
-#define DATA_SIZE (CHUNK_CNT * CHUNK_SIZE)      /* Buffer size. */
+#define CHUNK_CNT 8                        /* Number of chunks. */
+#define DATA_SIZE (CHUNK_CNT * CHUNK_SIZE) /* Buffer size. */
 
 unsigned char buf1[DATA_SIZE], buf2[DATA_SIZE];
 size_t histogram[256];
@@ -36,7 +36,7 @@ init(void)
 /* Sort each chunk of buf1 using SUBPROCESS,
    which is expected to return EXIT_STATUS. */
 static void
-sort_chunks(const char* subprocess, int exit_status)
+sort_chunks(const char *subprocess, int exit_status)
 {
     pid_t children[CHUNK_CNT];
     size_t i;
@@ -84,9 +84,9 @@ sort_chunks(const char* subprocess, int exit_status)
 static void
 merge(void)
 {
-    unsigned char* mp[CHUNK_CNT];
+    unsigned char *mp[CHUNK_CNT];
     size_t mp_left;
-    unsigned char* op;
+    unsigned char *op;
     size_t i;
 
     msg("merge");
@@ -139,8 +139,7 @@ verify(void)
     msg("success, buf_idx=%'zu", buf_idx);
 }
 
-void
-parallel_merge(const char* child_name, int exit_status)
+void parallel_merge(const char *child_name, int exit_status)
 {
     init();
     sort_chunks(child_name, exit_status);

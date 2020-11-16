@@ -7,12 +7,11 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void
-test_main(void)
+void test_main(void)
 {
     static const char overwrite[] = "Now is the time for all good...";
     static char buffer[sizeof sample - 1];
-    char* actual = (char*)0x54321000;
+    char *actual = (char *)0x54321000;
     int handle;
     mapid_t map;
 
@@ -23,8 +22,7 @@ test_main(void)
         fail("read of mmap'd file reported bad data");
 
     /* Modify file. */
-    CHECK(write(handle, overwrite, strlen(overwrite))
-          == (int)strlen(overwrite),
+    CHECK(write(handle, overwrite, strlen(overwrite)) == (int)strlen(overwrite),
           "write \"sample.txt\"");
 
     /* Close mapping.  Data should not be written back, because we
@@ -39,9 +37,8 @@ test_main(void)
           "read \"sample.txt\"");
 
     /* Verify that file overwrite worked. */
-    if (memcmp(buffer, overwrite, strlen(overwrite))
-        || memcmp(buffer + strlen(overwrite), sample + strlen(overwrite),
-                  strlen(sample) - strlen(overwrite)))
+    if (memcmp(buffer, overwrite, strlen(overwrite)) || memcmp(buffer + strlen(overwrite), sample + strlen(overwrite),
+                                                               strlen(sample) - strlen(overwrite)))
     {
         if (!memcmp(buffer, sample, strlen(sample)))
             fail("munmap wrote back clean page");

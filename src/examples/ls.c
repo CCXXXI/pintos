@@ -13,7 +13,7 @@
 #include <string.h>
 
 static bool
-list_dir(const char* dir, bool verbose)
+list_dir(const char *dir, bool verbose)
 {
     int dir_fd = open(dir);
     if (dir_fd == -1)
@@ -64,8 +64,7 @@ list_dir(const char* dir, bool verbose)
     return true;
 }
 
-int
-main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     bool success = true;
     bool verbose = false;
