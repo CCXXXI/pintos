@@ -94,8 +94,7 @@ timer_elapsed(int64_t then)
 void timer_sleep(int64_t ticks)
 {
     struct thread *cur = thread_current();
-    enum intr_level old_level;
-    old_level = intr_disable();
+    enum intr_level old_level = intr_disable();
     cur->wake_up_time = timer_ticks() + ticks;
     list_insert_ordered(&sleep_list, &cur->elem, thread_wake_up_time_cmp, NULL);
     thread_block();
