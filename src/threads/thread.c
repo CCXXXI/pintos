@@ -64,7 +64,6 @@ static void kernel_thread(thread_func *, void *aux);
 static void idle(void *aux UNUSED);
 static struct thread *running_thread(void);
 static struct thread *next_thread_to_run(void);
-static struct thread *thread_pop_highest_priority(void);
 static list_less_func thread_priority_cmp;
 static void init_thread(struct thread *, const char *name, int priority);
 static bool is_thread(struct thread *) UNUSED;
@@ -489,15 +488,15 @@ next_thread_to_run(void)
     if (list_empty(&ready_list))
         return idle_thread;
     else
-        return thread_pop_highest_priority();
+        return thread_pop_highest_priority(&ready_list);
 }
 
-/* Removes the highest-priority thread from ready_list and returns it.
-   Undefined behavior if ready_list is empty before removal. */
-static struct thread *
-thread_pop_highest_priority(void)
+/* Removes the highest-priority thread from LIST and returns it.
+   Undefined behavior if LIST is empty before removal. */
+struct thread *
+thread_pop_highest_priority(struct list *list)
 {
-    struct list_elem *tmp = list_max(&ready_list, thread_priority_cmp, NULL);
+    struct list_elem *tmp = list_max(list, thread_priority_cmp, NULL);
     list_remove(tmp);
     return list_entry(tmp, struct thread, elem);
 }
