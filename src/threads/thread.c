@@ -198,6 +198,9 @@ tid_t thread_create(const char *name, int priority,
     /* Add to run queue. */
     thread_unblock(t);
 
+    /* Run the highest-priority thread. */
+    thread_yield();
+
     return tid;
 }
 
