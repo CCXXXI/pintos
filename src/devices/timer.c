@@ -89,17 +89,6 @@ timer_elapsed(int64_t then)
     return timer_ticks() - then;
 }
 
-/* Compares the wake_up_time of two threads A and B, without using
-   auxiliary data AUX.  Returns true if A is less than B, or
-   false if A is greater than or equal to B. */
-static bool
-thread_wake_up_time_cmp(const struct list_elem *a,
-                        const struct list_elem *b,
-                        void *aux UNUSED)
-{
-    return list_entry(a, struct thread, elem)->wake_up_time < list_entry(b, struct thread, elem)->wake_up_time;
-}
-
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
    be turned on. */
 void timer_sleep(int64_t ticks)
@@ -111,6 +100,17 @@ void timer_sleep(int64_t ticks)
     list_insert_ordered(&sleep_list, &cur->elem, thread_wake_up_time_cmp, NULL);
     thread_block();
     intr_set_level(old_level);
+}
+
+/* Compares the wake_up_time of two threads A and B, without using
+   auxiliary data AUX.  Returns true if A is less than B, or
+   false if A is greater than or equal to B. */
+static bool
+thread_wake_up_time_cmp(const struct list_elem *a,
+                        const struct list_elem *b,
+                        void *aux UNUSED)
+{
+    return list_entry(a, struct thread, elem)->wake_up_time < list_entry(b, struct thread, elem)->wake_up_time;
 }
 
 /* Check sleep_list. Wake up the sleeper if necessary. */

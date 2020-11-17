@@ -472,27 +472,6 @@ alloc_frame(struct thread *t, size_t size)
     return t->stack;
 }
 
-/* Compares the priority of two threads A and B, without using
-   auxiliary data AUX.  Returns true if A is less than B, or
-   false if A is greater than or equal to B. */
-static bool
-thread_priority_cmp(const struct list_elem *a,
-                    const struct list_elem *b,
-                    void *aux UNUSED)
-{
-    return list_entry(a, struct thread, elem)->priority < list_entry(b, struct thread, elem)->priority;
-}
-
-/* Removes the highest-priority thread from ready_list and returns it.
-   Undefined behavior if ready_list is empty before removal. */
-static struct thread *
-thread_pop_highest_priority(void)
-{
-    struct list_elem *tmp = list_max(&ready_list, thread_priority_cmp, NULL);
-    list_remove(tmp);
-    return list_entry(tmp, struct thread, elem);
-}
-
 /* Chooses and returns the next thread to be scheduled.  Should
    return a thread from the run queue, unless the run queue is
    empty.  (If the running thread can continue running, then it
@@ -505,6 +484,27 @@ next_thread_to_run(void)
         return idle_thread;
     else
         return thread_pop_highest_priority();
+}
+
+/* Removes the highest-priority thread from ready_list and returns it.
+   Undefined behavior if ready_list is empty before removal. */
+static struct thread *
+thread_pop_highest_priority(void)
+{
+    struct list_elem *tmp = list_max(&ready_list, thread_priority_cmp, NULL);
+    list_remove(tmp);
+    return list_entry(tmp, struct thread, elem);
+}
+
+/* Compares the priority of two threads A and B, without using
+   auxiliary data AUX.  Returns true if A is less than B, or
+   false if A is greater than or equal to B. */
+static bool
+thread_priority_cmp(const struct list_elem *a,
+                    const struct list_elem *b,
+                    void *aux UNUSED)
+{
+    return list_entry(a, struct thread, elem)->priority < list_entry(b, struct thread, elem)->priority;
 }
 
 /* Completes a thread switch by activating the new thread's page
