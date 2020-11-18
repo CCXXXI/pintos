@@ -343,9 +343,17 @@ int thread_get_priority(void)
 /* Sets t->priority to max(base_priority, donor_priority). */
 void thread_update_priority(struct thread *t)
 {
-    t->priority = get_donor_priority(t);
+    int old_priority = t->priority;
+
+    t->priority = thread_get_donor_priority(t);
     if (t->priority < t->base_priority)
         t->priority = t->base_priority;
+
+    if (t->priority != old_priority && t->donee != NULL)
+    {
+        lock_update_priority(t->donee);
+        thread_yield();
+    }
 }
 
 /* Get the max priority of t->donor. */

@@ -290,14 +290,22 @@ bool lock_priority_cmp(const struct list_elem *a,
 /* Sets lock->priority to donor_priority. */
 void lock_update_priority(struct lock *lock)
 {
-    lock->priority = get_donor_priority(lock);
+    int old_priority = lock->priority;
+
+    lock->priority = lock_get_donor_priority(lock);
+
+    if (lock->priority != old_priority)
+        thread_update_priority(lock->holder);
 }
 
 /* Sets lock->priority to max(lock->priority, priority). */
 static void lock_update_priority_force(struct lock *lock, int priority)
 {
     if (lock->priority < priority)
+    {
         lock->priority = priority;
+        thread_update_priority(lock->holder);
+    }
 }
 
 /* Get the max priority of lock->semaphore.waiters. */
