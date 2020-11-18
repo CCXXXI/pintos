@@ -247,6 +247,23 @@ bool lock_priority_cmp(const struct list_elem *a,
 {
     return list_entry(a, struct lock, elem)->priority < list_entry(b, struct lock, elem)->priority;
 }
+
+static int get_donor_priority(struct lock *);
+
+/* Sets lock->priority to donor_priority. */
+void lock_update_priority(struct lock *lock)
+{
+    lock->priority = get_donor_priority(lock);
+}
+
+/* Get the max priority of lock->semaphore.waiters. */
+static int get_donor_priority(struct lock *lock)
+{
+    if (list_empty(&lock->semaphore.waiters))
+        return PRI_MIN;
+    return list_entry(list_max(&lock->semaphore.waiters, thread_priority_cmp, NULL), struct thread, elem)->priority;
+}
+
 /* Initializes condition variable COND.  A condition variable
    allows one piece of code to signal a condition and cooperating
    code to receive the signal and act upon it. */
