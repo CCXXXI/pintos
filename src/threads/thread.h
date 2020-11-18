@@ -97,6 +97,7 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem; /* List element. */
     struct list donor;     /* Locks that donate the thread. */
+   struct lock *donee;    /* Locks that donated by the thread. */
 
     /* Owned by timer.c. */
     int64_t wake_up_time; /* Time to stop sleeping. */
