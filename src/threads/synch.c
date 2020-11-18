@@ -223,6 +223,16 @@ bool lock_try_acquire(struct lock *lock)
     return success;
 }
 
+/* Subfunction of lock_acquire. */
+static void lock_acquire_fail(struct lock *lock)
+{
+    struct thread *cur = thread_current();
+
+    /* CUR do donate to LOCK now. */
+    cur->donee = lock;
+    lock_update_priority_force(lock, cur->priority);
+}
+
 /* Subfunction of lock_acquire and lock_try_acquire. */
 static void lock_acquire_success(struct lock *lock)
 {
@@ -236,16 +246,6 @@ static void lock_acquire_success(struct lock *lock)
 
     lock_update_priority(lock);
     thread_update_priority(cur);
-}
-
-/* Subfunction of lock_acquire. */
-static void lock_acquire_fail(struct lock *lock)
-{
-    struct thread *cur = thread_current();
-
-    /* CUR do donate to LOCK now. */
-    cur->donee = lock;
-    lock_update_priority_force(lock, cur->priority);
 }
 
 /* Releases LOCK, which must be owned by the current thread.
