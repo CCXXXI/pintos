@@ -64,9 +64,7 @@ static void kernel_thread(thread_func *, void *aux);
 static void idle(void *aux UNUSED);
 static struct thread *running_thread(void);
 static struct thread *next_thread_to_run(void);
-static list_less_func thread_priority_cmp;
 static int get_donor_priority(struct thread *);
-static list_less_func donor_priority_cmp;
 static void init_thread(struct thread *, const char *name, int priority);
 static bool is_thread(struct thread *) UNUSED;
 static void *alloc_frame(struct thread *, size_t size);
@@ -354,17 +352,7 @@ static int get_donor_priority(struct thread *t)
 {
     if (list_empty(&t->donor))
         return PRI_MIN;
-    return list_entry(list_max(&t->donor, donor_priority_cmp, NULL), struct lock, elem)->priority;
-}
-
-/* Compares the priority of two lock A and B, without using
-   auxiliary data AUX.  Returns true if A is less than B, or
-   false if A is greater than or equal to B. */
-static bool donor_priority_cmp(const struct list_elem *a,
-                               const struct list_elem *b,
-                               void *aux UNUSED)
-{
-    return list_entry(a, struct lock, elem)->priority < list_entry(b, struct lock, elem)->priority;
+    return list_entry(list_max(&t->donor, lock_priority_cmp, NULL), struct lock, elem)->priority;
 }
 
 /* Sets the current thread's nice value to NICE. */
