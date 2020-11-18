@@ -153,6 +153,11 @@ sema_test_helper(void *sema_)
     }
 }
 
+static int get_donor_priority(struct lock *lock);
+static void lock_acquire_success(struct lock *lock);
+static void lock_acquire_fail(struct lock *lock);
+static void lock_update_priority_force(struct lock *lock, int priority);
+
 /* Initializes LOCK.  A lock can be held by at most a single
    thread at any given time.  Our locks are not "recursive", that
    is, it is an error for the thread currently holding a lock to
@@ -191,8 +196,13 @@ void lock_acquire(struct lock *lock)
     ASSERT(!intr_context());
     ASSERT(!lock_held_by_current_thread(lock));
 
-    sema_down(&lock->semaphore);
-    lock->holder = thread_current();
+    bool success = lock_try_acquire(lock);
+    if (!success)
+    {
+        lock_acquire_fail(lock);
+        sema_down(&lock->semaphore);
+        lock_acquire_success(lock);
+    }
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -210,8 +220,33 @@ bool lock_try_acquire(struct lock *lock)
 
     success = sema_try_down(&lock->semaphore);
     if (success)
-        lock->holder = thread_current();
+        lock_acquire_success(lock);
     return success;
+}
+
+/* Subfunction of lock_acquire and lock_try_acquire. */
+static void lock_acquire_success(struct lock *lock)
+{
+    struct thread *cur = thread_current();
+
+    /* CUR do not donate to LOCK now. */
+    cur->donee = NULL;
+    lock_update_priority(lock);
+
+    /* LOCK do donate to CUR now. */
+    lock->holder = cur;
+    list_push_back(&cur->donor, &lock->elem);
+    thread_update_priority(cur);
+}
+
+/* Subfunction of lock_acquire. */
+static void lock_acquire_fail(struct lock *lock)
+{
+    struct thread *cur = thread_current();
+
+    /* CUR do donate to LOCK now. */
+    cur->donee = lock;
+    lock_update_priority_force(lock, cur->priority);
 }
 
 /* Releases LOCK, which must be owned by the current thread.
@@ -224,7 +259,12 @@ void lock_release(struct lock *lock)
     ASSERT(lock != NULL);
     ASSERT(lock_held_by_current_thread(lock));
 
+    struct thread *cur = thread_current();
+
+    /* LOCK do not donate to CUR now. */
     lock->holder = NULL;
+    list_remove(&lock->elem);
+    thread_update_priority(cur);
     sema_up(&lock->semaphore);
 }
 
@@ -248,12 +288,17 @@ bool lock_priority_cmp(const struct list_elem *a,
     return list_entry(a, struct lock, elem)->priority < list_entry(b, struct lock, elem)->priority;
 }
 
-static int get_donor_priority(struct lock *);
-
 /* Sets lock->priority to donor_priority. */
 void lock_update_priority(struct lock *lock)
 {
     lock->priority = get_donor_priority(lock);
+}
+
+/* Sets lock->priority to max(lock->priority, priority). */
+static void lock_update_priority_force(struct lock *lock, int priority)
+{
+    if (lock->priority < priority)
+        lock->priority = priority;
 }
 
 /* Get the max priority of lock->semaphore.waiters. */
