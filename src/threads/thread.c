@@ -522,10 +522,9 @@ thread_pop_highest_priority(struct list *list)
 /* Compares the priority of two threads A and B, without using
    auxiliary data AUX.  Returns true if A is less than B, or
    false if A is greater than or equal to B. */
-static bool
-thread_priority_cmp(const struct list_elem *a,
-                    const struct list_elem *b,
-                    void *aux UNUSED)
+bool thread_priority_cmp(const struct list_elem *a,
+                         const struct list_elem *b,
+                         void *aux UNUSED)
 {
     return list_entry(a, struct thread, elem)->priority < list_entry(b, struct thread, elem)->priority;
 }
