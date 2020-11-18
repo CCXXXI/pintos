@@ -8,13 +8,13 @@
 /* States in a thread's life cycle. */
 enum thread_status
 {
-    THREAD_RUNNING,
-    /* Running thread. */
-    THREAD_READY,
-    /* Not running but ready to run. */
-    THREAD_BLOCKED,
-    /* Waiting for an event to trigger. */
-    THREAD_DYING /* About to be destroyed. */
+   THREAD_RUNNING,
+   /* Running thread. */
+   THREAD_READY,
+   /* Not running but ready to run. */
+   THREAD_BLOCKED,
+   /* Waiting for an event to trigger. */
+   THREAD_DYING /* About to be destroyed. */
 };
 
 /* Thread identifier type.
@@ -85,30 +85,30 @@ typedef int tid_t;
    blocked state is on a semaphore wait list. */
 struct thread
 {
-    /* Owned by thread.c. */
-    tid_t tid;                 /* Thread identifier. */
-    enum thread_status status; /* Thread state. */
-    char name[16];             /* Name (for debugging purposes). */
-    uint8_t *stack;            /* Saved stack pointer. */
-    int priority;              /* Priority. */
-    int base_priority;         /* Priority without donation. */
-    struct list_elem allelem;  /* List element for all threads list. */
+   /* Owned by thread.c. */
+   tid_t tid;                 /* Thread identifier. */
+   enum thread_status status; /* Thread state. */
+   char name[16];             /* Name (for debugging purposes). */
+   uint8_t *stack;            /* Saved stack pointer. */
+   int priority;              /* Priority. */
+   int base_priority;         /* Priority without donation. */
+   struct list_elem allelem;  /* List element for all threads list. */
 
-    /* Shared between thread.c and synch.c. */
-    struct list_elem elem; /* List element. */
-    struct list donor;     /* Locks that donate the thread. */
+   /* Shared between thread.c and synch.c. */
+   struct list_elem elem; /* List element. */
+   struct list donor;     /* Locks that donate the thread. */
    struct lock *donee;    /* Locks that donated by the thread. */
 
-    /* Owned by timer.c. */
-    int64_t wake_up_time; /* Time to stop sleeping. */
+   /* Owned by timer.c. */
+   int64_t wake_up_time; /* Time to stop sleeping. */
 
 #ifdef USERPROG
-    /* Owned by userprog/process.c. */
-    uint32_t *pagedir; /* Page directory. */
+   /* Owned by userprog/process.c. */
+   uint32_t *pagedir; /* Page directory. */
 #endif
 
-    /* Owned by thread.c. */
-    unsigned magic; /* Detects stack overflow. */
+   /* Owned by thread.c. */
+   unsigned magic; /* Detects stack overflow. */
 };
 
 /* If false (default), use round-robin scheduler.
@@ -141,6 +141,7 @@ void thread_foreach(thread_action_func *, void *);
 
 int thread_get_priority(void);
 void thread_set_priority(int);
+void thread_update_priority(struct thread *);
 
 int thread_get_nice(void);
 void thread_set_nice(int);
