@@ -20,8 +20,12 @@ void sema_self_test(void);
 /* Lock. */
 struct lock
 {
-    struct thread *holder;      /* Thread holding lock (for debugging). */
+    struct thread *holder;      /* Thread holding lock (for donation). */
     struct semaphore semaphore; /* Binary semaphore controlling access. */
+
+    /* Shared between thread.c and synch.c. */
+    struct list_elem elem; /* List element. */
+    int priority;          /* Priority donated to HOLDER. */
 };
 
 void lock_init(struct lock *);
@@ -29,11 +33,14 @@ void lock_acquire(struct lock *);
 bool lock_try_acquire(struct lock *);
 void lock_release(struct lock *);
 bool lock_held_by_current_thread(const struct lock *);
+list_less_func lock_priority_cmp;
+void lock_update_priority(struct lock *);
+int lock_get_donor_priority(struct lock *);
 
 /* Condition variable. */
 struct condition
 {
-    struct list waiters; /* List of waiting threads. */
+    struct semaphore semaphore; /* Condition is a variant of semaphore. */
 };
 
 void cond_init(struct condition *);

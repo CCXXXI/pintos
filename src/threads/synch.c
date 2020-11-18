@@ -110,10 +110,11 @@ void sema_up(struct semaphore *sema)
 
     old_level = intr_disable();
     if (!list_empty(&sema->waiters))
-        thread_unblock(list_entry(list_pop_front(&sema->waiters),
-                                  struct thread, elem));
+        thread_unblock(thread_pop_highest_priority(&sema->waiters));
     sema->value++;
     intr_set_level(old_level);
+
+    thread_yield();
 }
 
 static void sema_test_helper(void *sema_);
@@ -152,6 +153,10 @@ sema_test_helper(void *sema_)
     }
 }
 
+static void lock_acquire_success(struct lock *lock);
+static void lock_acquire_fail(struct lock *lock);
+static void lock_update_priority_force(struct lock *lock, int priority);
+
 /* Initializes LOCK.  A lock can be held by at most a single
    thread at any given time.  Our locks are not "recursive", that
    is, it is an error for the thread currently holding a lock to
@@ -173,6 +178,7 @@ void lock_init(struct lock *lock)
 
     lock->holder = NULL;
     sema_init(&lock->semaphore, 1);
+    lock->priority = PRI_MIN;
 }
 
 /* Acquires LOCK, sleeping until it becomes available if
@@ -189,8 +195,13 @@ void lock_acquire(struct lock *lock)
     ASSERT(!intr_context());
     ASSERT(!lock_held_by_current_thread(lock));
 
-    sema_down(&lock->semaphore);
-    lock->holder = thread_current();
+    bool success = lock_try_acquire(lock);
+    if (!success)
+    {
+        lock_acquire_fail(lock);
+        sema_down(&lock->semaphore);
+        lock_acquire_success(lock);
+    }
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -208,8 +219,33 @@ bool lock_try_acquire(struct lock *lock)
 
     success = sema_try_down(&lock->semaphore);
     if (success)
-        lock->holder = thread_current();
+        lock_acquire_success(lock);
     return success;
+}
+
+/* Subfunction of lock_acquire and lock_try_acquire. */
+static void lock_acquire_success(struct lock *lock)
+{
+    struct thread *cur = thread_current();
+
+    /* CUR do not donate to LOCK now. */
+    /* LOCK do donate to CUR now. */
+    cur->donee = NULL;
+    lock->holder = cur;
+    list_push_back(&cur->donor, &lock->elem);
+
+    lock_update_priority(lock);
+    thread_update_priority(cur);
+}
+
+/* Subfunction of lock_acquire. */
+static void lock_acquire_fail(struct lock *lock)
+{
+    struct thread *cur = thread_current();
+
+    /* CUR do donate to LOCK now. */
+    cur->donee = lock;
+    lock_update_priority_force(lock, cur->priority);
 }
 
 /* Releases LOCK, which must be owned by the current thread.
@@ -222,7 +258,12 @@ void lock_release(struct lock *lock)
     ASSERT(lock != NULL);
     ASSERT(lock_held_by_current_thread(lock));
 
+    struct thread *cur = thread_current();
+
+    /* LOCK do not donate to CUR now. */
     lock->holder = NULL;
+    list_remove(&lock->elem);
+    thread_update_priority(cur);
     sema_up(&lock->semaphore);
 }
 
@@ -236,12 +277,44 @@ bool lock_held_by_current_thread(const struct lock *lock)
     return lock->holder == thread_current();
 }
 
-/* One semaphore in a list. */
-struct semaphore_elem
+/* Compares the priority of two lock A and B, without using
+   auxiliary data AUX.  Returns true if A is less than B, or
+   false if A is greater than or equal to B. */
+bool lock_priority_cmp(const struct list_elem *a,
+                       const struct list_elem *b,
+                       void *aux UNUSED)
 {
-    struct list_elem elem;      /* List element. */
-    struct semaphore semaphore; /* This semaphore. */
-};
+    return list_entry(a, struct lock, elem)->priority < list_entry(b, struct lock, elem)->priority;
+}
+
+/* Sets lock->priority to donor_priority. */
+void lock_update_priority(struct lock *lock)
+{
+    int old_priority = lock->priority;
+
+    lock->priority = lock_get_donor_priority(lock);
+
+    if (lock->priority != old_priority)
+        thread_update_priority(lock->holder);
+}
+
+/* Sets lock->priority to max(lock->priority, priority). */
+static void lock_update_priority_force(struct lock *lock, int priority)
+{
+    if (lock->priority < priority)
+    {
+        lock->priority = priority;
+        thread_update_priority(lock->holder);
+    }
+}
+
+/* Get the max priority of lock->semaphore.waiters. */
+int lock_get_donor_priority(struct lock *lock)
+{
+    if (list_empty(&lock->semaphore.waiters))
+        return PRI_MIN;
+    return list_entry(list_max(&lock->semaphore.waiters, thread_priority_cmp, NULL), struct thread, elem)->priority;
+}
 
 /* Initializes condition variable COND.  A condition variable
    allows one piece of code to signal a condition and cooperating
@@ -250,7 +323,7 @@ void cond_init(struct condition *cond)
 {
     ASSERT(cond != NULL);
 
-    list_init(&cond->waiters);
+    sema_init(&cond->semaphore, 0);
 }
 
 /* Atomically releases LOCK and waits for COND to be signaled by
@@ -275,17 +348,13 @@ void cond_init(struct condition *cond)
    we need to sleep. */
 void cond_wait(struct condition *cond, struct lock *lock)
 {
-    struct semaphore_elem waiter;
-
     ASSERT(cond != NULL);
     ASSERT(lock != NULL);
     ASSERT(!intr_context());
     ASSERT(lock_held_by_current_thread(lock));
 
-    sema_init(&waiter.semaphore, 0);
-    list_push_back(&cond->waiters, &waiter.elem);
     lock_release(lock);
-    sema_down(&waiter.semaphore);
+    sema_down(&cond->semaphore);
     lock_acquire(lock);
 }
 
@@ -303,10 +372,8 @@ void cond_signal(struct condition *cond, struct lock *lock UNUSED)
     ASSERT(!intr_context());
     ASSERT(lock_held_by_current_thread(lock));
 
-    if (!list_empty(&cond->waiters))
-        sema_up(&list_entry(list_pop_front(&cond->waiters),
-                            struct semaphore_elem, elem)
-                     ->semaphore);
+    if (!list_empty(&cond->semaphore.waiters))
+        sema_up(&cond->semaphore);
 }
 
 /* Wakes up all threads, if any, waiting on COND (protected by
@@ -320,6 +387,6 @@ void cond_broadcast(struct condition *cond, struct lock *lock)
     ASSERT(cond != NULL);
     ASSERT(lock != NULL);
 
-    while (!list_empty(&cond->waiters))
+    while (!list_empty(&cond->semaphore.waiters))
         cond_signal(cond, lock);
 }

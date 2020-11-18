@@ -64,7 +64,6 @@ static void kernel_thread(thread_func *, void *aux);
 static void idle(void *aux UNUSED);
 static struct thread *running_thread(void);
 static struct thread *next_thread_to_run(void);
-static list_less_func thread_priority_cmp;
 static void init_thread(struct thread *, const char *name, int priority);
 static bool is_thread(struct thread *) UNUSED;
 static void *alloc_frame(struct thread *, size_t size);
@@ -324,10 +323,12 @@ void thread_foreach(thread_action_func *func, void *aux)
     }
 }
 
-/* Sets the current thread's priority to NEW_PRIORITY. */
+/* Sets the current thread's base_priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority)
 {
-    thread_current()->priority = new_priority;
+    struct thread *cur = thread_current();
+    cur->base_priority = new_priority;
+    thread_update_priority(cur);
 
     /* Run the highest-priority thread. */
     thread_yield();
@@ -337,6 +338,27 @@ void thread_set_priority(int new_priority)
 int thread_get_priority(void)
 {
     return thread_current()->priority;
+}
+
+/* Sets t->priority to max(base_priority, donor_priority). */
+void thread_update_priority(struct thread *t)
+{
+    int old_priority = t->priority;
+
+    t->priority = thread_get_donor_priority(t);
+    if (t->priority < t->base_priority)
+        t->priority = t->base_priority;
+
+    if (t->priority != old_priority && t->donee != NULL)
+        lock_update_priority(t->donee);
+}
+
+/* Get the max priority of t->donor. */
+int thread_get_donor_priority(struct thread *t)
+{
+    if (list_empty(&t->donor))
+        return PRI_MIN;
+    return list_entry(list_max(&t->donor, lock_priority_cmp, NULL), struct lock, elem)->priority;
 }
 
 /* Sets the current thread's nice value to NICE. */
@@ -456,7 +478,9 @@ init_thread(struct thread *t, const char *name, int priority)
     t->status = THREAD_BLOCKED;
     strlcpy(t->name, name, sizeof t->name);
     t->stack = (uint8_t *)t + PGSIZE;
-    t->priority = priority;
+    t->priority = t->base_priority = priority;
+    list_init(&t->donor);
+    t->donee = NULL;
     t->magic = THREAD_MAGIC;
 
     old_level = intr_disable();
@@ -504,10 +528,9 @@ thread_pop_highest_priority(struct list *list)
 /* Compares the priority of two threads A and B, without using
    auxiliary data AUX.  Returns true if A is less than B, or
    false if A is greater than or equal to B. */
-static bool
-thread_priority_cmp(const struct list_elem *a,
-                    const struct list_elem *b,
-                    void *aux UNUSED)
+bool thread_priority_cmp(const struct list_elem *a,
+                         const struct list_elem *b,
+                         void *aux UNUSED)
 {
     return list_entry(a, struct thread, elem)->priority < list_entry(b, struct thread, elem)->priority;
 }
