@@ -350,10 +350,7 @@ void thread_update_priority(struct thread *t)
         t->priority = t->base_priority;
 
     if (t->priority != old_priority && t->donee != NULL)
-    {
         lock_update_priority(t->donee);
-        thread_yield();
-    }
 }
 
 /* Get the max priority of t->donor. */
