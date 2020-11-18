@@ -347,7 +347,7 @@ void thread_update_priority(struct thread *t)
         t->priority = t->base_priority;
 }
 
-/* Get the max priority of t->donor */
+/* Get the max priority of t->donor. */
 static int get_donor_priority(struct thread *t)
 {
     if (list_empty(&t->donor))
