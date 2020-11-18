@@ -64,7 +64,6 @@ static void kernel_thread(thread_func *, void *aux);
 static void idle(void *aux UNUSED);
 static struct thread *running_thread(void);
 static struct thread *next_thread_to_run(void);
-static int get_donor_priority(struct thread *);
 static void init_thread(struct thread *, const char *name, int priority);
 static bool is_thread(struct thread *) UNUSED;
 static void *alloc_frame(struct thread *, size_t size);
@@ -350,7 +349,7 @@ void thread_update_priority(struct thread *t)
 }
 
 /* Get the max priority of t->donor. */
-static int get_donor_priority(struct thread *t)
+int thread_get_donor_priority(struct thread *t)
 {
     if (list_empty(&t->donor))
         return PRI_MIN;

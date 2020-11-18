@@ -153,7 +153,6 @@ sema_test_helper(void *sema_)
     }
 }
 
-static int get_donor_priority(struct lock *lock);
 static void lock_acquire_success(struct lock *lock);
 static void lock_acquire_fail(struct lock *lock);
 static void lock_update_priority_force(struct lock *lock, int priority);
@@ -302,7 +301,7 @@ static void lock_update_priority_force(struct lock *lock, int priority)
 }
 
 /* Get the max priority of lock->semaphore.waiters. */
-static int get_donor_priority(struct lock *lock)
+int lock_get_donor_priority(struct lock *lock)
 {
     if (list_empty(&lock->semaphore.waiters))
         return PRI_MIN;
