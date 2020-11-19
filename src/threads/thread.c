@@ -330,6 +330,8 @@ void thread_set_priority(int new_priority)
     if (thread_mlfqs)
         return;
 
+    ASSERT(PRI_MIN <= new_priority && new_priority <= PRI_MAX);
+
     struct thread *cur = thread_current();
     cur->base_priority = new_priority;
     thread_update_priority(cur);
@@ -371,30 +373,42 @@ static int thread_get_donor_priority(struct thread *t)
 }
 
 /* Sets the current thread's nice value to NICE. */
-void thread_set_nice(int nice UNUSED)
+void thread_set_nice(int nice)
 {
-    /* Not yet implemented. */
+    ASSERT(NICE_MIN <= nice && nice <= NICE_MAX);
+
+    struct thread *cur = thread_current();
+    cur->nice = nice;
+    thread_calc_priority(cur);
 }
 
 /* Returns the current thread's nice value. */
 int thread_get_nice(void)
 {
-    /* Not yet implemented. */
-    return 0;
+    return thread_current()->nice;
 }
 
-/* Returns 100 times the system load average. */
+/* Returns 100 times the current system load average, rounded to the nearest integer. */
 int thread_get_load_avg(void)
 {
-    /* Not yet implemented. */
+    // todo
     return 0;
 }
 
-/* Returns 100 times the current thread's recent_cpu value. */
+/* Returns 100 times the current thread's recent_cpu value, rounded to the nearest integer. */
 int thread_get_recent_cpu(void)
 {
-    /* Not yet implemented. */
+    // todo
     return 0;
+}
+
+/* priority = PRI_MAX - (recent_cpu / 4) - (nice * 2) */
+void thread_calc_priority(struct thread *t)
+{
+    ASSERT(thread_mlfqs);
+    ASSERT(is_thread(t));
+
+    // todo
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
@@ -487,7 +501,15 @@ init_thread(struct thread *t, const char *name, int priority)
     t->status = THREAD_BLOCKED;
     strlcpy(t->name, name, sizeof t->name);
     t->stack = (uint8_t *)t + PGSIZE;
-    t->priority = t->base_priority = priority;
+    if (thread_mlfqs)
+    {
+        t->nice = NICE_DEFAULT;
+        t->priority = PRI_MAX;
+    }
+    else
+    {
+        t->priority = t->base_priority = priority;
+    }
     list_init(&t->donor);
     t->donee = NULL;
     t->magic = THREAD_MAGIC;
