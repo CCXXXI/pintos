@@ -70,6 +70,7 @@ static void *alloc_frame(struct thread *, size_t size);
 static void schedule(void);
 void thread_schedule_tail(struct thread *prev);
 static tid_t allocate_tid(void);
+static int thread_get_donor_priority(struct thread *);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -354,7 +355,7 @@ void thread_update_priority(struct thread *t)
 }
 
 /* Get the max priority of t->donor. */
-int thread_get_donor_priority(struct thread *t)
+static int thread_get_donor_priority(struct thread *t)
 {
     if (list_empty(&t->donor))
         return PRI_MIN;

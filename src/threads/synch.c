@@ -156,6 +156,7 @@ sema_test_helper(void *sema_)
 static void lock_acquire_success(struct lock *lock);
 static void lock_acquire_fail(struct lock *lock);
 static void lock_update_priority_force(struct lock *lock, int priority);
+static int lock_get_donor_priority(struct lock *);
 
 /* Initializes LOCK.  A lock can be held by at most a single
    thread at any given time.  Our locks are not "recursive", that
@@ -309,7 +310,7 @@ static void lock_update_priority_force(struct lock *lock, int priority)
 }
 
 /* Get the max priority of lock->semaphore.waiters. */
-int lock_get_donor_priority(struct lock *lock)
+static int lock_get_donor_priority(struct lock *lock)
 {
     if (list_empty(&lock->semaphore.waiters))
         return PRI_MIN;

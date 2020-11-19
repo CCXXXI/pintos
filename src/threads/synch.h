@@ -35,7 +35,6 @@ void lock_release(struct lock *);
 bool lock_held_by_current_thread(const struct lock *);
 list_less_func lock_priority_cmp;
 void lock_update_priority(struct lock *);
-int lock_get_donor_priority(struct lock *);
 
 /* Condition variable. */
 struct condition
