@@ -298,6 +298,9 @@ bool lock_priority_cmp(const struct list_elem *a,
 /* Sets lock->priority to donor_priority. */
 void lock_update_priority(struct lock *lock)
 {
+    if (thread_mlfqs)
+        return;
+
     ASSERT(is_lock(lock));
 
     int old_priority = lock->priority;
@@ -311,6 +314,9 @@ void lock_update_priority(struct lock *lock)
 /* Sets lock->priority to max(lock->priority, priority). */
 static void lock_update_priority_force(struct lock *lock, int priority)
 {
+    if (thread_mlfqs)
+        return;
+
     ASSERT(is_lock(lock));
 
     if (lock->priority < priority)

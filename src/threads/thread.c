@@ -327,6 +327,9 @@ void thread_foreach(thread_action_func *func, void *aux)
 /* Sets the current thread's base_priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority)
 {
+    if (thread_mlfqs)
+        return;
+
     struct thread *cur = thread_current();
     cur->base_priority = new_priority;
     thread_update_priority(cur);
@@ -344,6 +347,9 @@ int thread_get_priority(void)
 /* Sets t->priority to max(base_priority, donor_priority). */
 void thread_update_priority(struct thread *t)
 {
+    if (thread_mlfqs)
+        return;
+
     ASSERT(is_thread(t));
 
     int old_priority = t->priority;
