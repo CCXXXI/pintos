@@ -157,6 +157,13 @@ static void lock_acquire_success(struct lock *lock);
 static void lock_acquire_fail(struct lock *lock);
 static void lock_update_priority_force(struct lock *lock, int priority);
 static int lock_get_donor_priority(struct lock *);
+static bool is_lock(struct lock *) UNUSED;
+
+/* Returns true if LOCK appears to point to a valid lock. */
+static bool is_lock(struct lock *lock)
+{
+    return lock != NULL;
+}
 
 /* Initializes LOCK.  A lock can be held by at most a single
    thread at any given time.  Our locks are not "recursive", that
@@ -291,6 +298,8 @@ bool lock_priority_cmp(const struct list_elem *a,
 /* Sets lock->priority to donor_priority. */
 void lock_update_priority(struct lock *lock)
 {
+    ASSERT(is_lock(lock));
+
     int old_priority = lock->priority;
 
     lock->priority = lock_get_donor_priority(lock);
@@ -302,6 +311,8 @@ void lock_update_priority(struct lock *lock)
 /* Sets lock->priority to max(lock->priority, priority). */
 static void lock_update_priority_force(struct lock *lock, int priority)
 {
+    ASSERT(is_lock(lock));
+
     if (lock->priority < priority)
     {
         lock->priority = priority;
