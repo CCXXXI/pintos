@@ -15,21 +15,21 @@
     false if A is greater than or equal to B. */
 typedef bool heap_less_func(void *a, void *b);
 
-/* Pointer to element. */
-typedef void *elem_t;
+/* Pointer to heap element. */
+typedef void *heap_elem;
 
 /* Heap. */
 struct heap
 {
-    elem_t c[MAX_SIZE];  /* Container. */
+    heap_elem c[MAX_SIZE];  /* Container. */
     size_t size;         /* Size. */
     heap_less_func *cmp; /* Compare function. */
 };
 
 void heap_init(struct heap *, heap_less_func);
-elem_t heap_top(struct heap *);
+heap_elem heap_top(struct heap *);
 bool heap_empty(struct heap *);
-void heap_push(struct heap *, elem_t);
-elem_t heap_pop(struct heap *);
+void heap_push(struct heap *, heap_elem);
+heap_elem heap_pop(struct heap *);
 
 #endif /* threads/heap.h */

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <debug.h>
 
-static void swap(elem_t *, elem_t *);
+static void swap(heap_elem *, heap_elem *);
 
 void heap_init(struct heap *h, heap_less_func cmp)
 {
@@ -11,7 +11,7 @@ void heap_init(struct heap *h, heap_less_func cmp)
 }
 
 /* Returns the top element in the heap (also the greatest). */
-elem_t heap_top(struct heap *h)
+heap_elem heap_top(struct heap *h)
 {
     ASSERT(!heap_empty(h));
 
@@ -25,7 +25,7 @@ bool heap_empty(struct heap *h)
 }
 
 /* Pushes the given element to the heap. */
-void heap_push(struct heap *h, elem_t e)
+void heap_push(struct heap *h, heap_elem e)
 {
     size_t i = h->size;
     ASSERT(i < MAX_SIZE);
@@ -44,7 +44,7 @@ void heap_push(struct heap *h, elem_t e)
 }
 
 /* Removes and returns the top element from the heap. */
-elem_t heap_pop(struct heap *h)
+heap_elem heap_pop(struct heap *h)
 {
     ASSERT(!heap_empty(h));
 
@@ -66,9 +66,9 @@ elem_t heap_pop(struct heap *h)
     }
 }
 
-static void swap(elem_t *a, elem_t *b)
+static void swap(heap_elem *a, heap_elem *b)
 {
-    elem_t t = *a;
+    heap_elem t = *a;
     *a = *b;
     *b = t;
 }
