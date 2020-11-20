@@ -33,6 +33,12 @@ typedef int tid_t;
 #define NICE_DEFAULT 0 /* Default nice. */
 #define NICE_MAX 20    /* Highest nice. */
 
+/* Thread recent cpu. */
+#define RECENT_CPU_DEFAULT i_to_fp(0) /* Default recent_cpu. */
+
+/* Load average. */
+#define LOAD_AVG_DEFAULT i_to_fp(0); /* Default load_avg. */
+
 /* Scheduling. */
 #define TIME_SLICE 4 /* # of timer ticks to give each thread. */
 
@@ -110,6 +116,9 @@ struct thread
     struct list donor;     /* Locks that donate the thread. */
     struct lock *donee;    /* Locks that donated by the thread. */
 
+    /* Shared between thread.c and timer.c. */
+    fp_t recent_cpu;
+
     /* Owned by timer.c. */
     int64_t wake_up_time; /* Time to stop sleeping. */
 
@@ -126,6 +135,9 @@ struct thread
     If true, use multi-level feedback queue scheduler.
     Controlled by kernel command-line option "-o mlfqs". */
 extern bool thread_mlfqs;
+
+/* A moving average of the number of threads ready to run. */
+fp_t load_avg;
 
 void thread_init(void);
 void thread_start(void);
@@ -159,7 +171,8 @@ int thread_get_nice(void);
 void thread_set_nice(int);
 int thread_get_recent_cpu(void);
 int thread_get_load_avg(void);
-void thread_calc_priority(struct thread *);
+void thread_calc_recent_cpu(void);
+thread_action_func thread_calc_priority;
 
 struct thread *thread_pop_highest_priority(struct list *list);
 

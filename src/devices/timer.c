@@ -35,6 +35,7 @@ static void real_time_sleep(int64_t num, int32_t denom);
 static void real_time_delay(int64_t num, int32_t denom);
 static list_less_func thread_elem_wake_up_time_cmp;
 static void sleep_check(int64_t now);
+static void mlfqs_check(void);
 
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
@@ -193,6 +194,21 @@ timer_interrupt(struct intr_frame *args UNUSED)
     ticks++;
     thread_tick();
     sleep_check(ticks);
+    if (thread_mlfqs)
+        mlfqs_check();
+}
+
+/* Updates recent_cpu and load_avg. */
+static void mlfqs_check(void)
+{
+    ASSERT(thread_mlfqs);
+
+    enum intr_level old_level = intr_disable();
+    if (ticks % TIMER_FREQ == 0)
+        thread_calc_recent_cpu();
+    if (ticks % TIME_SLICE == 0)
+        thread_foreach(thread_calc_priority, NULL);
+    intr_set_level(old_level);
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
