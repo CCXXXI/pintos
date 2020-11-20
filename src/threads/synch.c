@@ -285,12 +285,12 @@ bool lock_held_by_current_thread(const struct lock *lock)
     return lock->holder == thread_current();
 }
 
-/* Compares the priority of two lock A and B, without using
+/* Compares the priority of two lock elem A and B, without using
    auxiliary data AUX.  Returns true if A is less than B, or
    false if A is greater than or equal to B. */
-bool lock_priority_cmp(const struct list_elem *a,
-                       const struct list_elem *b,
-                       void *aux UNUSED)
+bool lock_elem_priority_cmp(const struct list_elem *a,
+                            const struct list_elem *b,
+                            void *aux UNUSED)
 {
     return list_entry(a, struct lock, elem)->priority < list_entry(b, struct lock, elem)->priority;
 }
@@ -331,7 +331,7 @@ static int lock_get_donor_priority(struct lock *lock)
 {
     if (list_empty(&lock->semaphore.waiters))
         return PRI_MIN;
-    return list_entry(list_max(&lock->semaphore.waiters, thread_priority_cmp, NULL), struct thread, elem)->priority;
+    return list_entry(list_max(&lock->semaphore.waiters, thread_elem_priority_cmp, NULL), struct thread, elem)->priority;
 }
 
 /* Initializes condition variable COND.  A condition variable
