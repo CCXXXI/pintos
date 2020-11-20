@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <debug.h>
 
+/* Fixed-point number. */
 typedef int32_t fp_t;
 #define fp_size 32
 
