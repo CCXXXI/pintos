@@ -169,7 +169,6 @@ void thread_set_nice(int);
 int thread_get_recent_cpu(void);
 int thread_get_load_avg(void);
 void thread_calc_recent_cpu(void);
-thread_action_func thread_calc_priority;
 
 struct thread *thread_pop_highest_priority(struct list *list);
 

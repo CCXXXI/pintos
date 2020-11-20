@@ -78,6 +78,7 @@ static int thread_get_donor_priority(struct thread *);
 static thread_action_func thread_calc_recent_cpu_single;
 static void thread_calc_load_avg(void);
 static heap_less_func thread_priority_cmp;
+static void thread_calc_priority(struct thread *);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -142,7 +143,13 @@ void thread_tick(void)
     else
     {
         kernel_ticks++;
+    }
+
+    /* Multilevel feedback queue scheduler. */
+    if (thread_mlfqs && t != idle_thread)
+    {
         t->recent_cpu = fp_add_i(t->recent_cpu, 1);
+        thread_calc_priority(t);
     }
 
     /* Enforce preemption. */
@@ -396,7 +403,7 @@ void thread_set_nice(int nice)
 
     struct thread *cur = thread_current();
     cur->nice = nice;
-    thread_calc_priority(cur, NULL);
+    thread_calc_priority(cur);
 
     thread_yield();
 }
@@ -420,7 +427,7 @@ int thread_get_recent_cpu(void)
 }
 
 /* priority = PRI_MAX - (recent_cpu / 4) - (nice * 2) */
-void thread_calc_priority(struct thread *t, void *aux UNUSED)
+static void thread_calc_priority(struct thread *t)
 {
     ASSERT(thread_mlfqs);
     ASSERT(is_thread(t));
@@ -444,6 +451,8 @@ static void thread_calc_recent_cpu_single(struct thread *t, void *aux UNUSED)
 
     fp_t k = fp_div_fp(fp_mul_i(load_avg, 2), fp_add_i(fp_mul_i(load_avg, 2), 1));
     t->recent_cpu = fp_add_i(fp_mul_fp(k, t->recent_cpu), t->nice);
+
+    thread_calc_priority(t);
 }
 
 /* Calc load_avg and recent_cpu for all threads. */

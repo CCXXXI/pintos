@@ -194,7 +194,7 @@ timer_interrupt(struct intr_frame *args UNUSED)
     ticks++;
     thread_tick();
     sleep_check(ticks);
-    if (thread_mlfqs)
+    if (thread_mlfqs && ticks % TIMER_FREQ == 0)
         mlfqs_check();
 }
 
@@ -204,10 +204,7 @@ static void mlfqs_check(void)
     ASSERT(thread_mlfqs);
 
     enum intr_level old_level = intr_disable();
-    if (ticks % TIMER_FREQ == 0)
-        thread_calc_recent_cpu();
-    if (ticks % TIME_SLICE == 0)
-        thread_foreach(thread_calc_priority, NULL);
+    thread_calc_recent_cpu();
     intr_set_level(old_level);
 }
 
