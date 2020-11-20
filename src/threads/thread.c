@@ -141,9 +141,7 @@ void thread_tick(void)
         user_ticks++;
 #endif
     else
-    {
         kernel_ticks++;
-    }
 
     /* Multilevel feedback queue scheduler. */
     if (thread_mlfqs && t != idle_thread)
