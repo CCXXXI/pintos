@@ -39,9 +39,6 @@ typedef int tid_t;
 /* Load average. */
 #define LOAD_AVG_DEFAULT i_to_fp(0); /* Default load_avg. */
 
-/* Scheduling. */
-#define TIME_SLICE 4 /* # of timer ticks to give each thread. */
-
 /* A kernel thread or user process.
 
     Each thread structure is stored in its own 4 kB page.  The
