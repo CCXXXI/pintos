@@ -33,6 +33,9 @@ typedef int tid_t;
 #define NICE_DEFAULT 0 /* Default nice. */
 #define NICE_MAX 20    /* Highest nice. */
 
+/* Scheduling. */
+#define TIME_SLICE 4 /* # of timer ticks to give each thread. */
+
 /* A kernel thread or user process.
 
     Each thread structure is stored in its own 4 kB page.  The
