@@ -49,7 +49,7 @@ heap_elem heap_pop(struct heap *h)
     ASSERT(!heap_empty(h));
 
     h->size--;
-    swap(h->c[0], h->c[h->size]);
+    swap(&h->c[0], &h->c[h->size]);
 
     size_t i = 0;
     while (true)
@@ -61,7 +61,7 @@ heap_elem heap_pop(struct heap *h)
             c++;
         if (h->cmp(h->c[c], h->c[i]))
             break;
-        swap(h->c[i], h->c[c]);
+        swap(&h->c[i], &h->c[c]);
         i = c;
     }
 
