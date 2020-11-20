@@ -1,10 +1,10 @@
 #ifndef THREADS_FIXED_POINT_H
 #define THREADS_FIXED_POINT_H
 
+/* Fixed-point real arithmetic used by the mlfqs (multilevel feedback queue scheduler). */
+
 #include <stdint.h>
 #include <debug.h>
-
-/* Fixed-point real arithmetic used by the mlfqs (multilevel feedback queue scheduler). */
 
 typedef int32_t fp_t;
 #define fp_size 32
