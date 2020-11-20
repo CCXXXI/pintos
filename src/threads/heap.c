@@ -64,6 +64,8 @@ heap_elem heap_pop(struct heap *h)
         swap(h->c[i], h->c[c]);
         i = c;
     }
+
+    return h->c[h->size];
 }
 
 static void swap(heap_elem *a, heap_elem *b)
