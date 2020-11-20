@@ -100,6 +100,7 @@ struct thread
     int base_priority;         /* Priority without donation. */
     int nice;                  /* How nice the thread should be to other threads. */
     struct list_elem allelem;  /* List element for all threads list. */
+    unsigned fifo;             /* Used to make heap fifo. */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem; /* List element. */

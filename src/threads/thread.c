@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "threads/heap.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -22,7 +23,7 @@
 
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
-static struct list ready_list;
+static struct heap ready_list;
 
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
@@ -36,6 +37,9 @@ static struct thread *initial_thread;
 
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
+
+/* Used to make heap fifo. */
+static unsigned fifo;
 
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame
@@ -71,6 +75,7 @@ static void schedule(void);
 void thread_schedule_tail(struct thread *prev);
 static tid_t allocate_tid(void);
 static int thread_get_donor_priority(struct thread *);
+static heap_less_func thread_priority_cmp;
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -90,8 +95,10 @@ void thread_init(void)
     ASSERT(intr_get_level() == INTR_OFF);
 
     lock_init(&tid_lock);
-    list_init(&ready_list);
+    heap_init(&ready_list, thread_priority_cmp);
     list_init(&all_list);
+
+    fifo = 0;
 
     /* Set up a thread structure for the running thread. */
     initial_thread = running_thread();
@@ -234,7 +241,8 @@ void thread_unblock(struct thread *t)
 
     old_level = intr_disable();
     ASSERT(t->status == THREAD_BLOCKED);
-    list_push_back(&ready_list, &t->elem);
+    t->fifo = fifo++;
+    heap_push(&ready_list, t);
     t->status = THREAD_READY;
     intr_set_level(old_level);
 }
@@ -302,7 +310,10 @@ void thread_yield(void)
 
     old_level = intr_disable();
     if (cur != idle_thread)
-        list_push_back(&ready_list, &cur->elem);
+    {
+        cur->fifo = fifo++;
+        heap_push(&ready_list, cur);
+    }
     cur->status = THREAD_READY;
     schedule();
     intr_set_level(old_level);
@@ -540,10 +551,10 @@ alloc_frame(struct thread *t, size_t size)
 static struct thread *
 next_thread_to_run(void)
 {
-    if (list_empty(&ready_list))
+    if (heap_empty(&ready_list))
         return idle_thread;
     else
-        return thread_pop_highest_priority(&ready_list);
+        return (struct thread *)(heap_pop(&ready_list));
 }
 
 /* Removes the highest-priority thread from LIST and returns it.
@@ -564,6 +575,21 @@ bool thread_elem_priority_cmp(const struct list_elem *a,
                               void *aux UNUSED)
 {
     return list_entry(a, struct thread, elem)->priority < list_entry(b, struct thread, elem)->priority;
+}
+
+/* Compares the priority of two threads A and B.
+    Returns true if A is less than B, or
+    false if A is greater than or equal to B. */
+static bool thread_priority_cmp(void *a, void *b)
+{
+    struct thread *ta = (struct thread *)a;
+    struct thread *tb = (struct thread *)b;
+
+    ASSERT(ta->fifo != tb->fifo);
+
+    if (ta->priority == tb->priority)
+        return ta->fifo > tb->fifo;
+    return ta->priority < tb->priority;
 }
 
 /* Completes a thread switch by activating the new thread's page
