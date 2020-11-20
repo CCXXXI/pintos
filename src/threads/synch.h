@@ -33,7 +33,7 @@ void lock_acquire(struct lock *);
 bool lock_try_acquire(struct lock *);
 void lock_release(struct lock *);
 bool lock_held_by_current_thread(const struct lock *);
-list_less_func lock_priority_cmp;
+list_less_func lock_elem_priority_cmp;
 void lock_update_priority(struct lock *);
 
 /* Condition variable. */

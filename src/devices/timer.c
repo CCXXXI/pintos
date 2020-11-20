@@ -33,7 +33,7 @@ static bool too_many_loops(unsigned loops);
 static void busy_wait(int64_t loops);
 static void real_time_sleep(int64_t num, int32_t denom);
 static void real_time_delay(int64_t num, int32_t denom);
-static list_less_func thread_wake_up_time_cmp;
+static list_less_func thread_elem_wake_up_time_cmp;
 static void sleep_check(int64_t now);
 
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
@@ -96,18 +96,18 @@ void timer_sleep(int64_t ticks)
     struct thread *cur = thread_current();
     enum intr_level old_level = intr_disable();
     cur->wake_up_time = timer_ticks() + ticks;
-    list_insert_ordered(&sleep_list, &cur->elem, thread_wake_up_time_cmp, NULL);
+    list_insert_ordered(&sleep_list, &cur->elem, thread_elem_wake_up_time_cmp, NULL);
     thread_block();
     intr_set_level(old_level);
 }
 
-/* Compares the wake_up_time of two threads A and B, without using
+/* Compares the wake_up_time of two thread elem A and B, without using
    auxiliary data AUX.  Returns true if A is less than B, or
    false if A is greater than or equal to B. */
 static bool
-thread_wake_up_time_cmp(const struct list_elem *a,
-                        const struct list_elem *b,
-                        void *aux UNUSED)
+thread_elem_wake_up_time_cmp(const struct list_elem *a,
+                             const struct list_elem *b,
+                             void *aux UNUSED)
 {
     return list_entry(a, struct thread, elem)->wake_up_time < list_entry(b, struct thread, elem)->wake_up_time;
 }

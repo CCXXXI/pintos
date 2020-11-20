@@ -369,7 +369,7 @@ static int thread_get_donor_priority(struct thread *t)
 {
     if (list_empty(&t->donor))
         return PRI_MIN;
-    return list_entry(list_max(&t->donor, lock_priority_cmp, NULL), struct lock, elem)->priority;
+    return list_entry(list_max(&t->donor, lock_elem_priority_cmp, NULL), struct lock, elem)->priority;
 }
 
 /* Sets the current thread's nice value to NICE. */
@@ -551,17 +551,17 @@ next_thread_to_run(void)
 struct thread *
 thread_pop_highest_priority(struct list *list)
 {
-    struct list_elem *tmp = list_max(list, thread_priority_cmp, NULL);
+    struct list_elem *tmp = list_max(list, thread_elem_priority_cmp, NULL);
     list_remove(tmp);
     return list_entry(tmp, struct thread, elem);
 }
 
-/* Compares the priority of two threads A and B, without using
+/* Compares the priority of two thread elem A and B, without using
    auxiliary data AUX.  Returns true if A is less than B, or
    false if A is greater than or equal to B. */
-bool thread_priority_cmp(const struct list_elem *a,
-                         const struct list_elem *b,
-                         void *aux UNUSED)
+bool thread_elem_priority_cmp(const struct list_elem *a,
+                              const struct list_elem *b,
+                              void *aux UNUSED)
 {
     return list_entry(a, struct thread, elem)->priority < list_entry(b, struct thread, elem)->priority;
 }
