@@ -21,12 +21,13 @@ typedef void *heap_elem;
 /* Heap. */
 struct heap
 {
-    heap_elem c[MAX_SIZE];  /* Container. */
-    size_t size;         /* Size. */
-    heap_less_func *cmp; /* Compare function. */
+    heap_elem c[MAX_SIZE]; /* Container. */
+    size_t size;           /* Size. */
+    heap_less_func *cmp;   /* Compare function. */
+    bool max_heap;         /* true for a max-heap, false for a min-heap. */
 };
 
-void heap_init(struct heap *, heap_less_func);
+void heap_init(struct heap *, heap_less_func, bool max_heap);
 heap_elem heap_top(struct heap *);
 bool heap_empty(struct heap *);
 void heap_push(struct heap *, heap_elem);
