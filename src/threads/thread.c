@@ -21,9 +21,9 @@
    of thread.h for details. */
 #define THREAD_MAGIC 0xcd6abf4b
 
-/* List of processes in THREAD_READY state, that is, processes
+/* Heap of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
-static struct heap ready_list;
+static struct heap ready_q;
 
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
@@ -98,7 +98,7 @@ void thread_init(void)
     ASSERT(intr_get_level() == INTR_OFF);
 
     lock_init(&tid_lock);
-    heap_init(&ready_list, thread_priority_cmp, true);
+    heap_init(&ready_q, thread_priority_cmp, true);
     list_init(&all_list);
 
     fifo = 0;
@@ -253,7 +253,7 @@ void thread_unblock(struct thread *t)
     old_level = intr_disable();
     ASSERT(t->status == THREAD_BLOCKED);
     t->fifo = fifo++;
-    heap_push(&ready_list, t);
+    heap_push(&ready_q, t);
     t->status = THREAD_READY;
     intr_set_level(old_level);
 }
@@ -323,7 +323,7 @@ void thread_yield(void)
     if (cur != idle_thread)
     {
         cur->fifo = fifo++;
-        heap_push(&ready_list, cur);
+        heap_push(&ready_q, cur);
     }
     cur->status = THREAD_READY;
     schedule();
@@ -463,7 +463,7 @@ void thread_calc_recent_cpu(void)
 /* load_avg = (59 / 60) * load_avg + (1 / 60) * ready_threads */
 static void thread_calc_load_avg(void)
 {
-    int ready_threads = ready_list.size + (thread_current() != idle_thread);
+    int ready_threads = ready_q.size + (thread_current() != idle_thread);
     fp_t k1 = fp_div_fp(i_to_fp(59), i_to_fp(60));
     fp_t k2 = fp_div_fp(i_to_fp(1), i_to_fp(60));
     load_avg = fp_add_fp(fp_mul_fp(k1, load_avg), fp_mul_i(k2, ready_threads));
@@ -471,13 +471,13 @@ static void thread_calc_load_avg(void)
 
 /* Idle thread.  Executes when no other thread is ready to run.
 
-   The idle thread is initially put on the ready list by
+   The idle thread is initially put on the ready queue by
    thread_start().  It will be scheduled once initially, at which
    point it initializes idle_thread, "up"s the semaphore passed
    to it to enable thread_start() to continue, and immediately
    blocks.  After that, the idle thread never appears in the
-   ready list.  It is returned by next_thread_to_run() as a
-   special case when the ready list is empty. */
+   ready queue.  It is returned by next_thread_to_run() as a
+   special case when the ready queue is empty. */
 static void
 idle(void *idle_started_ UNUSED)
 {
@@ -599,10 +599,10 @@ alloc_frame(struct thread *t, size_t size)
 static struct thread *
 next_thread_to_run(void)
 {
-    if (heap_empty(&ready_list))
+    if (heap_empty(&ready_q))
         return idle_thread;
     else
-        return (struct thread *)(heap_pop(&ready_list));
+        return (struct thread *)(heap_pop(&ready_q));
 }
 
 /* Removes the highest-priority thread from LIST and returns it.
