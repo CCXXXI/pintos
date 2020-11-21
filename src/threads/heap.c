@@ -4,13 +4,14 @@
 
 static void swap(heap_elem *, heap_elem *);
 
-void heap_init(struct heap *h, heap_less_func cmp)
+void heap_init(struct heap *h, heap_less_func cmp, bool max_heap)
 {
     h->size = 0;
     h->cmp = cmp;
+    h->max_heap = max_heap;
 }
 
-/* Returns the top element in the heap (also the greatest). */
+/* Returns the top element in the heap. */
 heap_elem heap_top(struct heap *h)
 {
     ASSERT(!heap_empty(h));
@@ -34,7 +35,7 @@ void heap_push(struct heap *h, heap_elem e)
     while (i != 0)
     {
         size_t p = (i - 1) / 2;
-        if (h->cmp(h->c[i], h->c[p]))
+        if ((h->max_heap && !h->cmp(h->c[p], h->c[i])) || (!h->max_heap && !h->cmp(h->c[i], h->c[p])))
             break;
         swap(&h->c[i], &h->c[p]);
         i = p;
@@ -57,9 +58,9 @@ heap_elem heap_pop(struct heap *h)
         size_t c = i * 2 + 1;
         if (c >= h->size)
             break;
-        if (c + 1 < h->size && h->cmp(h->c[c], h->c[c + 1]))
+        if (c + 1 < h->size && (h->cmp(h->c[c], h->c[c + 1]) == h->max_heap))
             c++;
-        if (h->cmp(h->c[c], h->c[i]))
+        if ((h->max_heap && !h->cmp(h->c[i], h->c[c])) || (!h->max_heap && !h->cmp(h->c[c], h->c[i])))
             break;
         swap(&h->c[i], &h->c[c]);
         i = c;

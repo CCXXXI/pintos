@@ -98,7 +98,7 @@ void thread_init(void)
     ASSERT(intr_get_level() == INTR_OFF);
 
     lock_init(&tid_lock);
-    heap_init(&ready_list, thread_priority_cmp);
+    heap_init(&ready_list, thread_priority_cmp, true);
     list_init(&all_list);
 
     fifo = 0;
