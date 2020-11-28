@@ -13,8 +13,7 @@ static void invalidate_pagedir(uint32_t *);
    virtual addresses, but none for user virtual addresses.
    Returns the new page directory, or a null pointer if memory
    allocation fails. */
-uint32_t *
-pagedir_create(void)
+uint32_t *pagedir_create(void)
 {
     uint32_t *pd = palloc_get_page(0);
     if (pd != NULL)
@@ -52,8 +51,7 @@ void pagedir_destroy(uint32_t *pd)
    on CREATE.  If CREATE is true, then a new page table is
    created and a pointer into it is returned.  Otherwise, a null
    pointer is returned. */
-static uint32_t *
-lookup_page(uint32_t *pd, const void *vaddr, bool create)
+static uint32_t *lookup_page(uint32_t *pd, const void *vaddr, bool create)
 {
     uint32_t *pt, *pde;
 
@@ -120,8 +118,7 @@ bool pagedir_set_page(uint32_t *pd, void *upage, void *kpage, bool writable)
    address UADDR in PD.  Returns the kernel virtual address
    corresponding to that physical address, or a null pointer if
    UADDR is unmapped. */
-void *
-pagedir_get_page(uint32_t *pd, const void *uaddr)
+void *pagedir_get_page(uint32_t *pd, const void *uaddr)
 {
     uint32_t *pte;
 
@@ -227,8 +224,7 @@ void pagedir_activate(uint32_t *pd)
 }
 
 /* Returns the currently active page directory. */
-static uint32_t *
-active_pd(void)
+static uint32_t *active_pd(void)
 {
     /* Copy CR3, the page directory base register (PDBR), into
        `pd'.
@@ -249,8 +245,7 @@ active_pd(void)
    This function invalidates the TLB if PD is the active page
    directory.  (If PD is not active then its entries are not in
    the TLB, so there is no need to invalidate anything.) */
-static void
-invalidate_pagedir(uint32_t *pd)
+static void invalidate_pagedir(uint32_t *pd)
 {
     if (active_pd() == pd)
     {

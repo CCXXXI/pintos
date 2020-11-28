@@ -31,8 +31,7 @@ static struct block *list_elem_to_block(struct list_elem *);
 
 /* Returns a human-readable name for the given block device
    TYPE. */
-const char *
-block_type_name(enum block_type type)
+const char *block_type_name(enum block_type type)
 {
     static const char *block_type_names[BLOCK_CNT] =
         {
@@ -50,8 +49,7 @@ block_type_name(enum block_type type)
 
 /* Returns the block device fulfilling the given ROLE, or a null
    pointer if no block device has been assigned that role. */
-struct block *
-block_get_role(enum block_type role)
+struct block *block_get_role(enum block_type role)
 {
     ASSERT(role < BLOCK_ROLE_CNT);
     return block_by_role[role];
@@ -66,24 +64,21 @@ void block_set_role(enum block_type role, struct block *block)
 
 /* Returns the first block device in kernel probe order, or a
    null pointer if no block devices are registered. */
-struct block *
-block_first(void)
+struct block *block_first(void)
 {
     return list_elem_to_block(list_begin(&all_blocks));
 }
 
 /* Returns the block device following BLOCK in kernel probe
    order, or a null pointer if BLOCK is the last block device. */
-struct block *
-block_next(struct block *block)
+struct block *block_next(struct block *block)
 {
     return list_elem_to_block(list_next(&block->list_elem));
 }
 
 /* Returns the block device with the given NAME, or a null
    pointer if no block device has that name. */
-struct block *
-block_get_by_name(const char *name)
+struct block *block_get_by_name(const char *name)
 {
     struct list_elem *e;
 
@@ -100,8 +95,7 @@ block_get_by_name(const char *name)
 
 /* Verifies that SECTOR is a valid offset within BLOCK.
    Panics if not. */
-static void
-check_sector(struct block *block, block_sector_t sector)
+static void check_sector(struct block *block, block_sector_t sector)
 {
     if (sector >= block->size)
     {
@@ -145,8 +139,7 @@ block_size(struct block *block)
 }
 
 /* Returns BLOCK's name (e.g. "hda"). */
-const char *
-block_name(struct block *block)
+const char *block_name(struct block *block)
 {
     return block->name;
 }
@@ -180,10 +173,9 @@ void block_print_stats(void)
    message.  The block device's SIZE in sectors and its TYPE must
    be provided, as well as the it operation functions OPS, which
    will be passed AUX in each function call. */
-struct block *
-block_register(const char *name, enum block_type type,
-               const char *extra_info, block_sector_t size,
-               const struct block_operations *ops, void *aux)
+struct block *block_register(const char *name, enum block_type type,
+                             const char *extra_info, block_sector_t size,
+                             const struct block_operations *ops, void *aux)
 {
     struct block *block = malloc(sizeof *block);
     if (block == NULL)
@@ -210,8 +202,7 @@ block_register(const char *name, enum block_type type,
 
 /* Returns the block device corresponding to LIST_ELEM, or a null
    pointer if LIST_ELEM is the list end of all_blocks. */
-static struct block *
-list_elem_to_block(struct list_elem *list_elem)
+static struct block *list_elem_to_block(struct list_elem *list_elem)
 {
     return (list_elem != list_end(&all_blocks)
                 ? list_entry(list_elem, struct block, list_elem)

@@ -14,8 +14,7 @@ return_block_size(void)
     return 37;
 }
 
-static void
-check_tell(int fd, long ofs)
+static void check_tell(int fd, long ofs)
 {
     long pos = tell(fd);
     if (pos != ofs)

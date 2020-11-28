@@ -45,10 +45,9 @@ void partition_scan(struct block *block)
    PART_NR points to the number of non-empty primary or logical
    partitions already encountered on BLOCK.  It is incremented as
    partitions are found. */
-static void
-read_partition_table(struct block *block, block_sector_t sector,
-                     block_sector_t primary_extended_sector,
-                     int *part_nr)
+static void read_partition_table(struct block *block, block_sector_t sector,
+                                 block_sector_t primary_extended_sector,
+                                 int *part_nr)
 {
     /* Format of a partition table entry.  See [Partitions]. */
     struct partition_table_entry
@@ -147,10 +146,9 @@ read_partition_table(struct block *block, block_sector_t sector,
    sectors, which we are giving the partition number PART_NR.
    Check whether this is a partition of interest to Pintos, and
    if so then add it to the proper element of partitions[]. */
-static void
-found_partition(struct block *block, uint8_t part_type,
-                block_sector_t start, block_sector_t size,
-                int part_nr)
+static void found_partition(struct block *block, uint8_t part_type,
+                            block_sector_t start, block_sector_t size,
+                            int part_nr)
 {
     if (start >= block_size(block))
         printf("%s%d: Partition starts past end of device (sector %" PRDSNu ")\n",
@@ -187,8 +185,7 @@ found_partition(struct block *block, uint8_t part_type,
 }
 
 /* Returns a human-readable name for the given partition TYPE. */
-static const char *
-partition_type_name(uint8_t type)
+static const char *partition_type_name(uint8_t type)
 {
     /* Name of each known type of partition.
        From util-linux-2.12r/fdisk/i386_sys_types.c.
@@ -301,8 +298,7 @@ partition_type_name(uint8_t type)
 
 /* Reads sector SECTOR from partition P into BUFFER, which must
    have room for BLOCK_SECTOR_SIZE bytes. */
-static void
-partition_read(void *p_, block_sector_t sector, void *buffer)
+static void partition_read(void *p_, block_sector_t sector, void *buffer)
 {
     struct partition *p = p_;
     block_read(p->block, p->start + sector, buffer);
@@ -311,8 +307,7 @@ partition_read(void *p_, block_sector_t sector, void *buffer)
 /* Write sector SECTOR to partition P from BUFFER, which must
    contain BLOCK_SECTOR_SIZE bytes.  Returns after the block has
    acknowledged receiving the data. */
-static void
-partition_write(void *p_, block_sector_t sector, const void *buffer)
+static void partition_write(void *p_, block_sector_t sector, const void *buffer)
 {
     struct partition *p = p_;
     block_write(p->block, p->start + sector, buffer);

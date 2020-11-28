@@ -45,8 +45,7 @@ void test_mlfqs_block(void)
     msg("Block thread should have already acquired lock.");
 }
 
-static void
-block_thread(void *lock_)
+static void block_thread(void *lock_)
 {
     struct lock *lock = lock_;
     int64_t start_time;

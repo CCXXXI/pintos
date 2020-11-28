@@ -57,8 +57,7 @@ bool filesys_create(const char *name, off_t initial_size)
    otherwise.
    Fails if no file named NAME exists,
    or if an internal memory allocation fails. */
-struct file *
-filesys_open(const char *name)
+struct file *filesys_open(const char *name)
 {
     struct dir *dir = dir_open_root();
     struct inode *inode = NULL;
@@ -84,8 +83,7 @@ bool filesys_remove(const char *name)
 }
 
 /* Formats the file system. */
-static void
-do_format(void)
+static void do_format(void)
 {
     printf("Formatting file system...");
     free_map_create();

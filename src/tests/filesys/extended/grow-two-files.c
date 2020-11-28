@@ -10,8 +10,7 @@
 static char buf_a[FILE_SIZE];
 static char buf_b[FILE_SIZE];
 
-static void
-write_some_bytes(const char *file_name, int fd, const char *buf, size_t *ofs)
+static void write_some_bytes(const char *file_name, int fd, const char *buf, size_t *ofs)
 {
     if (*ofs < FILE_SIZE)
     {

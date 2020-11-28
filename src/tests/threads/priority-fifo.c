@@ -82,8 +82,7 @@ void test_priority_fifo(void)
     }
 }
 
-static void
-simple_thread_func(void *data_)
+static void simple_thread_func(void *data_)
 {
     struct simple_thread_data *data = data_;
     int i;

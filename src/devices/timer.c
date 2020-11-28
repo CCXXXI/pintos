@@ -112,8 +112,7 @@ static bool thread_wake_up_time_cmp(void *a, void *b)
 }
 
 /* Check sleep_q. Wake up the sleeper if necessary. */
-static void
-sleep_check(int64_t now)
+static void sleep_check(int64_t now)
 {
     while (!heap_empty(&sleep_q) && ((struct thread *)heap_top(&sleep_q))->wake_up_time <= now)
     {
@@ -185,8 +184,7 @@ void timer_print_stats(void)
 }
 
 /* Timer interrupt handler. */
-static void
-timer_interrupt(struct intr_frame *args UNUSED)
+static void timer_interrupt(struct intr_frame *args UNUSED)
 {
     ticks++;
     thread_tick();
@@ -207,8 +205,7 @@ static void mlfqs_check(void)
 
 /* Returns true if LOOPS iterations waits for more than one timer
    tick, otherwise false. */
-static bool
-too_many_loops(unsigned loops)
+static bool too_many_loops(unsigned loops)
 {
     /* Wait for a timer tick. */
     int64_t start = ticks;
@@ -240,8 +237,7 @@ busy_wait(int64_t loops)
 }
 
 /* Sleep for approximately NUM/DENOM seconds. */
-static void
-real_time_sleep(int64_t num, int32_t denom)
+static void real_time_sleep(int64_t num, int32_t denom)
 {
     /* Convert NUM/DENOM seconds into timer ticks, rounding down.
             
@@ -268,11 +264,9 @@ real_time_sleep(int64_t num, int32_t denom)
 }
 
 /* Busy-wait for approximately NUM/DENOM seconds. */
-static void
-real_time_delay(int64_t num, int32_t denom)
+static void real_time_delay(int64_t num, int32_t denom)
 {
-    /* Scale the numerator and denominator down by 1000 to avoid
-       the possibility of overflow. */
+    /* Scale the numerator and denominator down by 1000 to avoid        the possibility of overflow. */
     ASSERT(denom % 1000 == 0);
     busy_wait(loops_per_tick * num / 1000 * TIMER_FREQ / (denom / 1000));
 }

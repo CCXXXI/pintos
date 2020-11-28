@@ -59,8 +59,7 @@ void test_priority_donate_nest(void)
         PRI_DEFAULT, thread_get_priority());
 }
 
-static void
-medium_thread_func(void *locks_)
+static void medium_thread_func(void *locks_)
 {
     struct locks *locks = locks_;
 
@@ -81,8 +80,7 @@ medium_thread_func(void *locks_)
     msg("Middle thread finished.");
 }
 
-static void
-high_thread_func(void *lock_)
+static void high_thread_func(void *lock_)
 {
     struct lock *lock = lock_;
 

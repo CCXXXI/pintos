@@ -114,8 +114,7 @@ void seek(int fd, unsigned position)
   syscall2(SYS_SEEK, fd, position);
 }
 
-unsigned
-tell(int fd)
+unsigned tell(int fd)
 {
   return syscall1(SYS_TELL, fd);
 }

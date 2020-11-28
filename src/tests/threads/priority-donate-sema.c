@@ -45,8 +45,7 @@ void test_priority_donate_sema(void)
     msg("Main thread finished.");
 }
 
-static void
-l_thread_func(void *ls_)
+static void l_thread_func(void *ls_)
 {
     struct lock_and_sema *ls = ls_;
 
@@ -58,8 +57,7 @@ l_thread_func(void *ls_)
     msg("Thread L finished.");
 }
 
-static void
-m_thread_func(void *ls_)
+static void m_thread_func(void *ls_)
 {
     struct lock_and_sema *ls = ls_;
 
@@ -67,8 +65,7 @@ m_thread_func(void *ls_)
     msg("Thread M finished.");
 }
 
-static void
-h_thread_func(void *ls_)
+static void h_thread_func(void *ls_)
 {
     struct lock_and_sema *ls = ls_;
 

@@ -33,8 +33,7 @@ static void move_cursor(void);
 static void find_cursor(size_t *x, size_t *y);
 
 /* Initializes the VGA text display. */
-static void
-init(void)
+static void init(void)
 {
     /* Already initialized? */
     static bool inited;
@@ -102,8 +101,7 @@ void vga_putc(int c)
 }
 
 /* Clears the screen and moves the cursor to the upper left. */
-static void
-cls(void)
+static void cls(void)
 {
     size_t y;
 
@@ -115,8 +113,7 @@ cls(void)
 }
 
 /* Clears row Y to spaces. */
-static void
-clear_row(size_t y)
+static void clear_row(size_t y)
 {
     size_t x;
 
@@ -130,8 +127,7 @@ clear_row(size_t y)
 /* Advances the cursor to the first column in the next line on
    the screen.  If the cursor is already on the last line on the
    screen, scrolls the screen upward one line. */
-static void
-newline(void)
+static void newline(void)
 {
     cx = 0;
     cy++;
@@ -144,8 +140,7 @@ newline(void)
 }
 
 /* Moves the hardware cursor to (cx,cy). */
-static void
-move_cursor(void)
+static void move_cursor(void)
 {
     /* See [FREEVGA] under "Manipulating the Text-mode Cursor". */
     uint16_t cp = cx + COL_CNT * cy;
@@ -154,8 +149,7 @@ move_cursor(void)
 }
 
 /* Reads the current hardware cursor position into (*X,*Y). */
-static void
-find_cursor(size_t *x, size_t *y)
+static void find_cursor(size_t *x, size_t *y)
 {
     /* See [FREEVGA] under "Manipulating the Text-mode Cursor". */
     uint16_t cp;

@@ -47,8 +47,7 @@ spawn_child(int c, enum child_termination_mode mode)
 /* Open a number of files (and fail to close them).
    The kernel must free any kernel resources associated
    with these file descriptors. */
-static void
-consume_some_resources(void)
+static void consume_some_resources(void)
 {
     int fd, fdmax = 126;
 

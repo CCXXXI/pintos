@@ -151,8 +151,7 @@ void test_mlfqs_load_avg(void)
     }
 }
 
-static void
-load_thread(void *seq_no_)
+static void load_thread(void *seq_no_)
 {
     int seq_no = (int)seq_no_;
     int sleep_time = TIMER_FREQ * (10 + seq_no);

@@ -81,8 +81,7 @@ void test_priority_donate_chain(void)
         thread_get_priority());
 }
 
-static void
-donor_thread_func(void *locks_)
+static void donor_thread_func(void *locks_)
 {
     struct lock_pair *locks = locks_;
 
@@ -104,8 +103,7 @@ donor_thread_func(void *locks_)
         thread_get_priority());
 }
 
-static void
-interloper_thread_func(void *arg_ UNUSED)
+static void interloper_thread_func(void *arg_ UNUSED)
 {
     msg("%s finished.", thread_name());
 }

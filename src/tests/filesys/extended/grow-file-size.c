@@ -15,8 +15,7 @@ return_block_size(void)
     return 37;
 }
 
-static void
-check_file_size(int fd, long ofs)
+static void check_file_size(int fd, long ofs)
 {
     long size = filesize(fd);
     if (size != ofs)

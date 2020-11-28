@@ -45,8 +45,7 @@ struct sleep_thread
 static void sleeper(void *);
 
 /* Runs THREAD_CNT threads thread sleep ITERATIONS times each. */
-static void
-test_sleep(int thread_cnt, int iterations)
+static void test_sleep(int thread_cnt, int iterations)
 {
     struct sleep_test test;
     struct sleep_thread *threads;
@@ -132,8 +131,7 @@ test_sleep(int thread_cnt, int iterations)
 }
 
 /* Sleeper thread. */
-static void
-sleeper(void *t_)
+static void sleeper(void *t_)
 {
     struct sleep_thread *t = t_;
     struct sleep_test *test = t->test;

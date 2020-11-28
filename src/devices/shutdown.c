@@ -126,8 +126,7 @@ void shutdown_power_off(void)
 }
 
 /* Print statistics about Pintos execution. */
-static void
-print_stats(void)
+static void print_stats(void)
 {
     timer_print_stats();
     thread_print_stats();

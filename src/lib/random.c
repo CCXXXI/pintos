@@ -21,8 +21,7 @@ static uint8_t s_i, s_j; /* i, j. */
 static bool inited;
 
 /* Swaps the bytes pointed to by A and B. */
-static inline void
-swap_byte(uint8_t *a, uint8_t *b)
+static inline void swap_byte(uint8_t *a, uint8_t *b)
 {
     uint8_t t = *a;
     *a = *b;

@@ -56,8 +56,7 @@ void test(void)
 }
 
 /* Shuffles the CNT elements in ARRAY into random order. */
-static void
-shuffle(int *array, size_t cnt)
+static void shuffle(int *array, size_t cnt)
 {
     size_t i;
 
@@ -73,8 +72,7 @@ shuffle(int *array, size_t cnt)
 /* Returns 1 if *A is greater than *B,
    0 if *A equals *B,
    -1 if *A is less than *B. */
-static int
-compare_ints(const void *a_, const void *b_)
+static int compare_ints(const void *a_, const void *b_)
 {
     const int *a = a_;
     const int *b = b_;
@@ -83,8 +81,7 @@ compare_ints(const void *a_, const void *b_)
 }
 
 /* Verifies that ARRAY contains the CNT ints 0...CNT-1. */
-static void
-verify_order(const int *array, size_t cnt)
+static void verify_order(const int *array, size_t cnt)
 {
     int i;
 
@@ -94,8 +91,7 @@ verify_order(const int *array, size_t cnt)
 
 /* Checks that bsearch() works properly in ARRAY.  ARRAY must
    contain the values 0...CNT-1. */
-static void
-verify_bsearch(const int *array, size_t cnt)
+static void verify_bsearch(const int *array, size_t cnt)
 {
     int not_in_array[] = {0, -1, INT_MAX, MAX_CNT, MAX_CNT + 1, MAX_CNT * 2};
     int i;

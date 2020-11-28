@@ -16,16 +16,14 @@
 #include <termios.h>
 #include <unistd.h>
 
-static void
-fail_io(const char *msg, ...)
+static void fail_io(const char *msg, ...)
     __attribute__((noreturn))
     __attribute__((format(printf, 1, 2)));
 
 /* Prints MSG, formatting as with printf(),
    plus an error message based on errno,
    and exits. */
-static void
-fail_io(const char *msg, ...)
+static void fail_io(const char *msg, ...)
 {
     va_list args;
 
@@ -42,8 +40,7 @@ fail_io(const char *msg, ...)
 /* If FD is a terminal, configures it for noncanonical input mode
    with VMIN and VTIME set as indicated.
    If FD is not a terminal, has no effect. */
-static void
-make_noncanon(int fd, int vmin, int vtime)
+static void make_noncanon(int fd, int vmin, int vtime)
 {
     if (isatty(fd))
     {
@@ -60,8 +57,7 @@ make_noncanon(int fd, int vmin, int vtime)
 
 /* Make FD non-blocking if NONBLOCKING is true,
    or blocking if NONBLOCKING is false. */
-static void
-make_nonblocking(int fd, bool nonblocking)
+static void make_nonblocking(int fd, bool nonblocking)
 {
     int flags = fcntl(fd, F_GETFL);
     if (flags < 0)
@@ -78,8 +74,7 @@ make_nonblocking(int fd, bool nonblocking)
    is true, that returned end-of-file or error indication RETVAL.
    The system call is named CALL, for use in error messages.
    Sets *FD to -1 if the fd is no longer readable or writable. */
-static void
-handle_error(ssize_t retval, int *fd, bool fd_is_pty, const char *call)
+static void handle_error(ssize_t retval, int *fd, bool fd_is_pty, const char *call)
 {
     if (fd_is_pty)
     {
@@ -108,8 +103,7 @@ handle_error(ssize_t retval, int *fd, bool fd_is_pty, const char *call)
 
 /* Copies data from stdin to PTY and from PTY to stdout until no
    more data can be read or written. */
-static void
-relay(int pty, int dead_child_fd)
+static void relay(int pty, int dead_child_fd)
 {
     struct pipe
     {
@@ -239,8 +233,7 @@ relay(int pty, int dead_child_fd)
 
 static int dead_child_fd;
 
-static void
-sigchld_handler(int signo __attribute__((unused)))
+static void sigchld_handler(int signo __attribute__((unused)))
 {
     if (write(dead_child_fd, "", 1) < 0)
         _exit(1);

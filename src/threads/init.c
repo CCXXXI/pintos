@@ -144,8 +144,7 @@ int main(void)
 
    The start and end of the BSS segment is recorded by the
    linker as _start_bss and _end_bss.  See kernel.lds. */
-static void
-bss_init(void)
+static void bss_init(void)
 {
   extern char _start_bss, _end_bss;
   memset(&_start_bss, 0, &_end_bss - &_start_bss);
@@ -155,8 +154,7 @@ bss_init(void)
    kernel virtual mapping, and then sets up the CPU to use the
    new page directory.  Points init_page_dir to the page
    directory it creates. */
-static void
-paging_init(void)
+static void paging_init(void)
 {
   uint32_t *pd, *pt;
   size_t page;
@@ -194,8 +192,7 @@ paging_init(void)
 
 /* Breaks the kernel command line into words and returns them as
    an argv-like array. */
-static char **
-read_command_line(void)
+static char **read_command_line(void)
 {
   static char *argv[LOADER_ARGS_LEN / 2 + 1];
   char *p, *end;
@@ -229,8 +226,7 @@ read_command_line(void)
 
 /* Parses options in ARGV[]
    and returns the first non-option argument. */
-static char **
-parse_options(char **argv)
+static char **parse_options(char **argv)
 {
   for (; *argv != NULL && **argv == '-'; argv++)
   {
@@ -282,8 +278,7 @@ parse_options(char **argv)
 }
 
 /* Runs the task specified in ARGV[1]. */
-static void
-run_task(char **argv)
+static void run_task(char **argv)
 {
   const char *task = argv[1];
 
@@ -301,8 +296,7 @@ run_task(char **argv)
 
 /* Executes all of the actions specified in ARGV[]
    up to the null pointer sentinel. */
-static void
-run_actions(char **argv)
+static void run_actions(char **argv)
 {
   /* An action. */
   struct action
@@ -351,8 +345,7 @@ run_actions(char **argv)
 
 /* Prints a kernel command line help message and powers off the
    machine. */
-static void
-usage(void)
+static void usage(void)
 {
   printf("\nCommand line syntax: [OPTION...] [ACTION...]\n"
          "Options must precede actions.\n"
@@ -394,8 +387,7 @@ usage(void)
 
 #ifdef FILESYS
 /* Figure out what block devices to cast in the various Pintos roles. */
-static void
-locate_block_devices(void)
+static void locate_block_devices(void)
 {
   locate_block_device(BLOCK_FILESYS, filesys_bdev_name);
   locate_block_device(BLOCK_SCRATCH, scratch_bdev_name);
@@ -408,8 +400,7 @@ locate_block_devices(void)
    block device with the given NAME, if NAME is non-null,
    otherwise the first block device in probe order of type
    ROLE. */
-static void
-locate_block_device(enum block_type role, const char *name)
+static void locate_block_device(enum block_type role, const char *name)
 {
   struct block *block = NULL;
 

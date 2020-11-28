@@ -90,8 +90,7 @@ static const struct keymap shifted_keymap[] =
 
 static bool map_key(const struct keymap[], unsigned scancode, uint8_t *);
 
-static void
-keyboard_interrupt(struct intr_frame *args UNUSED)
+static void keyboard_interrupt(struct intr_frame *args UNUSED)
 {
     /* Status of shift keys. */
     bool shift = left_shift || right_shift;
@@ -194,8 +193,7 @@ keyboard_interrupt(struct intr_frame *args UNUSED)
    If found, sets *C to the corresponding character and returns
    true.
    If not found, returns false and C is ignored. */
-static bool
-map_key(const struct keymap k[], unsigned scancode, uint8_t *c)
+static bool map_key(const struct keymap k[], unsigned scancode, uint8_t *c)
 {
     for (; k->first_scancode != 0; k++)
         if (scancode >= k->first_scancode && scancode < k->first_scancode + strlen(k->chars))

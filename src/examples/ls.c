@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static bool
-list_dir(const char *dir, bool verbose)
+static bool list_dir(const char *dir, bool verbose)
 {
     int dir_fd = open(dir);
     if (dir_fd == -1)

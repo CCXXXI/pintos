@@ -41,8 +41,7 @@ int vsnprintf(char *buffer, size_t buf_size, const char *format, va_list args)
 }
 
 /* Helper function for vsnprintf(). */
-static void
-vsnprintf_helper(char ch, void *aux_)
+static void vsnprintf_helper(char ch, void *aux_)
 {
     struct vsnprintf_aux *aux = aux_;
 
@@ -351,9 +350,8 @@ void __vprintf(const char *format, va_list args,
    initializes C appropriately.  Returns the character in FORMAT
    that indicates the conversion (e.g. the `d' in `%d').  Uses
    *ARGS for `*' field widths and precisions. */
-static const char *
-parse_conversion(const char *format, struct printf_conversion *c,
-                 va_list *args)
+static const char *parse_conversion(const char *format, struct printf_conversion *c,
+                                    va_list *args)
 {
     /* Parse flag characters. */
     c->flags = 0;
@@ -481,11 +479,10 @@ not_a_flag:
    unsigned conversion and ignores NEGATIVE.  The output is done
    according to the provided base B.  Details of the conversion
    are in C. */
-static void
-format_integer(uintmax_t value, bool is_signed, bool negative,
-               const struct integer_base *b,
-               const struct printf_conversion *c,
-               void (*output)(char, void *), void *aux)
+static void format_integer(uintmax_t value, bool is_signed, bool negative,
+                           const struct integer_base *b,
+                           const struct printf_conversion *c,
+                           void (*output)(char, void *), void *aux)
 {
     char buf[64], *cp; /* Buffer and current position. */
     int x;             /* `x' character to use or 0 if none. */
@@ -562,8 +559,7 @@ format_integer(uintmax_t value, bool is_signed, bool negative,
 }
 
 /* Writes CH to OUTPUT with auxiliary data AUX, CNT times. */
-static void
-output_dup(char ch, size_t cnt, void (*output)(char, void *), void *aux)
+static void output_dup(char ch, size_t cnt, void (*output)(char, void *), void *aux)
 {
     while (cnt-- > 0)
         output(ch, aux);
@@ -572,10 +568,9 @@ output_dup(char ch, size_t cnt, void (*output)(char, void *), void *aux)
 /* Formats the LENGTH characters starting at STRING according to
    the conversion specified in C.  Writes output to OUTPUT with
    auxiliary data AUX. */
-static void
-format_string(const char *string, int length,
-              struct printf_conversion *c,
-              void (*output)(char, void *), void *aux)
+static void format_string(const char *string, int length,
+                          struct printf_conversion *c,
+                          void (*output)(char, void *), void *aux)
 {
     int i;
     if (c->width > length && (c->flags & MINUS) == 0)
