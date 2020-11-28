@@ -212,48 +212,48 @@ void *realloc(void *old_block, size_t new_size)
    malloc(), calloc(), or realloc(). */
 void free(void *p)
 {
-    if (p != NULL)
-    {
-        struct block *b = p;
-        struct arena *a = block_to_arena(b);
-        struct desc *d = a->desc;
+    if (p == NULL)
+        return;
 
-        if (d != NULL)
-        {
-            /* It's a normal block.  We handle it here. */
+    struct block *b = p;
+    struct arena *a = block_to_arena(b);
+    struct desc *d = a->desc;
+
+    if (d != NULL)
+    {
+        /* It's a normal block.  We handle it here. */
 
 #ifndef NDEBUG
-            /* Clear the block to help detect use-after-free bugs. */
-            memset(b, 0xcc, d->block_size);
+        /* Clear the block to help detect use-after-free bugs. */
+        memset(b, 0xcc, d->block_size);
 #endif
 
-            lock_acquire(&d->lock);
+        lock_acquire(&d->lock);
 
-            /* Add block to free list. */
-            list_push_front(&d->free_list, &b->free_elem);
+        /* Add block to free list. */
+        list_push_front(&d->free_list, &b->free_elem);
 
-            /* If the arena is now entirely unused, free it. */
-            if (++a->free_cnt >= d->blocks_per_arena)
-            {
-                size_t i;
-
-                ASSERT(a->free_cnt == d->blocks_per_arena);
-                for (i = 0; i < d->blocks_per_arena; i++)
-                {
-                    struct block *b = arena_to_block(a, i);
-                    list_remove(&b->free_elem);
-                }
-                palloc_free_page(a);
-            }
-
-            lock_release(&d->lock);
-        }
-        else
+        /* If the arena is now entirely unused, free it. */
+        if (++a->free_cnt >= d->blocks_per_arena)
         {
-            /* It's a big block.  Free its pages. */
-            palloc_free_multiple(a, a->free_cnt);
-            return;
+            size_t i;
+
+            ASSERT(a->free_cnt == d->blocks_per_arena);
+            for (i = 0; i < d->blocks_per_arena; i++)
+            {
+                struct block *b = arena_to_block(a, i);
+                list_remove(&b->free_elem);
+            }
+            palloc_free_page(a);
         }
+
+        lock_release(&d->lock);
+    }
+    else
+    {
+        /* It's a big block.  Free its pages. */
+        palloc_free_multiple(a, a->free_cnt);
+        return;
     }
 }
 
