@@ -41,8 +41,7 @@ static void swap(unsigned char *a, unsigned char *b)
 /* Partitions ARRAY in-place in an initial run of bytes all less
    than PIVOT, followed by a run of bytes all greater than or
    equal to PIVOT.  Returns the length of the initial run. */
-static size_t
-partition(unsigned char *array, size_t size, int pivot)
+static size_t partition(unsigned char *array, size_t size, int pivot)
 {
     size_t left_size = size;
     unsigned char *first = array;

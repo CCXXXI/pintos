@@ -120,8 +120,7 @@ char *strchr(const char *string, int c_)
 
 /* Returns the length of the initial substring of STRING that
    consists of characters that are not in STOP. */
-size_t
-strcspn(const char *string, const char *stop)
+size_t strcspn(const char *string, const char *stop)
 {
     size_t length;
 
@@ -157,8 +156,7 @@ char *strrchr(const char *string, int c_)
 
 /* Returns the length of the initial substring of STRING that
    consists of characters in SKIP. */
-size_t
-strspn(const char *string, const char *skip)
+size_t strspn(const char *string, const char *skip)
 {
     size_t length;
 
@@ -277,8 +275,7 @@ void *memset(void *dst_, int value, size_t size)
 }
 
 /* Returns the length of STRING. */
-size_t
-strlen(const char *string)
+size_t strlen(const char *string)
 {
     const char *p;
 
@@ -291,8 +288,7 @@ strlen(const char *string)
 
 /* If STRING is less than MAXLEN characters in length, returns
    its actual length.  Otherwise, returns MAXLEN. */
-size_t
-strnlen(const char *string, size_t maxlen)
+size_t strnlen(const char *string, size_t maxlen)
 {
     size_t length;
 
@@ -310,8 +306,7 @@ strnlen(const char *string, size_t maxlen)
    increasingly popular extension.  See
    http://www.courtesan.com/todd/papers/strlcpy.html for
    information on strlcpy(). */
-size_t
-strlcpy(char *dst, const char *src, size_t size)
+size_t strlcpy(char *dst, const char *src, size_t size)
 {
     size_t src_len;
 
@@ -340,8 +335,7 @@ strlcpy(char *dst, const char *src, size_t size)
    increasingly popular extension.  See
    http://www.courtesan.com/todd/papers/strlcpy.html for
    information on strlcpy(). */
-size_t
-strlcat(char *dst, const char *src, size_t size)
+size_t strlcat(char *dst, const char *src, size_t size)
 {
     size_t src_len, dst_len;
 

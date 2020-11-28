@@ -124,8 +124,7 @@ void close(int fd)
   syscall1(SYS_CLOSE, fd);
 }
 
-mapid_t
-mmap(int fd, void *addr)
+mapid_t mmap(int fd, void *addr)
 {
   return syscall2(SYS_MMAP, fd, addr);
 }

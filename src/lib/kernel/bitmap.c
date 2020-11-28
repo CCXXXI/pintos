@@ -32,8 +32,7 @@ struct bitmap
 
 /* Returns the index of the element that contains the bit
    numbered BIT_IDX. */
-static inline size_t
-elem_idx(size_t bit_idx)
+static inline size_t elem_idx(size_t bit_idx)
 {
     return bit_idx / ELEM_BITS;
 }
@@ -47,15 +46,13 @@ bit_mask(size_t bit_idx)
 }
 
 /* Returns the number of elements required for BIT_CNT bits. */
-static inline size_t
-elem_cnt(size_t bit_cnt)
+static inline size_t elem_cnt(size_t bit_cnt)
 {
     return DIV_ROUND_UP(bit_cnt, ELEM_BITS);
 }
 
 /* Returns the number of bytes required for BIT_CNT bits. */
-static inline size_t
-byte_cnt(size_t bit_cnt)
+static inline size_t byte_cnt(size_t bit_cnt)
 {
     return sizeof(elem_type) * elem_cnt(bit_cnt);
 }
@@ -109,8 +106,7 @@ struct bitmap *bitmap_create_in_buf(size_t bit_cnt, void *block, size_t block_si
 
 /* Returns the number of bytes required to accomodate a bitmap
    with BIT_CNT bits (for use with bitmap_create_in_buf()). */
-size_t
-bitmap_buf_size(size_t bit_cnt)
+size_t bitmap_buf_size(size_t bit_cnt)
 {
     return sizeof(struct bitmap) + byte_cnt(bit_cnt);
 }
@@ -129,8 +125,7 @@ void bitmap_destroy(struct bitmap *b)
 /* Bitmap size. */
 
 /* Returns the number of bits in B. */
-size_t
-bitmap_size(const struct bitmap *b)
+size_t bitmap_size(const struct bitmap *b)
 {
     return b->bit_cnt;
 }
@@ -228,8 +223,7 @@ void bitmap_set_multiple(struct bitmap *b, size_t start, size_t cnt, bool value)
 
 /* Returns the number of bits in B between START and START + CNT,
    exclusive, that are set to VALUE. */
-size_t
-bitmap_count(const struct bitmap *b, size_t start, size_t cnt, bool value)
+size_t bitmap_count(const struct bitmap *b, size_t start, size_t cnt, bool value)
 {
     size_t i, value_cnt;
 
@@ -287,8 +281,7 @@ bool bitmap_all(const struct bitmap *b, size_t start, size_t cnt)
    consecutive bits in B at or after START that are all set to
    VALUE.
    If there is no such group, returns BITMAP_ERROR. */
-size_t
-bitmap_scan(const struct bitmap *b, size_t start, size_t cnt, bool value)
+size_t bitmap_scan(const struct bitmap *b, size_t start, size_t cnt, bool value)
 {
     ASSERT(b != NULL);
     ASSERT(start <= b->bit_cnt);
@@ -311,8 +304,7 @@ bitmap_scan(const struct bitmap *b, size_t start, size_t cnt, bool value)
    If CNT is zero, returns 0.
    Bits are set atomically, but testing bits is not atomic with
    setting them. */
-size_t
-bitmap_scan_and_flip(struct bitmap *b, size_t start, size_t cnt, bool value)
+size_t bitmap_scan_and_flip(struct bitmap *b, size_t start, size_t cnt, bool value)
 {
     size_t idx = bitmap_scan(b, start, cnt, value);
     if (idx != BITMAP_ERROR)
@@ -324,8 +316,7 @@ bitmap_scan_and_flip(struct bitmap *b, size_t start, size_t cnt, bool value)
 
 #ifdef FILESYS
 /* Returns the number of bytes needed to store B in a file. */
-size_t
-bitmap_file_size(const struct bitmap *b)
+size_t bitmap_file_size(const struct bitmap *b)
 {
     return byte_cnt(b->bit_cnt);
 }

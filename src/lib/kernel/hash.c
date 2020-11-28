@@ -233,8 +233,7 @@ struct hash_elem *hash_cur(struct hash_iterator *i)
 }
 
 /* Returns the number of elements in H. */
-size_t
-hash_size(struct hash *h)
+size_t hash_size(struct hash *h)
 {
     return h->elem_cnt;
 }
@@ -309,15 +308,13 @@ static struct hash_elem *find_elem(struct hash *h, struct list *bucket, struct h
 }
 
 /* Returns X with its lowest-order bit set to 1 turned off. */
-static inline size_t
-turn_off_least_1bit(size_t x)
+static inline size_t turn_off_least_1bit(size_t x)
 {
     return x & (x - 1);
 }
 
 /* Returns true if X is a power of 2, otherwise false. */
-static inline size_t
-is_power_of_2(size_t x)
+static inline size_t is_power_of_2(size_t x)
 {
     return x != 0 && turn_off_least_1bit(x) == 0;
 }

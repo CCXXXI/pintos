@@ -35,8 +35,7 @@ enum child_termination_mode
 
 /* Spawn a recursive copy of ourselves, passing along instructions
    for the child. */
-static pid_t
-spawn_child(int c, enum child_termination_mode mode)
+static pid_t spawn_child(int c, enum child_termination_mode mode)
 {
     char child_cmd[128];
     snprintf(child_cmd, sizeof child_cmd,

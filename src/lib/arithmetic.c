@@ -22,8 +22,7 @@
    yield a 32-bit quotient.  Returns the quotient.
    Traps with a divide error (#DE) if the quotient does not fit
    in 32 bits. */
-static inline uint32_t
-divl(uint64_t n, uint32_t d)
+static inline uint32_t divl(uint64_t n, uint32_t d)
 {
     uint32_t n1 = n >> 32;
     uint32_t n0 = n;
@@ -73,8 +72,7 @@ static int nlz(uint32_t x)
 
 /* Divides unsigned 64-bit N by unsigned 64-bit D and returns the
    quotient. */
-static uint64_t
-udiv64(uint64_t n, uint64_t d)
+static uint64_t udiv64(uint64_t n, uint64_t d)
 {
     if ((d >> 32) == 0)
     {
@@ -127,16 +125,14 @@ udiv64(uint64_t n, uint64_t d)
 
 /* Divides unsigned 64-bit N by unsigned 64-bit D and returns the
    remainder. */
-static uint32_t
-umod64(uint64_t n, uint64_t d)
+static uint32_t umod64(uint64_t n, uint64_t d)
 {
     return n - d * udiv64(n, d);
 }
 
 /* Divides signed 64-bit N by signed 64-bit D and returns the
    quotient. */
-static int64_t
-sdiv64(int64_t n, int64_t d)
+static int64_t sdiv64(int64_t n, int64_t d)
 {
     uint64_t n_abs = n >= 0 ? (uint64_t)n : -(uint64_t)n;
     uint64_t d_abs = d >= 0 ? (uint64_t)d : -(uint64_t)d;
@@ -146,8 +142,7 @@ sdiv64(int64_t n, int64_t d)
 
 /* Divides signed 64-bit N by signed 64-bit D and returns the
    remainder. */
-static int32_t
-smod64(int64_t n, int64_t d)
+static int32_t smod64(int64_t n, int64_t d)
 {
     return n - d * sdiv64(n, d);
 }

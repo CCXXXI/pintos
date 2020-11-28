@@ -292,8 +292,7 @@ static void pic_end_of_interrupt(int irq)
    disables interrupts, but entering a trap gate does not.  See
    [IA32-v3a] section 5.12.1.2 "Flag Usage By Exception- or
    Interrupt-Handler Procedure" for discussion. */
-static uint64_t
-make_gate(void (*function)(void), int dpl, int type)
+static uint64_t make_gate(void (*function)(void), int dpl, int type)
 {
     uint32_t e0, e1;
 
@@ -315,24 +314,21 @@ make_gate(void (*function)(void), int dpl, int type)
 
 /* Creates an interrupt gate that invokes FUNCTION with the given
    DPL. */
-static uint64_t
-make_intr_gate(void (*function)(void), int dpl)
+static uint64_t make_intr_gate(void (*function)(void), int dpl)
 {
     return make_gate(function, dpl, 14);
 }
 
 /* Creates a trap gate that invokes FUNCTION with the given
    DPL. */
-static uint64_t
-make_trap_gate(void (*function)(void), int dpl)
+static uint64_t make_trap_gate(void (*function)(void), int dpl)
 {
     return make_gate(function, dpl, 15);
 }
 
 /* Returns a descriptor that yields the given LIMIT and BASE when
    used as an operand for the LIDT instruction. */
-static inline uint64_t
-make_idtr_operand(uint16_t limit, void *base)
+static inline uint64_t make_idtr_operand(uint16_t limit, void *base)
 {
     return limit | ((uint64_t)(uint32_t)base << 16);
 }

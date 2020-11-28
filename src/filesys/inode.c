@@ -22,8 +22,7 @@ struct inode_disk
 
 /* Returns the number of sectors to allocate for an inode SIZE
    bytes long. */
-static inline size_t
-bytes_to_sectors(off_t size)
+static inline size_t bytes_to_sectors(off_t size)
 {
     return DIV_ROUND_UP(size, BLOCK_SECTOR_SIZE);
 }
@@ -43,8 +42,7 @@ struct inode
    within INODE.
    Returns -1 if INODE does not contain data for a byte at offset
    POS. */
-static block_sector_t
-byte_to_sector(const struct inode *inode, off_t pos)
+static block_sector_t byte_to_sector(const struct inode *inode, off_t pos)
 {
     ASSERT(inode != NULL);
     if (pos < inode->data.length)
@@ -147,8 +145,7 @@ struct inode *inode_reopen(struct inode *inode)
 }
 
 /* Returns INODE's inode number. */
-block_sector_t
-inode_get_inumber(const struct inode *inode)
+block_sector_t inode_get_inumber(const struct inode *inode)
 {
     return inode->sector;
 }

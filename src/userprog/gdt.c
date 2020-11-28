@@ -85,8 +85,7 @@ enum seg_granularity
    DPL==3 means that user processes can use the segment and
    DPL==0 means that only the kernel can use the segment.  See
    [IA32-v3a] 4.5 "Privilege Levels" for further discussion. */
-static uint64_t
-make_seg_desc(uint32_t base,
+static uint64_t make_seg_desc(uint32_t base,
               uint32_t limit,
               enum seg_class class,
               int type,
@@ -119,16 +118,14 @@ make_seg_desc(uint32_t base,
 
 /* Returns a descriptor for a readable code segment with base at
    0, a limit of 4 GB, and the given DPL. */
-static uint64_t
-make_code_desc(int dpl)
+static uint64_t make_code_desc(int dpl)
 {
     return make_seg_desc(0, 0xfffff, CLS_CODE_DATA, 10, dpl, GRAN_PAGE);
 }
 
 /* Returns a descriptor for a writable data segment with base at
    0, a limit of 4 GB, and the given DPL. */
-static uint64_t
-make_data_desc(int dpl)
+static uint64_t make_data_desc(int dpl)
 {
     return make_seg_desc(0, 0xfffff, CLS_CODE_DATA, 2, dpl, GRAN_PAGE);
 }
@@ -137,16 +134,14 @@ make_data_desc(int dpl)
    Segment with its base at the given linear address, a limit of
    0x67 bytes (the size of a 32-bit TSS), and a DPL of 0.
    See [IA32-v3a] 6.2.2 "TSS Descriptor". */
-static uint64_t
-make_tss_desc(void *laddr)
+static uint64_t make_tss_desc(void *laddr)
 {
     return make_seg_desc((uint32_t)laddr, 0x67, CLS_SYSTEM, 9, 0, GRAN_BYTE);
 }
 
 /* Returns a descriptor that yields the given LIMIT and BASE when
    used as an operand for the LGDT instruction. */
-static uint64_t
-make_gdtr_operand(uint16_t limit, void *base)
+static uint64_t make_gdtr_operand(uint16_t limit, void *base)
 {
     return limit | ((uint64_t)(uint32_t)
                         base

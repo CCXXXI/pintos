@@ -9,8 +9,7 @@
 
 static char buf[2134];
 
-static size_t
-return_block_size(void)
+static size_t return_block_size(void)
 {
     return 37;
 }

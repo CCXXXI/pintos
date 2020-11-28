@@ -273,8 +273,7 @@ struct list_elem *list_back(struct list *list)
 
 /* Returns the number of elements in LIST.
    Runs in O(n) in the number of elements. */
-size_t
-list_size(struct list *list)
+size_t list_size(struct list *list)
 {
     struct list_elem *e;
     size_t cnt = 0;

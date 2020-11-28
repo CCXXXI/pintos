@@ -5,8 +5,7 @@
 #include <stdint.h>
 
 /* Reads and returns a byte from PORT. */
-static inline uint8_t
-inb(uint16_t port)
+static inline uint8_t inb(uint16_t port)
 {
     /* See [IA32-v2a] "IN". */
     uint8_t data;
@@ -28,8 +27,7 @@ static inline void insb(uint16_t port, void *addr, size_t cnt)
 }
 
 /* Reads and returns 16 bits from PORT. */
-static inline uint16_t
-inw(uint16_t port)
+static inline uint16_t inw(uint16_t port)
 {
     uint16_t data;
     /* See [IA32-v2a] "IN". */
@@ -51,8 +49,7 @@ static inline void insw(uint16_t port, void *addr, size_t cnt)
 }
 
 /* Reads and returns 32 bits from PORT. */
-static inline uint32_t
-inl(uint16_t port)
+static inline uint32_t inl(uint16_t port)
 {
     /* See [IA32-v2a] "IN". */
     uint32_t data;

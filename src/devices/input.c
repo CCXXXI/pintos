@@ -25,8 +25,7 @@ void input_putc(uint8_t key)
 
 /* Retrieves a key from the input buffer.
    If the buffer is empty, waits for a key to be pressed. */
-uint8_t
-input_getc(void)
+uint8_t input_getc(void)
 {
     enum intr_level old_level;
     uint8_t key;
