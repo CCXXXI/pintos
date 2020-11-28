@@ -94,8 +94,7 @@ rtc_get_time(void)
 }
 
 /* Returns the integer value of the given BCD byte. */
-static int
-bcd_to_bin(uint8_t x)
+static int bcd_to_bin(uint8_t x)
 {
     return (x & 0x0f) + ((x >> 4) * 10);
 }

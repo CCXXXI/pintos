@@ -14,8 +14,7 @@ struct file
 /* Opens a file for the given INODE, of which it takes ownership,
    and returns the new file.  Returns a null pointer if an
    allocation fails or if INODE is null. */
-struct file *
-file_open(struct inode *inode)
+struct file *file_open(struct inode *inode)
 {
     struct file *file = calloc(1, sizeof *file);
     if (inode != NULL && file != NULL)
@@ -35,8 +34,7 @@ file_open(struct inode *inode)
 
 /* Opens and returns a new file for the same inode as FILE.
    Returns a null pointer if unsuccessful. */
-struct file *
-file_reopen(struct file *file)
+struct file *file_reopen(struct file *file)
 {
     return file_open(inode_reopen(file->inode));
 }
@@ -53,8 +51,7 @@ void file_close(struct file *file)
 }
 
 /* Returns the inode encapsulated by FILE. */
-struct inode *
-file_get_inode(struct file *file)
+struct inode *file_get_inode(struct file *file)
 {
     return file->inode;
 }

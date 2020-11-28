@@ -26,8 +26,7 @@ void test_priority_preempt(void)
     msg("The high-priority thread should have already completed.");
 }
 
-static void
-simple_thread_func(void *aux UNUSED)
+static void simple_thread_func(void *aux UNUSED)
 {
     int i;
 

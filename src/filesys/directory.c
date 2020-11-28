@@ -30,8 +30,7 @@ bool dir_create(block_sector_t sector, size_t entry_cnt)
 
 /* Opens and returns the directory for the given INODE, of which
    it takes ownership.  Returns a null pointer on failure. */
-struct dir *
-dir_open(struct inode *inode)
+struct dir *dir_open(struct inode *inode)
 {
     struct dir *dir = calloc(1, sizeof *dir);
     if (inode != NULL && dir != NULL)
@@ -50,16 +49,14 @@ dir_open(struct inode *inode)
 
 /* Opens the root directory and returns a directory for it.
    Return true if successful, false on failure. */
-struct dir *
-dir_open_root(void)
+struct dir *dir_open_root(void)
 {
     return dir_open(inode_open(ROOT_DIR_SECTOR));
 }
 
 /* Opens and returns a new directory for the same inode as DIR.
    Returns a null pointer on failure. */
-struct dir *
-dir_reopen(struct dir *dir)
+struct dir *dir_reopen(struct dir *dir)
 {
     return dir_open(inode_reopen(dir->inode));
 }
@@ -75,8 +72,7 @@ void dir_close(struct dir *dir)
 }
 
 /* Returns the inode encapsulated by DIR. */
-struct inode *
-dir_get_inode(struct dir *dir)
+struct inode *dir_get_inode(struct dir *dir)
 {
     return dir->inode;
 }
@@ -86,9 +82,8 @@ dir_get_inode(struct dir *dir)
    if EP is non-null, and sets *OFSP to the byte offset of the
    directory entry if OFSP is non-null.
    otherwise, returns false and ignores EP and OFSP. */
-static bool
-lookup(const struct dir *dir, const char *name,
-       struct dir_entry *ep, off_t *ofsp)
+static bool lookup(const struct dir *dir, const char *name,
+                   struct dir_entry *ep, off_t *ofsp)
 {
     struct dir_entry e;
     size_t ofs;

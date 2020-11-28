@@ -20,8 +20,7 @@ size_t histogram[256];
 
 /* Initialize buf1 with random data,
    then count the number of instances of each value within it. */
-static void
-init(void)
+static void init(void)
 {
     struct arc4 arc4;
     size_t i;
@@ -35,8 +34,7 @@ init(void)
 }
 
 /* Sort each chunk of buf1 using a subprocess. */
-static void
-sort_chunks(void)
+static void sort_chunks(void)
 {
     size_t i;
 
@@ -69,8 +67,7 @@ sort_chunks(void)
 }
 
 /* Merge the sorted chunks in buf1 into a fully sorted buf2. */
-static void
-merge(void)
+static void merge(void)
 {
     unsigned char *mp[CHUNK_CNT];
     size_t mp_left;
@@ -104,8 +101,7 @@ merge(void)
     }
 }
 
-static void
-verify(void)
+static void verify(void)
 {
     size_t buf_idx;
     size_t hist_idx;

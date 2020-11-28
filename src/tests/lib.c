@@ -8,8 +8,7 @@
 const char *test_name;
 bool quiet = false;
 
-static void
-vmsg(const char *format, va_list args, const char *suffix)
+static void vmsg(const char *format, va_list args, const char *suffix)
 {
     /* We go to some trouble to stuff the entire message into a
        single buffer and output it in a single system call, because
@@ -46,8 +45,7 @@ void fail(const char *format, ...)
     exit(1);
 }
 
-static void
-swap(void *a_, void *b_, size_t size)
+static void swap(void *a_, void *b_, size_t size)
 {
     uint8_t *a = a_;
     uint8_t *b = b_;

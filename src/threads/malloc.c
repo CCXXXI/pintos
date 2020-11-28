@@ -85,8 +85,7 @@ void malloc_init(void)
 
 /* Obtains and returns a new block of at least SIZE bytes.
    Returns a null pointer if memory is not available. */
-void *
-malloc(size_t size)
+void *malloc(size_t size)
 {
     struct desc *d;
     struct block *b;
@@ -154,8 +153,7 @@ malloc(size_t size)
 
 /* Allocates and return A times B bytes initialized to zeroes.
    Returns a null pointer if memory is not available. */
-void *
-calloc(size_t a, size_t b)
+void *calloc(size_t a, size_t b)
 {
     void *p;
     size_t size;
@@ -190,8 +188,7 @@ block_size(void *block)
    null pointer.
    A call with null OLD_BLOCK is equivalent to malloc(NEW_SIZE).
    A call with zero NEW_SIZE is equivalent to free(OLD_BLOCK). */
-void *
-realloc(void *old_block, size_t new_size)
+void *realloc(void *old_block, size_t new_size)
 {
     if (new_size == 0)
     {
@@ -262,8 +259,7 @@ void free(void *p)
 }
 
 /* Returns the arena that block B is inside. */
-static struct arena *
-block_to_arena(struct block *b)
+static struct arena *block_to_arena(struct block *b)
 {
     struct arena *a = pg_round_down(b);
 
@@ -279,8 +275,7 @@ block_to_arena(struct block *b)
 }
 
 /* Returns the (IDX - 1)'th block within arena A. */
-static struct block *
-arena_to_block(struct arena *a, size_t idx)
+static struct block *arena_to_block(struct arena *a, size_t idx)
 {
     ASSERT(a != NULL);
     ASSERT(a->magic == ARENA_MAGIC);

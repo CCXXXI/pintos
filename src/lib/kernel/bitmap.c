@@ -75,8 +75,7 @@ last_mask(const struct bitmap *b)
    BIT_CNT (or more) bits.  Returns a null pointer if memory allocation fails.
    The caller is responsible for freeing the bitmap, with bitmap_destroy(),
    when it is no longer needed. */
-struct bitmap *
-bitmap_create(size_t bit_cnt)
+struct bitmap *bitmap_create(size_t bit_cnt)
 {
     struct bitmap *b = malloc(sizeof *b);
     if (b != NULL)
@@ -96,8 +95,7 @@ bitmap_create(size_t bit_cnt)
 /* Creates and returns a bitmap with BIT_CNT bits in the
    BLOCK_SIZE bytes of storage preallocated at BLOCK.
    BLOCK_SIZE must be at least bitmap_needed_bytes(BIT_CNT). */
-struct bitmap *
-bitmap_create_in_buf(size_t bit_cnt, void *block, size_t block_size UNUSED)
+struct bitmap *bitmap_create_in_buf(size_t bit_cnt, void *block, size_t block_size UNUSED)
 {
     struct bitmap *b = block;
 

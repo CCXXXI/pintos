@@ -170,9 +170,8 @@ void intr_init(void)
    privilege level DPL.  Names the interrupt NAME for debugging
    purposes.  The interrupt handler will be invoked with
    interrupt status set to LEVEL. */
-static void
-register_handler(uint8_t vec_no, int dpl, enum intr_level level,
-                 intr_handler_func *handler, const char *name)
+static void register_handler(uint8_t vec_no, int dpl, enum intr_level level,
+                             intr_handler_func *handler, const char *name)
 {
     ASSERT(intr_handlers[vec_no] == NULL);
     if (level == INTR_ON)
@@ -239,8 +238,7 @@ void intr_yield_on_return(void)
    traps and exceptions, so we reprogram the PICs so that
    interrupts 0...15 are delivered to interrupt vectors 32...47
    (0x20...0x2f) instead. */
-static void
-pic_init(void)
+static void pic_init(void)
 {
     /* Mask all interrupts on both PICs. */
     outb(PIC0_DATA, 0xff);
@@ -266,8 +264,7 @@ pic_init(void)
 /* Sends an end-of-interrupt signal to the PIC for the given IRQ.
    If we don't acknowledge the IRQ, it will never be delivered to
    us again, so this is important.  */
-static void
-pic_end_of_interrupt(int irq)
+static void pic_end_of_interrupt(int irq)
 {
     ASSERT(irq >= 0x20 && irq < 0x30);
 
@@ -394,8 +391,7 @@ void intr_handler(struct intr_frame *frame)
 
 /* Handles an unexpected interrupt with interrupt frame F.  An
    unexpected interrupt is one that has no registered handler. */
-static void
-unexpected_interrupt(const struct intr_frame *f)
+static void unexpected_interrupt(const struct intr_frame *f)
 {
     /* Count the number so far. */
     unsigned int n = ++unexpected_cnt[f->vec_no];
@@ -435,8 +431,7 @@ void intr_dump_frame(const struct intr_frame *f)
 }
 
 /* Returns the name of interrupt VEC. */
-const char *
-intr_name(uint8_t vec)
+const char *intr_name(uint8_t vec)
 {
     return intr_names[vec];
 }

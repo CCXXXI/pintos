@@ -52,8 +52,7 @@ void debug_panic(const char *file, int line, const char *function,
 
 /* Print call stack of a thread.
    The thread may be running, ready, or blocked. */
-static void
-print_stacktrace(struct thread *t, void *aux UNUSED)
+static void print_stacktrace(struct thread *t, void *aux UNUSED)
 {
     void *retaddr = NULL, **frame = NULL;
     const char *status = "UNKNOWN";

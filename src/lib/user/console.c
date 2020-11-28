@@ -69,8 +69,7 @@ int vhprintf(int handle, const char *format, va_list args)
 
 /* Adds C to the buffer in AUX, flushing it if the buffer fills
    up. */
-static void
-add_char(char c, void *aux_)
+static void add_char(char c, void *aux_)
 {
     struct vhprintf_aux *aux = aux_;
     *aux->p++ = c;
@@ -80,8 +79,7 @@ add_char(char c, void *aux_)
 }
 
 /* Flushes the buffer in AUX. */
-static void
-flush(struct vhprintf_aux *aux)
+static void flush(struct vhprintf_aux *aux)
 {
     if (aux->p > aux->buf)
         write(aux->handle, aux->buf, aux->p - aux->buf);

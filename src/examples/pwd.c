@@ -27,8 +27,7 @@ int main(void)
 /* Stores the inode number for FILE_NAME in *INUM.
    Returns true if successful, false if the file could not be
    opened. */
-static bool
-get_inumber(const char *file_name, int *inum)
+static bool get_inumber(const char *file_name, int *inum)
 {
     int fd = open(file_name);
     if (fd >= 0)
@@ -47,9 +46,8 @@ get_inumber(const char *file_name, int *inum)
    characters, plus a null terminator, would overflow the buffer.
    (No null terminator is actually added or depended upon, but
    its space is accounted for.) */
-static bool
-prepend(const char *prefix,
-        char *dst, size_t *dst_len, size_t dst_size)
+static bool prepend(const char *prefix,
+                    char *dst, size_t *dst_len, size_t dst_size)
 {
     size_t prefix_len = strlen(prefix);
     if (prefix_len + *dst_len + 1 <= dst_size)
@@ -67,8 +65,7 @@ prepend(const char *prefix,
    Returns true if successful, false on error.  Errors include
    system errors, directory trees deeper than MAX_LEVEL levels,
    and insufficient space in CWD. */
-static bool
-getcwd(char *cwd, size_t cwd_size)
+static bool getcwd(char *cwd, size_t cwd_size)
 {
     size_t cwd_len = 0;
 

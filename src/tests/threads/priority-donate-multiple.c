@@ -53,8 +53,7 @@ void test_priority_donate_multiple(void)
         PRI_DEFAULT, thread_get_priority());
 }
 
-static void
-a_thread_func(void *lock_)
+static void a_thread_func(void *lock_)
 {
     struct lock *lock = lock_;
 
@@ -64,8 +63,7 @@ a_thread_func(void *lock_)
     msg("Thread a finished.");
 }
 
-static void
-b_thread_func(void *lock_)
+static void b_thread_func(void *lock_)
 {
     struct lock *lock = lock_;
 

@@ -37,8 +37,7 @@ void test_alarm_priority(void)
         sema_down(&wait_sema);
 }
 
-static void
-alarm_priority_thread(void *aux UNUSED)
+static void alarm_priority_thread(void *aux UNUSED)
 {
     /* Busy-wait until the current time changes. */
     int64_t start_time = timer_ticks();

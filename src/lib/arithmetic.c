@@ -38,8 +38,7 @@ divl(uint64_t n, uint32_t d)
 
 /* Returns the number of leading zero bits in X,
    which must be nonzero. */
-static int
-nlz(uint32_t x)
+static int nlz(uint32_t x)
 {
     /* This technique is portable, but there are better ways to do
        it on particular systems.  With sufficiently new enough GCC,

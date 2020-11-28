@@ -46,8 +46,7 @@ tid_t process_execute(const char *file_name)
 
 /* A thread function that loads a user process and starts it
    running. */
-static void
-start_process(void *file_name_)
+static void start_process(void *file_name_)
 {
     char *file_name = file_name_;
     struct intr_frame if_;
@@ -314,8 +313,7 @@ static bool install_page(void *upage, void *kpage, bool writable);
 
 /* Checks whether PHDR describes a valid, loadable segment in
    FILE and returns true if so, false otherwise. */
-static bool
-validate_segment(const struct Elf32_Phdr *phdr, struct file *file)
+static bool validate_segment(const struct Elf32_Phdr *phdr, struct file *file)
 {
     /* p_offset and p_vaddr must have the same page offset. */
     if ((phdr->p_offset & PGMASK) != (phdr->p_vaddr & PGMASK))
@@ -371,9 +369,8 @@ validate_segment(const struct Elf32_Phdr *phdr, struct file *file)
 
    Return true if successful, false if a memory allocation error
    or disk read error occurs. */
-static bool
-load_segment(struct file *file, off_t ofs, uint8_t *upage,
-             uint32_t read_bytes, uint32_t zero_bytes, bool writable)
+static bool load_segment(struct file *file, off_t ofs, uint8_t *upage,
+                         uint32_t read_bytes, uint32_t zero_bytes, bool writable)
 {
     ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
     ASSERT(pg_ofs(upage) == 0);
@@ -418,8 +415,7 @@ load_segment(struct file *file, off_t ofs, uint8_t *upage,
 
 /* Create a minimal stack by mapping a zeroed page at the top of
    user virtual memory. */
-static bool
-setup_stack(void **esp)
+static bool setup_stack(void **esp)
 {
     uint8_t *kpage;
     bool success = false;
@@ -445,8 +441,7 @@ setup_stack(void **esp)
    with palloc_get_page().
    Returns true on success, false if UPAGE is already mapped or
    if memory allocation fails. */
-static bool
-install_page(void *upage, void *kpage, bool writable)
+static bool install_page(void *upage, void *kpage, bool writable)
 {
     struct thread *t = thread_current();
 

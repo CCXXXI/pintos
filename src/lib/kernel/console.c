@@ -81,8 +81,7 @@ void console_print_stats(void)
 }
 
 /* Acquires the console lock. */
-static void
-acquire_console(void)
+static void acquire_console(void)
 {
     if (!intr_context() && use_console_lock)
     {
@@ -94,8 +93,7 @@ acquire_console(void)
 }
 
 /* Releases the console lock. */
-static void
-release_console(void)
+static void release_console(void)
 {
     if (!intr_context() && use_console_lock)
     {
@@ -108,8 +106,7 @@ release_console(void)
 
 /* Returns true if the current thread has the console lock,
    false otherwise. */
-static bool
-console_locked_by_current_thread(void)
+static bool console_locked_by_current_thread(void)
 {
     return (intr_context() || !use_console_lock || lock_held_by_current_thread(&console_lock));
 }
@@ -161,8 +158,7 @@ int putchar(int c)
 }
 
 /* Helper function for vprintf(). */
-static void
-vprintf_helper(char c, void *char_cnt_)
+static void vprintf_helper(char c, void *char_cnt_)
 {
     int *char_cnt = char_cnt_;
     (*char_cnt)++;
@@ -172,8 +168,7 @@ vprintf_helper(char c, void *char_cnt_)
 /* Writes C to the vga display and serial port.
    The caller has already acquired the console lock if
    appropriate. */
-static void
-putchar_have_lock(uint8_t c)
+static void putchar_have_lock(uint8_t c)
 {
     ASSERT(console_locked_by_current_thread());
     write_cnt++;

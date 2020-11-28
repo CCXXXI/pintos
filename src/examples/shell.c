@@ -47,8 +47,7 @@ int main(void)
    for SIZE bytes.  Handles backspace and Ctrl+U in the ways
    expected by Unix users.  On return, LINE will always be
    null-terminated and will not end in a new-line character. */
-static void
-read_line(char line[], size_t size)
+static void read_line(char line[], size_t size)
 {
     char *pos = line;
     for (;;)
@@ -87,8 +86,7 @@ read_line(char line[], size_t size)
 /* If *POS is past the beginning of LINE, backs up one character
    position.  Returns true if successful, false if nothing was
    done. */
-static bool
-backspace(char **pos, char line[])
+static bool backspace(char **pos, char line[])
 {
     if (*pos > line)
     {

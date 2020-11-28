@@ -65,8 +65,7 @@ static intr_handler_func serial_interrupt;
    Polling mode busy-waits for the serial port to become free
    before writing to it.  It's slow, but until interrupts have
    been initialized it's all we can do. */
-static void
-init_poll(void)
+static void init_poll(void)
 {
     ASSERT(mode == UNINIT);
     outb(IER_REG, 0);        /* Turn off all interrupts. */
@@ -151,8 +150,7 @@ void serial_notify(void)
 }
 
 /* Configures the serial port for BPS bits per second. */
-static void
-set_serial(int bps)
+static void set_serial(int bps)
 {
     int base_rate = 1843200 / 16;       /* Base rate of 16550A, in Hz. */
     uint16_t divisor = base_rate / bps; /* Clock rate divisor. */
@@ -171,8 +169,7 @@ set_serial(int bps)
 }
 
 /* Update interrupt enable register. */
-static void
-write_ier(void)
+static void write_ier(void)
 {
     uint8_t ier = 0;
 
@@ -193,8 +190,7 @@ write_ier(void)
 
 /* Polls the serial port until it's ready,
    and then transmits BYTE. */
-static void
-putc_poll(uint8_t byte)
+static void putc_poll(uint8_t byte)
 {
     ASSERT(intr_get_level() == INTR_OFF);
 
@@ -204,8 +200,7 @@ putc_poll(uint8_t byte)
 }
 
 /* Serial interrupt handler. */
-static void
-serial_interrupt(struct intr_frame *f UNUSED)
+static void serial_interrupt(struct intr_frame *f UNUSED)
 {
     /* Inquire about interrupt in UART.  Without this, we can
        occasionally miss an interrupt running under QEMU. */

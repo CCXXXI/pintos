@@ -41,8 +41,7 @@ void make_tree(int at, int bt, int ct, int dt)
     close(fd);
 }
 
-static void
-do_mkdir(const char *format, ...)
+static void do_mkdir(const char *format, ...)
 {
     char dir[128];
     va_list args;
@@ -54,8 +53,7 @@ do_mkdir(const char *format, ...)
     CHECK(mkdir(dir), "mkdir \"%s\"", dir);
 }
 
-static void
-do_touch(const char *format, ...)
+static void do_touch(const char *format, ...)
 {
     char file[128];
     va_list args;

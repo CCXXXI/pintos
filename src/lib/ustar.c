@@ -32,8 +32,7 @@ struct ustar_header
 } PACKED;
 
 /* Returns the checksum for the given ustar format HEADER. */
-static unsigned int
-calculate_chksum(const struct ustar_header *h)
+static unsigned int calculate_chksum(const struct ustar_header *h)
 {
     const uint8_t *header = (const uint8_t *)h;
     unsigned int chksum;
@@ -61,8 +60,7 @@ calculate_chksum(const struct ustar_header *h)
 
    The return value can be a suffix of FILE_NAME or a string
    literal. */
-static const char *
-strip_antisocial_prefixes(const char *file_name)
+static const char *strip_antisocial_prefixes(const char *file_name)
 {
     while (*file_name == '/' || !memcmp(file_name, "./", 2) || !memcmp(file_name, "../", 3))
         file_name = strchr(file_name, '/') + 1;
@@ -122,8 +120,7 @@ bool ustar_make_header(const char *file_name, enum ustar_type type,
    seems ambiguous as to whether these fields must be padded on
    the left with '0's, so we accept any field that fits in the
    available space, regardless of whether it fills the space. */
-static bool
-parse_octal_field(const char *s, size_t size, unsigned long int *value)
+static bool parse_octal_field(const char *s, size_t size, unsigned long int *value)
 {
     size_t ofs;
 
@@ -159,8 +156,7 @@ parse_octal_field(const char *s, size_t size, unsigned long int *value)
 
 /* Returns true if the CNT bytes starting at BLOCK are all zero,
    false otherwise. */
-static bool
-is_all_zeros(const char *block, size_t cnt)
+static bool is_all_zeros(const char *block, size_t cnt)
 {
     while (cnt-- > 0)
         if (*block++ != 0)
@@ -174,9 +170,8 @@ is_all_zeros(const char *block, size_t cnt)
    literal), its type in *TYPE, and its size in bytes in *SIZE,
    and returns a null pointer.  On failure, returns a
    human-readable error message. */
-const char *
-ustar_parse_header(const char header[USTAR_HEADER_SIZE],
-                   const char **file_name, enum ustar_type *type, int *size)
+const char *ustar_parse_header(const char header[USTAR_HEADER_SIZE],
+                               const char **file_name, enum ustar_type *type, int *size)
 {
     const struct ustar_header *h = (const struct ustar_header *)header;
     unsigned long int chksum, size_ul;

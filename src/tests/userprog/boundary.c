@@ -14,8 +14,7 @@ static char dst[8192] __attribute__((section(".testEndmem,\"aw\",@nobits#")));
 
 /* Returns the beginning of a page.  There are at least 2048
    modifiable bytes on either side of the pointer returned. */
-void *
-get_boundary_area(void)
+void *get_boundary_area(void)
 {
     char *p = (char *)ROUND_UP((uintptr_t)dst, 4096);
     if (p - dst < 2048)
@@ -25,8 +24,7 @@ get_boundary_area(void)
 
 /* Returns a copy of SRC split across the boundary between two
    pages. */
-char *
-copy_string_across_boundary(const char *src)
+char *copy_string_across_boundary(const char *src)
 {
     char *p = get_boundary_area();
     p -= strlen(src) < 4096 ? strlen(src) / 2 : 4096;
@@ -38,8 +36,7 @@ copy_string_across_boundary(const char *src)
  * are all valid (the highest address in the bss segment). Used
  * to position information such that the first byte of the
  * information is valid, but not all the information is valid. */
-void *
-get_bad_boundary(void)
+void *get_bad_boundary(void)
 {
     /* This code assumes that dst will be in the highest page
      * allocated to the user process. */

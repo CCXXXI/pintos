@@ -110,8 +110,7 @@ void test(void)
 }
 
 /* Shuffles the CNT elements in ARRAY into random order. */
-static void
-shuffle(struct value *array, size_t cnt)
+static void shuffle(struct value *array, size_t cnt)
 {
     size_t i;
 
@@ -126,9 +125,8 @@ shuffle(struct value *array, size_t cnt)
 
 /* Returns true if value A is less than value B, false
    otherwise. */
-static bool
-value_less(const struct list_elem *a_, const struct list_elem *b_,
-           void *aux UNUSED)
+static bool value_less(const struct list_elem *a_, const struct list_elem *b_,
+                       void *aux UNUSED)
 {
     const struct value *a = list_entry(a_, struct value, elem);
     const struct value *b = list_entry(b_, struct value, elem);
@@ -138,8 +136,7 @@ value_less(const struct list_elem *a_, const struct list_elem *b_,
 
 /* Verifies that LIST contains the values 0...SIZE when traversed
    in forward order. */
-static void
-verify_list_fwd(struct list *list, int size)
+static void verify_list_fwd(struct list *list, int size)
 {
     struct list_elem *e;
     int i;
@@ -157,8 +154,7 @@ verify_list_fwd(struct list *list, int size)
 
 /* Verifies that LIST contains the values 0...SIZE when traversed
    in reverse order. */
-static void
-verify_list_bkwd(struct list *list, int size)
+static void verify_list_bkwd(struct list *list, int size)
 {
     struct list_elem *e;
     int i;

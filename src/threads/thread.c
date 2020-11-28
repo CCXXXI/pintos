@@ -259,8 +259,7 @@ void thread_unblock(struct thread *t)
 }
 
 /* Returns the name of the running thread. */
-const char *
-thread_name(void)
+const char *thread_name(void)
 {
     return thread_current()->name;
 }
@@ -268,8 +267,7 @@ thread_name(void)
 /* Returns the running thread.
    This is running_thread() plus a couple of sanity checks.
    See the big comment at the top of thread.h for details. */
-struct thread *
-thread_current(void)
+struct thread *thread_current(void)
 {
     struct thread *t = running_thread();
 
@@ -478,8 +476,7 @@ static void thread_calc_load_avg(void)
    blocks.  After that, the idle thread never appears in the
    ready queue.  It is returned by next_thread_to_run() as a
    special case when the ready queue is empty. */
-static void
-idle(void *idle_started_ UNUSED)
+static void idle(void *idle_started_ UNUSED)
 {
     struct semaphore *idle_started = idle_started_;
     idle_thread = thread_current();
@@ -512,8 +509,7 @@ idle(void *idle_started_ UNUSED)
 }
 
 /* Function used as the basis for a kernel thread. */
-static void
-kernel_thread(thread_func *function, void *aux)
+static void kernel_thread(thread_func *function, void *aux)
 {
     ASSERT(function != NULL);
 
@@ -523,8 +519,7 @@ kernel_thread(thread_func *function, void *aux)
 }
 
 /* Returns the running thread. */
-struct thread *
-running_thread(void)
+struct thread *running_thread(void)
 {
     uint32_t *esp;
 
@@ -538,16 +533,14 @@ running_thread(void)
 }
 
 /* Returns true if T appears to point to a valid thread. */
-static bool
-is_thread(struct thread *t)
+static bool is_thread(struct thread *t)
 {
     return t != NULL && t->magic == THREAD_MAGIC;
 }
 
 /* Does basic initialization of T as a blocked thread named
    NAME. */
-static void
-init_thread(struct thread *t, const char *name, int priority)
+static void init_thread(struct thread *t, const char *name, int priority)
 {
     enum intr_level old_level;
 
@@ -580,8 +573,7 @@ init_thread(struct thread *t, const char *name, int priority)
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
    returns a pointer to the frame's base. */
-static void *
-alloc_frame(struct thread *t, size_t size)
+static void *alloc_frame(struct thread *t, size_t size)
 {
     /* Stack data is always allocated in word-size units. */
     ASSERT(is_thread(t));
@@ -596,8 +588,7 @@ alloc_frame(struct thread *t, size_t size)
    empty.  (If the running thread can continue running, then it
    will be in the run queue.)  If the run queue is empty, return
    idle_thread. */
-static struct thread *
-next_thread_to_run(void)
+static struct thread *next_thread_to_run(void)
 {
     if (heap_empty(&ready_q))
         return idle_thread;
@@ -607,8 +598,7 @@ next_thread_to_run(void)
 
 /* Removes the highest-priority thread from LIST and returns it.
    Undefined behavior if LIST is empty before removal. */
-struct thread *
-thread_pop_highest_priority(struct list *list)
+struct thread *thread_pop_highest_priority(struct list *list)
 {
     struct list_elem *tmp = list_max(list, thread_elem_priority_cmp, NULL);
     list_remove(tmp);
@@ -692,8 +682,7 @@ void thread_schedule_tail(struct thread *prev)
 
    It's not safe to call printf() until thread_schedule_tail()
    has completed. */
-static void
-schedule(void)
+static void schedule(void)
 {
     struct thread *cur = running_thread();
     struct thread *next = next_thread_to_run();

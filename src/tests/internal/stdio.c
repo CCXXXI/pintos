@@ -19,8 +19,7 @@
 /* Number of failures so far. */
 static int failure_cnt;
 
-static void
-checkf(const char *expect, const char *format, ...)
+static void checkf(const char *expect, const char *format, ...)
 {
     char output[128];
     va_list args;

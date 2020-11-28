@@ -6,8 +6,7 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-static int
-wrap_open(const char *name)
+static int wrap_open(const char *name)
 {
     static int fds[8], fd_cnt;
     int fd, i;

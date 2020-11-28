@@ -10,8 +10,7 @@
 #include <syscall.h>
 #include "tests/lib.h"
 
-static void
-try_write(void)
+static void try_write(void)
 {
     int handle;
     char buffer[19];

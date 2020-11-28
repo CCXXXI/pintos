@@ -106,8 +106,7 @@ bool inode_create(block_sector_t sector, off_t length)
 /* Reads an inode from SECTOR
    and returns a `struct inode' that contains it.
    Returns a null pointer if memory allocation fails. */
-struct inode *
-inode_open(block_sector_t sector)
+struct inode *inode_open(block_sector_t sector)
 {
     struct list_elem *e;
     struct inode *inode;
@@ -140,8 +139,7 @@ inode_open(block_sector_t sector)
 }
 
 /* Reopens and returns INODE. */
-struct inode *
-inode_reopen(struct inode *inode)
+struct inode *inode_reopen(struct inode *inode)
 {
     if (inode != NULL)
         inode->open_cnt++;

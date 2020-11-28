@@ -40,8 +40,7 @@ int atoi(const char *s)
 }
 
 /* Compares A and B by calling the AUX function. */
-static int
-compare_thunk(const void *a, const void *b, void *aux)
+static int compare_thunk(const void *a, const void *b, void *aux)
 {
     int (**compare)(const void *, const void *) = aux;
     return (*compare)(a, b);
@@ -61,8 +60,7 @@ void qsort(void *array, size_t cnt, size_t size,
 
 /* Swaps elements with 1-based indexes A_IDX and B_IDX in ARRAY
    with elements of SIZE bytes each. */
-static void
-do_swap(unsigned char *array, size_t a_idx, size_t b_idx, size_t size)
+static void do_swap(unsigned char *array, size_t a_idx, size_t b_idx, size_t size)
 {
     unsigned char *a = array + (a_idx - 1) * size;
     unsigned char *b = array + (b_idx - 1) * size;
@@ -80,10 +78,9 @@ do_swap(unsigned char *array, size_t a_idx, size_t b_idx, size_t size)
    ARRAY with elements of SIZE bytes each, using COMPARE to
    compare elements, passing AUX as auxiliary data, and returns a
    strcmp()-type result. */
-static int
-do_compare(unsigned char *array, size_t a_idx, size_t b_idx, size_t size,
-           int (*compare)(const void *, const void *, void *aux),
-           void *aux)
+static int do_compare(unsigned char *array, size_t a_idx, size_t b_idx, size_t size,
+                      int (*compare)(const void *, const void *, void *aux),
+                      void *aux)
 {
     return compare(array + (a_idx - 1) * size, array + (b_idx - 1) * size, aux);
 }
@@ -91,10 +88,9 @@ do_compare(unsigned char *array, size_t a_idx, size_t b_idx, size_t size,
 /* "Float down" the element with 1-based index I in ARRAY of CNT
    elements of SIZE bytes each, using COMPARE to compare
    elements, passing AUX as auxiliary data. */
-static void
-heapify(unsigned char *array, size_t i, size_t cnt, size_t size,
-        int (*compare)(const void *, const void *, void *aux),
-        void *aux)
+static void heapify(unsigned char *array, size_t i, size_t cnt, size_t size,
+                    int (*compare)(const void *, const void *, void *aux),
+                    void *aux)
 {
     for (;;)
     {
@@ -158,9 +154,8 @@ void sort(void *array, size_t cnt, size_t size,
    pair of elements A and B, respectively, it must return a
    strcmp()-type result, i.e. less than zero if A < B, zero if A
    == B, greater than zero if A > B. */
-void *
-bsearch(const void *key, const void *array, size_t cnt,
-        size_t size, int (*compare)(const void *, const void *))
+void *bsearch(const void *key, const void *array, size_t cnt,
+              size_t size, int (*compare)(const void *, const void *))
 {
     return binary_search(key, array, cnt, size, compare_thunk, &compare);
 }
@@ -177,10 +172,9 @@ bsearch(const void *key, const void *array, size_t cnt,
    respectively, it must return a strcmp()-type result, i.e. less
    than zero if A < B, zero if A == B, greater than zero if A >
    B. */
-void *
-binary_search(const void *key, const void *array, size_t cnt, size_t size,
-              int (*compare)(const void *, const void *, void *aux),
-              void *aux)
+void *binary_search(const void *key, const void *array, size_t cnt, size_t size,
+                    int (*compare)(const void *, const void *, void *aux),
+                    void *aux)
 {
     const unsigned char *first = array;
     const unsigned char *last = array + size * cnt;

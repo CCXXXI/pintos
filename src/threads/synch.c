@@ -142,8 +142,7 @@ void sema_self_test(void)
 }
 
 /* Thread function used by sema_self_test(). */
-static void
-sema_test_helper(void *sema_)
+static void sema_test_helper(void *sema_)
 {
     struct semaphore *sema = sema_;
     int i;

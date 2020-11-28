@@ -3,8 +3,7 @@
 
 /* Copies SIZE bytes from SRC to DST, which must not overlap.
    Returns DST. */
-void *
-memcpy(void *dst_, const void *src_, size_t size)
+void *memcpy(void *dst_, const void *src_, size_t size)
 {
     unsigned char *dst = dst_;
     const unsigned char *src = src_;
@@ -20,8 +19,7 @@ memcpy(void *dst_, const void *src_, size_t size)
 
 /* Copies SIZE bytes from SRC to DST, which are allowed to
    overlap.  Returns DST. */
-void *
-memmove(void *dst_, const void *src_, size_t size)
+void *memmove(void *dst_, const void *src_, size_t size)
 {
     unsigned char *dst = dst_;
     const unsigned char *src = src_;
@@ -64,8 +62,7 @@ int memcmp(const void *a_, const void *b_, size_t size)
 }
 
 /* Finds the first differing characters in strings A and B.
-   Returns a positive value if the character in A (as an unsigned
-   char) is greater, a negative value if the character in B (as
+   Returns a positive value if the character in A (as an unsigned    char) is greater, a negative value if the character in B (as
    an unsigned char) is greater, or zero if strings A and B are
    equal. */
 int strcmp(const char *a_, const char *b_)
@@ -88,8 +85,7 @@ int strcmp(const char *a_, const char *b_)
 /* Returns a pointer to the first occurrence of CH in the first
    SIZE bytes starting at BLOCK.  Returns a null pointer if CH
    does not occur in BLOCK. */
-void *
-memchr(const void *block_, int ch_, size_t size)
+void *memchr(const void *block_, int ch_, size_t size)
 {
     const unsigned char *block = block_;
     unsigned char ch = ch_;
@@ -107,8 +103,7 @@ memchr(const void *block_, int ch_, size_t size)
    null pointer if C does not appear in STRING.  If C == '\0'
    then returns a pointer to the null terminator at the end of
    STRING. */
-char *
-strchr(const char *string, int c_)
+char *strchr(const char *string, int c_)
 {
     char c = c_;
 
@@ -139,8 +134,7 @@ strcspn(const char *string, const char *stop)
 /* Returns a pointer to the first character in STRING that is
    also in STOP.  If no character in STRING is in STOP, returns a
    null pointer. */
-char *
-strpbrk(const char *string, const char *stop)
+char *strpbrk(const char *string, const char *stop)
 {
     for (; *string != '\0'; string++)
         if (strchr(stop, *string) != NULL)
@@ -150,8 +144,7 @@ strpbrk(const char *string, const char *stop)
 
 /* Returns a pointer to the last occurrence of C in STRING.
    Returns a null pointer if C does not occur in STRING. */
-char *
-strrchr(const char *string, int c_)
+char *strrchr(const char *string, int c_)
 {
     char c = c_;
     const char *p = NULL;
@@ -178,8 +171,7 @@ strspn(const char *string, const char *skip)
 /* Returns a pointer to the first occurrence of NEEDLE within
    HAYSTACK.  Returns a null pointer if NEEDLE does not exist
    within HAYSTACK. */
-char *
-strstr(const char *haystack, const char *needle)
+char *strstr(const char *haystack, const char *needle)
 {
     size_t haystack_len = strlen(haystack);
     size_t needle_len = strlen(needle);
@@ -229,8 +221,7 @@ strstr(const char *haystack, const char *needle)
      'to'
      'tokenize.'
 */
-char *
-strtok_r(char *s, const char *delimiters, char **save_ptr)
+char *strtok_r(char *s, const char *delimiters, char **save_ptr)
 {
     char *token;
 
@@ -273,8 +264,7 @@ strtok_r(char *s, const char *delimiters, char **save_ptr)
 }
 
 /* Sets the SIZE bytes in DST to VALUE. */
-void *
-memset(void *dst_, int value, size_t size)
+void *memset(void *dst_, int value, size_t size)
 {
     unsigned char *dst = dst_;
 

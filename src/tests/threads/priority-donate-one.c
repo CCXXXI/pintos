@@ -41,8 +41,7 @@ void test_priority_donate_one(void)
     msg("This should be the last line before finishing this test.");
 }
 
-static void
-acquire1_thread_func(void *lock_)
+static void acquire1_thread_func(void *lock_)
 {
     struct lock *lock = lock_;
 
@@ -52,8 +51,7 @@ acquire1_thread_func(void *lock_)
     msg("acquire1: done");
 }
 
-static void
-acquire2_thread_func(void *lock_)
+static void acquire2_thread_func(void *lock_)
 {
     struct lock *lock = lock_;
 

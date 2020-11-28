@@ -58,8 +58,7 @@ struct thread_info
 
 static void load_thread(void *aux);
 
-static void
-test_mlfqs_fair(int thread_cnt, int nice_min, int nice_step)
+static void test_mlfqs_fair(int thread_cnt, int nice_min, int nice_step)
 {
     struct thread_info info[MAX_THREAD_CNT];
     int64_t start_time;
@@ -100,8 +99,7 @@ test_mlfqs_fair(int thread_cnt, int nice_min, int nice_step)
         msg("Thread %d received %d ticks.", i, info[i].tick_count);
 }
 
-static void
-load_thread(void *ti_)
+static void load_thread(void *ti_)
 {
     struct thread_info *ti = ti_;
     int64_t sleep_time = 5 * TIMER_FREQ;
