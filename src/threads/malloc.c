@@ -172,8 +172,7 @@ void *calloc(size_t a, size_t b)
 }
 
 /* Returns the number of bytes allocated for BLOCK. */
-static size_t
-block_size(void *block)
+static size_t block_size(void *block)
 {
     struct block *b = block;
     struct arena *a = block_to_arena(b);

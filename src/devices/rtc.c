@@ -39,8 +39,7 @@ static uint8_t cmos_read(uint8_t index);
 
 /* Returns number of seconds since Unix epoch of January 1,
    1970. */
-time_t
-rtc_get_time(void)
+time_t rtc_get_time(void)
 {
     static const int days_per_month[12] =
         {
@@ -101,8 +100,7 @@ static int bcd_to_bin(uint8_t x)
 
 /* Reads a byte from the CMOS register with the given INDEX and
    returns the byte read. */
-static uint8_t
-cmos_read(uint8_t index)
+static uint8_t cmos_read(uint8_t index)
 {
     outb(CMOS_REG_SET, index);
     return inb(CMOS_REG_IO);

@@ -31,8 +31,7 @@ bool intq_full(const struct intq *q)
 /* Removes a byte from Q and returns it.
    If Q is empty, sleeps until a byte is added.
    When called from an interrupt handler, Q must not be empty. */
-uint8_t
-intq_getc(struct intq *q)
+uint8_t intq_getc(struct intq *q)
 {
     uint8_t byte;
 

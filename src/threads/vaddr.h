@@ -79,8 +79,7 @@ static inline void *ptov(uintptr_t paddr)
 
 /* Returns physical address at which kernel virtual address VADDR
    is mapped. */
-static inline uintptr_t
-vtop(const void *vaddr)
+static inline uintptr_t vtop(const void *vaddr)
 {
     ASSERT(is_kernel_vaddr(vaddr));
 
