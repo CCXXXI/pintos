@@ -4,7 +4,6 @@
 /* Fixed-point real arithmetic used by the mlfqs (multilevel feedback queue scheduler). */
 
 #include <stdint.h>
-#include <debug.h>
 
 /* Fixed-point number. */
 typedef int32_t fp_t;
