@@ -264,7 +264,8 @@ static void real_time_sleep(int64_t num, int32_t denom)
 /* Busy-wait for approximately NUM/DENOM seconds. */
 static void real_time_delay(int64_t num, int32_t denom)
 {
-    /* Scale the numerator and denominator down by 1000 to avoid        the possibility of overflow. */
+    /* Scale the numerator and denominator down by 1000 to avoid
+       the possibility of overflow. */
     ASSERT(denom % 1000 == 0);
     busy_wait(loops_per_tick * num / 1000 * TIMER_FREQ / (denom / 1000));
 }
