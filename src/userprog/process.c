@@ -71,7 +71,8 @@ static void start_process(void *file_name_)
        we just point the stack pointer (%esp) to our stack frame
        and jump to it. */
     asm volatile(
-        "movl %0, %%esp; jmp intr_exit"
+        "movl %0, %%esp; \
+         jmp intr_exit"
         :
         : "g"(&if_)
         : "memory");
@@ -83,12 +84,12 @@ static void start_process(void *file_name_)
    exception), returns -1.  If TID is invalid or if it was not a
    child of the calling process, or if process_wait() has already
    been successfully called for the given TID, returns -1
-   immediately, without waiting.
-
-   This function will be implemented in problem 2-2.  For now, it
-   does nothing. */
+   immediately, without waiting. */
 int process_wait(tid_t child_tid UNUSED)
 {
+    // todo
+    for (;;)
+        ;
     return -1;
 }
 
@@ -425,7 +426,10 @@ static bool setup_stack(void **esp)
     {
         success = install_page(((uint8_t *)PHYS_BASE) - PGSIZE, kpage, true);
         if (success)
-            *esp = PHYS_BASE;
+        {
+            // todo
+            *esp = PHYS_BASE - 12;
+        }
         else
             palloc_free_page(kpage);
     }
