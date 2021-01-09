@@ -1,5 +1,6 @@
 #include "userprog/syscall.h"
-#include <stdio.h>
+#include "lib/stdio.h"
+#include "lib/kernel/stdio.h"
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
@@ -173,6 +174,15 @@ static void exit(int status)
     the grading scripts. */
 int write(int fd, const void *buffer, unsigned size)
 {
+    USER_ASSERT(is_user_mem(buffer, size));
+    USER_ASSERT(fd != STDIN_FILENO);
+
+    if (fd == STDOUT_FILENO)
+    {
+        putbuf((const char *)buffer, size);
+        return size;
+    }
+
     // todo
     return -1;
 }
