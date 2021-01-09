@@ -80,7 +80,7 @@ static void start_process(void *file_name_)
 
     /* If load successed, pass arguments. */
     if (success)
-        if_.esp = arg_pass((esp_t)(if_.esp), cmd, save_ptr);
+        if_.esp = arg_pass((esp_t)if_.esp, cmd, save_ptr);
 
     /* Free file_name whether successed or failed. */
     palloc_free_page(file_name);
