@@ -124,8 +124,8 @@ static void *arg_pass(esp_t esp, char *cmd, char *save_ptr)
     esp.u -= esp.u % 4;
 
     /* Push argv[i]. */
-    while (i > 0)
-        *(--esp.cpp) = arg_ptrs[--i];
+    esp.cpp -= i;
+    memcpy(esp.cpp, arg_ptrs, i * sizeof(char *));
     char **argv = esp.cpp;
 
     /* Push argv. */
