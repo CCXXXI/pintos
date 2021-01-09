@@ -138,7 +138,7 @@ static bool is_user_mem(const void *start, size_t size)
             return false;
     }
 
-    if (size != 1 && !is_valid_ptr(start + size - 1))
+    if (size > 1 && !is_valid_ptr(start + size - 1))
         return false;
 
     return true;
