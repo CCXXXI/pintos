@@ -51,7 +51,8 @@ static bool is_valid_ptr(const void *ptr)
     success and nonzero values indicate errors. */
 static void exit(int status)
 {
-    // todo
+    thread_current()->exit_code = status;
+    thread_exit();
 }
 
 /* Terminates Pintos by calling shutdown_power_off()
