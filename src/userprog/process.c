@@ -66,12 +66,15 @@ static void start_process(void *file_name_)
     char *cmd = strtok_r(file_name, " ", &save_ptr);
     success = load(cmd, &if_.eip, &if_.esp);
 
-    palloc_free_page(file_name);
-
-    /* Pass arguments if load successed else quit. */
+    /* If load successed, pass arguments. */
     if (success)
         if_.esp = arg_pass(if_.esp, cmd, save_ptr);
-    else
+
+    /* Free file_name whether successed or failed. */
+    palloc_free_page(file_name);
+
+    /* If load failed, quit. */
+    if (!success)
         thread_exit();
 
     /* Start the user process by simulating a return from an
