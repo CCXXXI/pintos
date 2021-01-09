@@ -18,7 +18,8 @@ typedef int pid_t;
     }
 
 static void syscall_handler(struct intr_frame *);
-static bool is_valid_ptr(const void *);
+static bool is_valid_ptr(const void *ptr);
+static bool is_user_mem(const void *start, size_t size);
 
 static void halt(void);
 static void exit(int status);
@@ -41,7 +42,7 @@ void syscall_init(void)
 
 static void syscall_handler(struct intr_frame *f)
 {
-    USER_ASSERT(is_valid_ptr(f->esp));
+    USER_ASSERT(is_user_mem(f->esp, sizeof(void *)));
 
     void *args[4];
     for (size_t i = 0; i != 4; ++i)
@@ -54,10 +55,10 @@ static void syscall_handler(struct intr_frame *f)
     {
     case SYS_READ:
     case SYS_WRITE:
-        USER_ASSERT(is_valid_ptr(args[3]));
+        USER_ASSERT(is_user_mem(args[3], sizeof(void *)));
     case SYS_CREATE:
     case SYS_SEEK:
-        USER_ASSERT(is_valid_ptr(args[2]));
+        USER_ASSERT(is_user_mem(args[2], sizeof(void *)));
     case SYS_EXIT:
     case SYS_EXEC:
     case SYS_WAIT:
@@ -66,7 +67,7 @@ static void syscall_handler(struct intr_frame *f)
     case SYS_FILESIZE:
     case SYS_TELL:
     case SYS_CLOSE:
-        USER_ASSERT(is_valid_ptr(args[1]));
+        USER_ASSERT(is_user_mem(args[1], sizeof(void *)));
     case SYS_HALT:
         break;
     default:
@@ -120,12 +121,27 @@ static void syscall_handler(struct intr_frame *f)
     }
 }
 
-/* Check if the user did not pass a null pointer,
+/* Returns true if PTR is not a null pointer,
     a pointer to kernel virtual address space
     or a pointer to unmapped virtual memory. */
 static bool is_valid_ptr(const void *ptr)
 {
     return ptr != NULL && is_user_vaddr(ptr) && pagedir_get_page(thread_current()->pagedir, ptr) != NULL;
+}
+
+/* Returns true if [START, START + SIZE) is all valid. */
+static bool is_user_mem(const void *start, size_t size)
+{
+    if (!is_valid_ptr(start + size - 1))
+        return false;
+
+    for (void *ptr = start; ptr < start + size; ptr += PGSIZE)
+    {
+        if (!is_valid_ptr(ptr))
+            return false;
+    }
+
+    return true;
 }
 
 /* Terminates the current user program, returning
