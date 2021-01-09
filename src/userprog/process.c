@@ -20,7 +20,19 @@
 
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
-static void *arg_pass(void *, char *cmd, char *save_ptr);
+
+typedef void (*ret_addr_t)(void);
+typedef union
+{
+    void *vp;
+    char *cp;
+    unsigned u;
+    char **cpp;
+    char ***cppp;
+    int *ip;
+    ret_addr_t *rap;
+} esp_t;
+static void *arg_pass(esp_t esp, char *cmd, char *save_ptr);
 
 /* Starts a new thread running a user program loaded from
    FILE_NAME.  The new thread may be scheduled (and may even exit)
@@ -68,7 +80,7 @@ static void start_process(void *file_name_)
 
     /* If load successed, pass arguments. */
     if (success)
-        if_.esp = arg_pass(if_.esp, cmd, save_ptr);
+        if_.esp = arg_pass((esp_t)(if_.esp), cmd, save_ptr);
 
     /* Free file_name whether successed or failed. */
     palloc_free_page(file_name);
@@ -93,45 +105,39 @@ static void start_process(void *file_name_)
 }
 
 /* Argument passing. */
-static void *arg_pass(void *esp_vp, char *cmd, char *save_ptr)
+static void *arg_pass(esp_t esp, char *cmd, char *save_ptr)
 {
     /* Push arguments. */
-    char *esp_cp = (char *)esp_vp;
     char *arg_ptrs[1024];
     size_t i = 0;
     for (char *arg = cmd; arg != NULL; arg = strtok_r(NULL, " ", &save_ptr))
     {
         size_t size = strlen(arg) + 1;
-        esp_cp -= size;
-        strlcpy(esp_cp, arg, size);
-        arg_ptrs[i++] = esp_cp;
+        esp.cp -= size;
+        strlcpy(esp.cp, arg, size);
+        arg_ptrs[i++] = esp.cp;
     }
     int argc = i;
     arg_ptrs[i++] = NULL;
 
     /* Push word-align. */
-    unsigned esp_u = (unsigned)esp_cp;
-    esp_u -= esp_u % 4;
+    esp.u -= esp.u % 4;
 
     /* Push argv[i]. */
-    char **esp_cpp = (char **)esp_u;
     while (i > 0)
-        *(--esp_cpp) = arg_ptrs[--i];
+        *(--esp.cpp) = arg_ptrs[--i];
+    char **argv = esp.cpp;
 
     /* Push argv. */
-    char ***esp_cppp = (char ***)esp_cpp;
-    *(--esp_cppp) = esp_cpp;
+    *(--esp.cppp) = argv;
 
     /* Push argc. */
-    int *esp_ip = (int *)esp_cppp;
-    *(--esp_ip) = argc;
+    *(--esp.ip) = argc;
 
     /* Push fake return address. */
-    typedef void (*ret_addr_t)(void);
-    ret_addr_t *esp_rap = (ret_addr_t *)esp_ip;
-    *(--esp_rap) = NULL;
+    *(--esp.rap) = NULL;
 
-    return (void *)esp_rap;
+    return esp.vp;
 }
 
 /* Waits for thread TID to die and returns its exit status.  If
