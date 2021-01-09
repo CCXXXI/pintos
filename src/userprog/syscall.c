@@ -138,25 +138,23 @@ static void exit(int status)
     thread_exit();
 }
 
-/* Terminates Pintos by calling shutdown_power_off()
-    (declaredin‘devices/shutdown.h’). This should be
-    seldom used, because you losesome information
-    about possible deadlock situations, etc. */
-static void halt(void)
-{
-    // todo
-}
+/* Writes SIZE bytes from buffer to the open file FD. Returns the
+    number of bytes actually written, which may be less than SIZE if
+    some bytes could not be written.
 
-/* Runs the executable whose name is given in CMD_LINE,
-    passing any given arguments, and returns the new
-    process’s program id (pid). Must return pid -1,
-    which otherwise should not be a valid pid, if
-    the program cannot load or run for any reason.
-    Thus, the parent process cannot return from the
-    exec until it knows whether the child process
-    successfully loaded its executable. Use appropriate
-    synchronization to ensure this. */
-pid_t exec(const char *cmd_line)
+    Writing past end-of-file would normally extend the file, but file
+    growth is not implemented by the basic file system. The expected
+    behavior is to write as many bytes as possible up to end-of-file
+    and return the actual number written, or 0 if no bytes could be
+    written at all.
+
+    Fd 1 writes to the console. The code to write to the console should
+    write all of buffer in one call to putbuf(), at least as long as SIZE
+    is not bigger than a few hundred bytes. (It is reasonable to break up
+    larger buffers.) Otherwise, lines of text output by different processes
+    may end up interleaved on the console, confusing both human readers and
+    the grading scripts. */
+int write(int fd, const void *buffer, unsigned size)
 {
     // todo
     return -1;
@@ -207,6 +205,30 @@ pid_t exec(const char *cmd_line)
     comment at the top of the function and then implement the wait
     system call in terms of process_wait(). */
 int wait(pid_t pid)
+{
+    // todo
+    return -1;
+}
+
+/* Terminates Pintos by calling shutdown_power_off()
+    (declaredin‘devices/shutdown.h’). This should be
+    seldom used, because you losesome information
+    about possible deadlock situations, etc. */
+static void halt(void)
+{
+    // todo
+}
+
+/* Runs the executable whose name is given in CMD_LINE,
+    passing any given arguments, and returns the new
+    process’s program id (pid). Must return pid -1,
+    which otherwise should not be a valid pid, if
+    the program cannot load or run for any reason.
+    Thus, the parent process cannot return from the
+    exec until it knows whether the child process
+    successfully loaded its executable. Use appropriate
+    synchronization to ensure this. */
+pid_t exec(const char *cmd_line)
 {
     // todo
     return -1;
@@ -269,28 +291,6 @@ int filesize(int fd)
 
     Fd 0 reads from the keyboard using input_getc(). */
 int read(int fd, void *buffer, unsigned size)
-{
-    // todo
-    return -1;
-}
-
-/* Writes SIZE bytes from buffer to the open file FD. Returns the
-    number of bytes actually written, which may be less than SIZE if
-    some bytes could not be written.
-
-    Writing past end-of-file would normally extend the file, but file
-    growth is not implemented by the basic file system. The expected
-    behavior is to write as many bytes as possible up to end-of-file
-    and return the actual number written, or 0 if no bytes could be
-    written at all.
-
-    Fd 1 writes to the console. The code to write to the console should
-    write all of buffer in one call to putbuf(), at least as long as SIZE
-    is not bigger than a few hundred bytes. (It is reasonable to break up
-    larger buffers.) Otherwise, lines of text output by different processes
-    may end up interleaved on the console, confusing both human readers and
-    the grading scripts. */
-int write(int fd, const void *buffer, unsigned size)
 {
     // todo
     return -1;
