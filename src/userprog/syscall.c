@@ -10,6 +10,7 @@ typedef int pid_t;
 
 static void syscall_handler(struct intr_frame *);
 static bool is_valid_ptr(const void *);
+static void check_ptr(const void *);
 
 static void halt(void);
 static void exit(int status);
@@ -30,10 +31,92 @@ void syscall_init(void)
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 
-static void syscall_handler(struct intr_frame *f UNUSED)
+static void syscall_handler(struct intr_frame *f)
 {
-    printf("system call!\n");
-    thread_exit();
+    check_ptr(f->esp);
+
+    void *args[4];
+    for (size_t i = 0; i != 4; ++i)
+        args[i] = f->esp + i * sizeof(void *);
+
+    int syscall_num = *(int *)args[0];
+
+    /* Check validation. */
+    switch (syscall_num)
+    {
+    case SYS_READ:
+    case SYS_WRITE:
+        check_ptr(args[3]);
+    case SYS_CREATE:
+    case SYS_SEEK:
+        check_ptr(args[2]);
+    case SYS_EXIT:
+    case SYS_EXEC:
+    case SYS_WAIT:
+    case SYS_REMOVE:
+    case SYS_OPEN:
+    case SYS_FILESIZE:
+    case SYS_TELL:
+    case SYS_CLOSE:
+        check_ptr(args[1]);
+    case SYS_HALT:
+        break;
+    default:
+        NOT_REACHED();
+    }
+
+    /* Forward. */
+    switch (syscall_num)
+    {
+    case SYS_HALT:
+        halt();
+        break;
+    case SYS_EXIT:
+        exit(*(int *)args[1]);
+        break;
+    case SYS_EXEC:
+        f->eax = exec(*(const char **)args[1]);
+        break;
+    case SYS_WAIT:
+        f->eax = wait(*(pid_t *)args[1]);
+        break;
+    case SYS_CREATE:
+        f->eax = create(*(const char **)args[1], *(unsigned *)args[2]);
+        break;
+    case SYS_REMOVE:
+        f->eax = remove(*(const char **)args[1]);
+        break;
+    case SYS_OPEN:
+        f->eax = remove(*(const char **)args[1]);
+        break;
+    case SYS_FILESIZE:
+        f->eax = filesize(*(int *)args[1]);
+        break;
+    case SYS_READ:
+        f->eax = read(*(int *)args[1], *(void **)args[2], *(unsigned *)args[3]);
+        break;
+    case SYS_WRITE:
+        f->eax = read(*(int *)args[1], *(const void **)args[2], *(unsigned *)args[3]);
+        break;
+    case SYS_SEEK:
+        seek(*(int *)args[1], *(unsigned *)args[2]);
+        break;
+    case SYS_TELL:
+        f->eax = tell(*(int *)args[1]);
+        break;
+    case SYS_CLOSE:
+        close(*(int *)args[1]);
+        break;
+    default:
+        NOT_REACHED();
+    }
+}
+
+/* If the user passed an invalid pointer PTR, exit(-1). */
+static void check_ptr(const void *ptr)
+{
+    if (!is_valid_ptr(ptr))
+        exit(-1);
 }
 
 /* Check if the user did not pass a null pointer,
