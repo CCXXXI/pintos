@@ -22,19 +22,19 @@ static void syscall_handler(struct intr_frame *);
 static bool is_valid_ptr(const void *ptr);
 static bool is_user_mem(const void *start, size_t size);
 
-static void halt(void);
-static void exit(int status);
-pid_t exec(const char *cmd_line);
-int wait(pid_t pid);
-bool create(const char *file, unsigned initial_size);
-bool remove(const char *file);
-int open(const char *file);
-int filesize(int fd);
-int read(int fd, void *buffer, unsigned size);
-int write(int fd, const void *buffer, unsigned size);
-void seek(int fd, unsigned position);
-unsigned tell(int fd);
-void close(int fd);
+static void halt(void) NO_RETURN;
+static void exit(int status) NO_RETURN;
+static pid_t exec(const char *file);
+static int wait(pid_t);
+static bool create(const char *file, unsigned initial_size);
+static bool remove(const char *file);
+static int open(const char *file);
+static int filesize(int fd);
+static int read(int fd, void *buffer, unsigned length);
+static int write(int fd, const void *buffer, unsigned length);
+static void seek(int fd, unsigned position);
+static unsigned tell(int fd);
+static void close(int fd);
 
 void syscall_init(void)
 {
@@ -172,7 +172,7 @@ static void exit(int status)
     larger buffers.) Otherwise, lines of text output by different processes
     may end up interleaved on the console, confusing both human readers and
     the grading scripts. */
-int write(int fd, const void *buffer, unsigned size)
+static int write(int fd, const void *buffer, unsigned size)
 {
     USER_ASSERT(is_user_mem(buffer, size));
     USER_ASSERT(fd != STDIN_FILENO);
@@ -231,7 +231,7 @@ int write(int fd, const void *buffer, unsigned size)
     (in ‘threads/init.c’). Implement process_wait() according to the
     comment at the top of the function and then implement the wait
     system call in terms of process_wait(). */
-int wait(pid_t pid)
+static int wait(pid_t pid)
 {
     // todo
     return -1;
@@ -255,7 +255,7 @@ static void halt(void)
     exec until it knows whether the child process
     successfully loaded its executable. Use appropriate
     synchronization to ensure this. */
-pid_t exec(const char *cmd_line)
+static pid_t exec(const char *cmd_line)
 {
     // todo
     return -1;
@@ -265,7 +265,7 @@ pid_t exec(const char *cmd_line)
     Returns true if successful, false otherwise. Creating a new file
     does not open it: opening the new file is a separate operation which
     would require a open system call. */
-bool create(const char *file, unsigned initial_size)
+static bool create(const char *file, unsigned initial_size)
 {
     // todo
     return false;
@@ -274,7 +274,7 @@ bool create(const char *file, unsigned initial_size)
 /* Deletes the file called FILE. Returns true if successful, false
     otherwise. A file may be removed regardless of whether it is open
     or closed, and removing an open file does not close it. */
-bool remove(const char *file)
+static bool remove(const char *file)
 {
     // todo
     return false;
@@ -298,14 +298,14 @@ bool remove(const char *file)
     descriptor. Different file descriptors for a single file are closed
     independently in separate calls to close and they do not share a
     file position. */
-int open(const char *file)
+static int open(const char *file)
 {
     // todo
     return -1;
 }
 
 /* Returns the size, in bytes, of the file open as FD. */
-int filesize(int fd)
+static int filesize(int fd)
 {
     // todo
     return -1;
@@ -317,7 +317,7 @@ int filesize(int fd)
     of file).
 
     Fd 0 reads from the keyboard using input_getc(). */
-int read(int fd, void *buffer, unsigned size)
+static int read(int fd, void *buffer, unsigned size)
 {
     // todo
     return -1;
@@ -333,14 +333,14 @@ int read(int fd, void *buffer, unsigned size)
     fixed length until project 4 is complete, so writes past end of file
     will return an error.) These semantics are implemented in the file
     system and do not require any special effort in system call implementation. */
-void seek(int fd, unsigned position)
+static void seek(int fd, unsigned position)
 {
     // todo
 }
 
 /* Returns the position of the next byte to be read or written in open
     file FD, expressed in bytes from the beginning of the file. */
-unsigned tell(int fd)
+static unsigned tell(int fd)
 {
     // todo
     return (unsigned)-1;
@@ -349,7 +349,7 @@ unsigned tell(int fd)
 /* Closes file descriptor FD. Exiting or terminating a process implicitly
     closes all its open file descriptors, as if by calling this function
     for each one. */
-void close(int fd)
+static void close(int fd)
 {
     // todo
 }
