@@ -38,7 +38,9 @@ tid_t process_execute(const char *file_name)
     strlcpy(fn_copy, file_name, PGSIZE);
 
     /* Create a new thread to execute FILE_NAME. */
-    tid = thread_create(file_name, PRI_DEFAULT, start_process, fn_copy);
+    char *save_ptr;
+    char *cmd = strtok_r(file_name, " ", &save_ptr);
+    tid = thread_create(cmd, PRI_DEFAULT, start_process, fn_copy);
     if (tid == TID_ERROR)
         palloc_free_page(fn_copy);
     return tid;
@@ -52,17 +54,67 @@ static void start_process(void *file_name_)
     struct intr_frame if_;
     bool success;
 
-    /* Initialize interrupt frame and load executable. */
+    /* Initialize interrupt frame. */
     memset(&if_, 0, sizeof if_);
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
     if_.cs = SEL_UCSEG;
     if_.eflags = FLAG_IF | FLAG_MBS;
-    success = load(file_name, &if_.eip, &if_.esp);
 
-    /* If load failed, quit. */
+    /* Load executable. */
+    char *save_ptr;
+    char *cmd = strtok_r(file_name, " ", &save_ptr);
+    success = load(cmd, &if_.eip, &if_.esp);
+
     palloc_free_page(file_name);
-    if (!success)
+
+    if (success)
+    {
+        /* Argument passing. */
+
+        /* Push arguments. */
+        char *esp_cp = (char *)if_.esp;
+        char *arg_ptrs[1024];
+        size_t i = 0;
+        for (char *arg = cmd; arg != NULL; arg = strtok_r(NULL, " ", &save_ptr))
+        {
+            size_t size = strlen(arg) + 1;
+            esp_cp -= size;
+            strlcpy(esp_cp, arg, size);
+            arg_ptrs[i++] = esp_cp;
+        }
+        int argc = i;
+        arg_ptrs[i++] = NULL;
+
+        /* Push word-align. */
+        unsigned esp_u = (unsigned)esp_cp;
+        esp_u -= esp_u % 4;
+
+        /* Push argv[i]. */
+        char **esp_cpp = (char **)esp_u;
+        while (i > 0)
+            *(--esp_cpp) = arg_ptrs[--i];
+
+        /* Push argv. */
+        char ***esp_cppp = (char ***)esp_cpp;
+        *(--esp_cppp) = esp_cpp;
+
+        /* Push argc. */
+        int *esp_ip = (int *)esp_cppp;
+        *(--esp_ip) = argc;
+
+        /* Push fake return address. */
+        typedef void (*ret_addr_t)(void);
+        ret_addr_t *esp_rap = (ret_addr_t *)esp_ip;
+        *(--esp_rap) = NULL;
+
+        /* Set if. */
+        if_.esp = (void *)esp_rap;
+    }
+    else
+    {
+        /* If load failed, quit. */
         thread_exit();
+    }
 
     /* Start the user process by simulating a return from an
        interrupt, implemented by intr_exit (in
@@ -426,10 +478,7 @@ static bool setup_stack(void **esp)
     {
         success = install_page(((uint8_t *)PHYS_BASE) - PGSIZE, kpage, true);
         if (success)
-        {
-            // todo
-            *esp = PHYS_BASE - 12;
-        }
+            *esp = PHYS_BASE;
         else
             palloc_free_page(kpage);
     }
