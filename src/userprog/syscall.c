@@ -8,9 +8,17 @@
 
 typedef int pid_t;
 
+#define USER_ASSERT(CONDITION) \
+    if (CONDITION)             \
+    {                          \
+    }                          \
+    else                       \
+    {                          \
+        exit(-1);              \
+    }
+
 static void syscall_handler(struct intr_frame *);
 static bool is_valid_ptr(const void *);
-static void check_ptr(const void *);
 
 static void halt(void);
 static void exit(int status);
@@ -33,7 +41,7 @@ void syscall_init(void)
 
 static void syscall_handler(struct intr_frame *f)
 {
-    check_ptr(f->esp);
+    USER_ASSERT(is_valid_ptr(f->esp));
 
     void *args[4];
     for (size_t i = 0; i != 4; ++i)
@@ -46,10 +54,10 @@ static void syscall_handler(struct intr_frame *f)
     {
     case SYS_READ:
     case SYS_WRITE:
-        check_ptr(args[3]);
+        USER_ASSERT(is_valid_ptr(args[3]));
     case SYS_CREATE:
     case SYS_SEEK:
-        check_ptr(args[2]);
+        USER_ASSERT(is_valid_ptr(args[2]));
     case SYS_EXIT:
     case SYS_EXEC:
     case SYS_WAIT:
@@ -58,7 +66,7 @@ static void syscall_handler(struct intr_frame *f)
     case SYS_FILESIZE:
     case SYS_TELL:
     case SYS_CLOSE:
-        check_ptr(args[1]);
+        USER_ASSERT(is_valid_ptr(args[1]));
     case SYS_HALT:
         break;
     default:
@@ -110,13 +118,6 @@ static void syscall_handler(struct intr_frame *f)
     default:
         NOT_REACHED();
     }
-}
-
-/* If the user passed an invalid pointer PTR, exit(-1). */
-static void check_ptr(const void *ptr)
-{
-    if (!is_valid_ptr(ptr))
-        exit(-1);
 }
 
 /* Check if the user did not pass a null pointer,
