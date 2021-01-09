@@ -165,6 +165,8 @@ void process_exit(void)
     pd = cur->pagedir;
     if (pd != NULL)
     {
+        printf("%s: exit(%d)\n", cur->name, cur->exit_code);
+
         /* Correct ordering here is crucial.  We must set
            cur->pagedir to NULL before switching page directories,
            so that a timer interrupt can't switch back to the
