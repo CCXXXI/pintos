@@ -132,14 +132,14 @@ static bool is_valid_ptr(const void *ptr)
 /* Returns true if [START, START + SIZE) is all valid. */
 static bool is_user_mem(const void *start, size_t size)
 {
-    if (!is_valid_ptr(start + size - 1))
-        return false;
-
     for (void *ptr = start; ptr < start + size; ptr += PGSIZE)
     {
         if (!is_valid_ptr(ptr))
             return false;
     }
+
+    if (size != 1 && !is_valid_ptr(start + size - 1))
+        return false;
 
     return true;
 }
