@@ -97,7 +97,7 @@ static void syscall_handler(struct intr_frame *f)
         f->eax = remove(*(const char **)args[1]);
         break;
     case SYS_OPEN:
-        f->eax = remove(*(const char **)args[1]);
+        f->eax = open(*(const char **)args[1]);
         break;
     case SYS_FILESIZE:
         f->eax = filesize(*(int *)args[1]);
@@ -106,7 +106,7 @@ static void syscall_handler(struct intr_frame *f)
         f->eax = read(*(int *)args[1], *(void **)args[2], *(unsigned *)args[3]);
         break;
     case SYS_WRITE:
-        f->eax = read(*(int *)args[1], *(const void **)args[2], *(unsigned *)args[3]);
+        f->eax = write(*(int *)args[1], *(const void **)args[2], *(unsigned *)args[3]);
         break;
     case SYS_SEEK:
         seek(*(int *)args[1], *(unsigned *)args[2]);
