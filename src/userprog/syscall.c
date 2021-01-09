@@ -76,6 +76,7 @@ static void halt(void)
 pid_t exec(const char *cmd_line)
 {
     // todo
+    return -1;
 }
 
 /* Waits for a child process PID and retrieves the
@@ -125,6 +126,7 @@ pid_t exec(const char *cmd_line)
 int wait(pid_t pid)
 {
     // todo
+    return -1;
 }
 
 /* Creates a new file called FILE initially INITIAL_SIZE bytes in size.
@@ -134,6 +136,7 @@ int wait(pid_t pid)
 bool create(const char *file, unsigned initial_size)
 {
     // todo
+    return false;
 }
 
 /* Deletes the file called FILE. Returns true if successful, false
@@ -142,6 +145,7 @@ bool create(const char *file, unsigned initial_size)
 bool remove(const char *file)
 {
     // todo
+    return false;
 }
 
 /* Opens the file called FILE. Returns a nonnegative integer handle
@@ -165,12 +169,14 @@ bool remove(const char *file)
 int open(const char *file)
 {
     // todo
+    return -1;
 }
 
 /* Returns the size, in bytes, of the file open as FD. */
 int filesize(int fd)
 {
     // todo
+    return -1;
 }
 
 /* Reads SIZE bytes from the file open as FD into buffer. Returns
@@ -182,6 +188,7 @@ int filesize(int fd)
 int read(int fd, void *buffer, unsigned size)
 {
     // todo
+    return -1;
 }
 
 /* Writes SIZE bytes from buffer to the open file FD. Returns the
@@ -203,6 +210,7 @@ int read(int fd, void *buffer, unsigned size)
 int write(int fd, const void *buffer, unsigned size)
 {
     // todo
+    return -1;
 }
 
 /* Changes the next byte to be read or written in open file FD to POSITION,
@@ -225,6 +233,7 @@ void seek(int fd, unsigned position)
 unsigned tell(int fd)
 {
     // todo
+    return (unsigned)-1;
 }
 
 /* Closes file descriptor FD. Exiting or terminating a process implicitly
