@@ -121,7 +121,10 @@ static void start_process(void *file_name_)
     palloc_free_page(file_name);
 
     if (!success)
+    {
         process_load_fail();
+        NOT_REACHED();
+    }
 
     /* Start the user process by simulating a return from an
        interrupt, implemented by intr_exit (in
