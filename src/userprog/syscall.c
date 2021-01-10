@@ -205,6 +205,21 @@ static int write(int fd, const void *buffer, unsigned size)
     return -1;
 }
 
+/* Runs the executable whose name is given in CMD_LINE,
+    passing any given arguments, and returns the new
+    process’s program id (pid). Must return pid -1,
+    which otherwise should not be a valid pid, if
+    the program cannot load or run for any reason.
+    Thus, the parent process cannot return from the
+    exec until it knows whether the child process
+    successfully loaded its executable. Use appropriate
+    synchronization to ensure this. */
+static pid_t exec(const char *cmd_line)
+{
+    // todo
+    return -1;
+}
+
 /* Waits for a child process PID and retrieves the
     child’s exit status.
 
@@ -262,21 +277,6 @@ static int wait(pid_t pid)
 static void halt(void)
 {
     shutdown_power_off();
-}
-
-/* Runs the executable whose name is given in CMD_LINE,
-    passing any given arguments, and returns the new
-    process’s program id (pid). Must return pid -1,
-    which otherwise should not be a valid pid, if
-    the program cannot load or run for any reason.
-    Thus, the parent process cannot return from the
-    exec until it knows whether the child process
-    successfully loaded its executable. Use appropriate
-    synchronization to ensure this. */
-static pid_t exec(const char *cmd_line)
-{
-    // todo
-    return -1;
 }
 
 /* Creates a new file called FILE initially INITIAL_SIZE bytes in size.
