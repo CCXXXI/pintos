@@ -79,10 +79,13 @@ tid_t process_execute(const char *file_name)
 
     palloc_free_page(fn_copy0);
 
-    struct process *self = thread_current()->process;
-    struct process *child = get_process(tid);
-    child->parent = self;
-    list_push_back(&self->children, &child->elem);
+    if (thread_current()->tid != 1)
+    {
+        struct process *self = thread_current()->process;
+        struct process *child = get_process(tid);
+        child->parent = self;
+        list_push_back(&self->children, &child->elem);
+    }
 
     return tid;
 }
