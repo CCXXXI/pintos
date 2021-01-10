@@ -583,6 +583,9 @@ struct process *process_create(struct thread *t)
     sema_init(&p->sema_load, 0);
     sema_init(&p->sema_wait, 0);
 
+    list_init(&p->files);
+    p->fd = 2;
+
     return p;
 }
 

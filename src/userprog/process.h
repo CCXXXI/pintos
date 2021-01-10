@@ -29,6 +29,8 @@ struct process
     struct process *parent;     /* Parent. */
     struct semaphore sema_load; /* Parent block on this while loading. */
     struct semaphore sema_wait; /* Parent block on this while waiting. */
+    struct list files;          /* Opening files. */
+    int fd;                     /* Max file descriptor num. */
 };
 
 void process_init(void);

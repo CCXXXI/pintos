@@ -7,6 +7,7 @@
 #include "threads/vaddr.h"
 #include "threads/synch.h"
 #include "threads/palloc.h"
+#include "threads/malloc.h"
 #include "userprog/pagedir.h"
 #include "userprog/process.h"
 #include "devices/shutdown.h"
@@ -20,6 +21,13 @@
     {                          \
         exit(-1);              \
     }
+
+static struct open_file
+{
+    int fd;
+    struct file *file;
+    struct list_elem elem;
+};
 
 static void syscall_handler(struct intr_frame *);
 static bool is_valid_ptr(const void *ptr);
@@ -350,8 +358,23 @@ static bool remove(const char *file)
     file position. */
 static int open(const char *file)
 {
-    // todo
-    return -1;
+    USER_ASSERT(is_valid_str(file));
+
+    lock_acquire(&file_lock);
+    struct file *f = filesys_open(file);
+    lock_release(&file_lock);
+
+    if (f == NULL)
+        return -1;
+
+    struct process *self = thread_current()->process;
+
+    struct open_file *open_file = malloc(sizeof(struct open_file));
+    open_file->fd = self->fd++;
+    open_file->file = f;
+    list_push_back(&self->files, &open_file->elem);
+
+    return open_file->fd;
 }
 
 /* Returns the size, in bytes, of the file open as FD. */
