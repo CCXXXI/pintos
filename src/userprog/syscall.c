@@ -11,6 +11,7 @@
 #include "userprog/pagedir.h"
 #include "userprog/process.h"
 #include "devices/shutdown.h"
+#include "devices/input.h"
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 
@@ -422,8 +423,26 @@ static int filesize(int fd)
     Fd 0 reads from the keyboard using input_getc(). */
 static int read(int fd, void *buffer, unsigned size)
 {
-    // todo
-    return -1;
+    USER_ASSERT(is_user_mem(buffer, size));
+    USER_ASSERT(fd != STDOUT_FILENO);
+
+    if (fd == STDIN_FILENO)
+    {
+        uint8_t *c = buffer;
+        for (unsigned i = 0; i != size; ++i)
+            *c++ = input_getc();
+        return size;
+    }
+
+    struct open_file *f = get_file_by_fd(fd);
+
+    USER_ASSERT(f != NULL);
+
+    lock_acquire(&file_lock);
+    int ret = file_read(f->file, buffer, size);
+    lock_release(&file_lock);
+
+    return ret;
 }
 
 /* Changes the next byte to be read or written in open file FD to POSITION,
