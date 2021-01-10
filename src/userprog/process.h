@@ -2,6 +2,7 @@
 #define USERPROG_PROCESS_H
 
 #include "threads/thread.h"
+#include <list.h>
 
 typedef int pid_t;
 
@@ -20,6 +21,7 @@ struct process
     pid_t pid;                  /* Process identifier. */
     enum process_status status; /* Process state. */
     int exit_code;              /* Exit code. */
+    struct list_elem allelem;   /* List element for all processes list. */
 };
 
 tid_t process_execute(const char *file_name);

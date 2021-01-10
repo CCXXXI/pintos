@@ -18,6 +18,9 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
+/* List of all user processes. */
+static struct list all_list;
+
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
 
@@ -194,6 +197,7 @@ void process_exit(void)
     }
     cur->process->thread = NULL;
     // todo
+    list_remove(&cur->process->allelem);
     palloc_free_page(cur->process);
 }
 
@@ -542,6 +546,8 @@ struct process *new_process(struct thread *t)
     p->thread = t;
     p->pid = t->tid;
     p->status = PROCESS_LOADING;
+
+    list_push_back(&all_list, &p->allelem);
 
     return p;
 }
