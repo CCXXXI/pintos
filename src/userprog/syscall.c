@@ -231,8 +231,15 @@ static int write(int fd, const void *buffer, unsigned size)
         return size;
     }
 
-    // todo
-    return -1;
+    struct open_file *f = get_file_by_fd(fd);
+
+    USER_ASSERT(f != NULL);
+
+    lock_acquire(&file_lock);
+    int ret = file_write(f->file, buffer, size);
+    lock_release(&file_lock);
+
+    return ret;
 }
 
 /* Runs the executable whose name is given in CMD_LINE,
