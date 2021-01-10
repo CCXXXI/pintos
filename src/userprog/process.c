@@ -73,6 +73,8 @@ tid_t process_execute(const char *file_name)
 
     palloc_free_page(fn_copy0);
 
+    list_push_back(&thread_current()->process->children, &get_process(tid)->elem);
+
     return tid;
 }
 
@@ -548,6 +550,8 @@ struct process *create_process(struct thread *t)
     p->status = PROCESS_LOADING;
 
     list_push_back(&all_list, &p->allelem);
+    list_init(&p->children);
+    p->parent = NULL;
 
     return p;
 }

@@ -22,6 +22,9 @@ struct process
     enum process_status status; /* Process state. */
     int exit_code;              /* Exit code. */
     struct list_elem allelem;   /* List element for all processes list. */
+    struct list_elem elem;      /* List element for children list. */
+    struct list children;       /* List of children. */
+    struct process *parent;     /* Parent. */
 };
 
 tid_t process_execute(const char *file_name);
