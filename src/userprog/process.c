@@ -232,9 +232,11 @@ void process_exit(void)
     self->thread = NULL;
     self->status = PROCESS_EXITED;
 
-    ASSERT(self->file != NULL);
-    file_allow_write(self->file);
-    file_close(self->file);
+    if (self->file != NULL)
+    {
+        file_allow_write(self->file);
+        file_close(self->file);
+    }
 
     sema_up(&self->sema_wait);
 }
