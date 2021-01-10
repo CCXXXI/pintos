@@ -12,8 +12,6 @@
 #include "userprog/process.h"
 #include "devices/shutdown.h"
 #include "devices/input.h"
-#include "filesys/filesys.h"
-#include "filesys/file.h"
 
 #define USER_ASSERT(CONDITION) \
     if (CONDITION)             \
