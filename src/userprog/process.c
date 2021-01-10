@@ -179,7 +179,7 @@ void process_exit(void)
     pd = cur->pagedir;
     if (pd != NULL)
     {
-        printf("%s: exit(%d)\n", cur->name, cur->exit_code);
+        printf("%s: exit(%d)\n", cur->name, cur->process->exit_code);
 
         /* Correct ordering here is crucial.  We must set
            cur->pagedir to NULL before switching page directories,
@@ -192,6 +192,9 @@ void process_exit(void)
         pagedir_activate(NULL);
         pagedir_destroy(pd);
     }
+    cur->process->thread = NULL;
+    // todo
+    palloc_free_page(cur->process);
 }
 
 /* Sets up the CPU for running user code in the current
@@ -526,4 +529,19 @@ static bool install_page(void *upage, void *kpage, bool writable)
     /* Verify that there's not already a page at that virtual
        address, then map our page there. */
     return (pagedir_get_page(t->pagedir, upage) == NULL && pagedir_set_page(t->pagedir, upage, kpage, writable));
+}
+
+/* Returns a pointer to struct process that correspond to T. */
+struct process *new_process(struct thread *t)
+{
+    /* Allocate process. */
+    struct process *p = palloc_get_page(PAL_ZERO);
+    if (p == NULL)
+        return NULL;
+
+    p->thread = t;
+    p->pid = t->tid;
+    p->status = PROCESS_LOADING;
+
+    return p;
 }

@@ -212,6 +212,12 @@ tid_t thread_create(const char *name, int priority,
     sf->eip = switch_entry;
     sf->ebp = 0;
 
+#ifdef USERPROG
+    t->process = new_process(t);
+    if (t->process == NULL)
+        return TID_ERROR;
+#endif
+
     /* Add to run queue. */
     thread_unblock(t);
 

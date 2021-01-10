@@ -174,7 +174,7 @@ static bool is_valid_str(const char *str)
     success and nonzero values indicate errors. */
 static void exit(int status)
 {
-    thread_current()->exit_code = status;
+    thread_current()->process->exit_code = status;
     thread_exit();
 }
 
