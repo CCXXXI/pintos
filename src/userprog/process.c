@@ -162,9 +162,9 @@ static void *arg_pass(esp_t esp, char *cmd, char *save_ptr)
    immediately, without waiting. */
 int process_wait(tid_t child_tid UNUSED)
 {
-    // todo
-    for (;;)
-        ;
+#include "devices/timer.h"
+    timer_sleep(1 * TIMER_FREQ);
+
     return -1;
 }
 
