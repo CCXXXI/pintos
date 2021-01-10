@@ -150,7 +150,7 @@ static bool is_valid_ptr(const void *ptr)
 /* Returns true if [START, START + SIZE) is all valid. */
 static bool is_user_mem(const void *start, size_t size)
 {
-    for (void *ptr = start; ptr < start + size; ptr += PGSIZE)
+    for (const void *ptr = start; ptr < start + size; ptr += PGSIZE)
     {
         if (!is_valid_ptr(ptr))
             return false;
@@ -168,7 +168,7 @@ static bool is_valid_str(const char *str)
     if (!is_valid_ptr(str))
         return false;
 
-    for (char *c = str; *c != '\0';)
+    for (const char *c = str; *c != '\0';)
     {
         ++c;
         if (c - str + 2 == PGSIZE || !is_valid_ptr(c))
