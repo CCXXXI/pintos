@@ -40,22 +40,35 @@ static void *arg_pass(esp_t esp, char *cmd, char *save_ptr);
    thread id, or TID_ERROR if the thread cannot be created. */
 tid_t process_execute(const char *file_name)
 {
-    char *fn_copy;
+    char *fn_copy0, *fn_copy1;
     tid_t tid;
 
     /* Make a copy of FILE_NAME.
        Otherwise there's a race between the caller and load(). */
-    fn_copy = palloc_get_page(0);
-    if (fn_copy == NULL)
+    fn_copy0 = palloc_get_page(0);
+    if (fn_copy0 == NULL)
         return TID_ERROR;
-    strlcpy(fn_copy, file_name, PGSIZE);
+    strlcpy(fn_copy0, file_name, PGSIZE);
+
+    /* Make a copy of FILE_NAME.
+       Otherwise strtok_r will change the const char *file_name. */
+    fn_copy1 = palloc_get_page(0);
+    if (fn_copy1 == NULL)
+    {
+        palloc_free_page(fn_copy0);
+        return TID_ERROR;
+    }
+    strlcpy(fn_copy1, file_name, PGSIZE);
 
     /* Create a new thread to execute FILE_NAME. */
     char *save_ptr;
-    char *cmd = strtok_r(file_name, " ", &save_ptr);
-    tid = thread_create(cmd, PRI_DEFAULT, start_process, fn_copy);
+    char *cmd = strtok_r(fn_copy1, " ", &save_ptr);
+    tid = thread_create(cmd, PRI_DEFAULT, start_process, fn_copy0);
     if (tid == TID_ERROR)
-        palloc_free_page(fn_copy);
+        palloc_free_page(fn_copy0);
+
+    palloc_free_page(fn_copy1);
+
     return tid;
 }
 
