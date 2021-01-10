@@ -5,6 +5,7 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "threads/synch.h"
 #include "userprog/pagedir.h"
 #include "devices/shutdown.h"
 
@@ -38,9 +39,13 @@ static void seek(int fd, unsigned position);
 static unsigned tell(int fd);
 static void close(int fd);
 
+static struct lock file_lock;
+
 void syscall_init(void)
 {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
+
+    lock_init(&file_lock);
 }
 
 static void syscall_handler(struct intr_frame *f)
