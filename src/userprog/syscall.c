@@ -265,6 +265,9 @@ static pid_t exec(const char *cmd_line)
     pid_t pid = process_execute(cmd_line);
     lock_release(&file_lock);
 
+    if (pid == TID_ERROR)
+        return -1;
+
     struct process *child = get_child(pid);
     sema_down(&child->sema_load);
 
