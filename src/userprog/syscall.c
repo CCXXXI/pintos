@@ -22,6 +22,7 @@ typedef int pid_t;
 static void syscall_handler(struct intr_frame *);
 static bool is_valid_ptr(const void *ptr);
 static bool is_user_mem(const void *start, size_t size);
+static bool is_valid_str(const char *str);
 
 static void halt(void) NO_RETURN;
 static void exit(int status) NO_RETURN;
@@ -142,6 +143,22 @@ static bool is_user_mem(const void *start, size_t size)
 
     if (size > 1 && !is_valid_ptr(start + size - 1))
         return false;
+
+    return true;
+}
+
+/* Returns true if STR is a valid string in user space. */
+static bool is_valid_str(const char *str)
+{
+    if (!is_valid_ptr(str))
+        return false;
+
+    for (char *c = str; *c != '\0';)
+    {
+        ++c;
+        if (c - str + 2 == PGSIZE || (unsigned)c & PGMASK == 0 && !is_valid_ptr(c))
+            return false;
+    }
 
     return true;
 }
