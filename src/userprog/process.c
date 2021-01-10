@@ -636,7 +636,6 @@ static void process_load_fail(void)
     struct process *self = thread_current()->process;
 
     self->status = PROCESS_FAILED;
-    self->exit_code = -1;
 
     sema_up(&self->sema_load);
 
