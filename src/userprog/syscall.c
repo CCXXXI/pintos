@@ -201,7 +201,16 @@ static struct open_file *get_file_by_fd(const int fd)
     success and nonzero values indicate errors. */
 static void exit(int status)
 {
-    thread_current()->process->exit_code = status;
+    struct process *self = thread_current()->process;
+
+    while (!list_empty(&self->files))
+    {
+        struct open_file *f = list_entry(list_pop_back(&self->files),
+                                         struct open_file, elem);
+        close(f->fd);
+    }
+
+    self->exit_code = status;
     thread_exit();
 }
 
