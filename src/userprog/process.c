@@ -21,6 +21,12 @@
 /* List of all user processes. */
 static struct list all_list;
 
+static int process_num = 1;
+enum
+{
+    PROCESS_NUM_LIMIT = 32
+};
+
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
 static void process_load_fail(void);
@@ -51,6 +57,10 @@ void process_init(void)
    thread id, or TID_ERROR if the thread cannot be created. */
 tid_t process_execute(const char *file_name)
 {
+    if (process_num == PROCESS_NUM_LIMIT)
+        return TID_ERROR;
+    ++process_num;
+
     char *fn_copy0, *fn_copy1;
     tid_t tid;
 
@@ -205,6 +215,8 @@ int process_wait(tid_t child_tid)
 /* Free the current process's resources. */
 void process_exit(void)
 {
+    --process_num;
+
     struct thread *cur = thread_current();
     uint32_t *pd;
 
