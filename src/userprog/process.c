@@ -599,7 +599,7 @@ struct process *get_child(pid_t pid)
             return p;
     }
 
-    NOT_REACHED();
+    return NULL;
 }
 
 /* Set process status when load failed. */
