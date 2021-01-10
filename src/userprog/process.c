@@ -536,7 +536,7 @@ static bool install_page(void *upage, void *kpage, bool writable)
 }
 
 /* Creates a struct process that correspond to T. */
-struct process *new_process(struct thread *t)
+struct process *create_process(struct thread *t)
 {
     /* Allocate process. */
     struct process *p = palloc_get_page(PAL_ZERO);
