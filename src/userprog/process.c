@@ -551,3 +551,18 @@ struct process *new_process(struct thread *t)
 
     return p;
 }
+
+/* Get struct process by pid. */
+struct process *get_process(pid_t pid)
+{
+    for (struct list_elem *e = list_begin(&all_list);
+         e != list_end(&all_list);
+         e = list_next(e))
+    {
+        struct process *p = list_entry(e, struct process, allelem);
+        if (p->pid == pid)
+            return p;
+    }
+
+    return NULL;
+}
