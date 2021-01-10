@@ -462,8 +462,11 @@ static void seek(int fd, unsigned position)
     file FD, expressed in bytes from the beginning of the file. */
 static unsigned tell(int fd)
 {
-    // todo
-    return (unsigned)-1;
+    struct open_file *f = get_file_by_fd(fd);
+
+    lock_acquire(&file_lock);
+    file_tell(f->file);
+    lock_release(&file_lock);
 }
 
 /* Closes file descriptor FD. Exiting or terminating a process implicitly
