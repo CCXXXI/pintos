@@ -80,10 +80,10 @@ static void syscall_handler(struct intr_frame *f)
     {
     case SYS_HALT:
         halt();
-        break;
+        NOT_REACHED();
     case SYS_EXIT:
         exit(*(int *)args[1]);
-        break;
+        NOT_REACHED();
     case SYS_EXEC:
         f->eax = exec(*(const char **)args[1]);
         break;
