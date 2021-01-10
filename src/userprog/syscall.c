@@ -191,7 +191,7 @@ static struct open_file *get_file_by_fd(const int fd)
             return f;
     }
 
-    return NULL;
+    USER_ASSERT(false);
 }
 
 /* Terminates the current user program, returning
@@ -233,8 +233,6 @@ static int write(int fd, const void *buffer, unsigned size)
     }
 
     struct open_file *f = get_file_by_fd(fd);
-
-    USER_ASSERT(f != NULL);
 
     lock_acquire(&file_lock);
     int ret = file_write(f->file, buffer, size);
@@ -406,8 +404,6 @@ static int filesize(int fd)
 {
     struct open_file *f = get_file_by_fd(fd);
 
-    USER_ASSERT(f != NULL);
-
     lock_acquire(&file_lock);
     int ret = file_length(f->file);
     lock_release(&file_lock);
@@ -436,8 +432,6 @@ static int read(int fd, void *buffer, unsigned size)
 
     struct open_file *f = get_file_by_fd(fd);
 
-    USER_ASSERT(f != NULL);
-
     lock_acquire(&file_lock);
     int ret = file_read(f->file, buffer, size);
     lock_release(&file_lock);
@@ -458,8 +452,6 @@ static int read(int fd, void *buffer, unsigned size)
 static void seek(int fd, unsigned position)
 {
     struct open_file *f = get_file_by_fd(fd);
-
-    USER_ASSERT(f != NULL);
 
     lock_acquire(&file_lock);
     file_seek(f->file, position);
