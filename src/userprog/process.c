@@ -573,7 +573,7 @@ struct process *process_create(struct thread *t)
     return p;
 }
 
-/* Get struct process by pid. */
+/* Get struct process in ALL_LIST by pid. */
 struct process *get_process(pid_t pid)
 {
     struct list *l = &all_list;
@@ -588,6 +588,8 @@ struct process *get_process(pid_t pid)
     NOT_REACHED();
 }
 
+/* Get struct process in self's children by pid.
+    Returns NULL if not found. */
 struct process *get_child(pid_t pid)
 {
     struct list *l = &thread_current()->process->children;
