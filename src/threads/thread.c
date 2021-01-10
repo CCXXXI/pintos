@@ -213,7 +213,7 @@ tid_t thread_create(const char *name, int priority,
     sf->ebp = 0;
 
 #ifdef USERPROG
-    t->process = create_process(t);
+    t->process = process_create(t);
     if (t->process == NULL)
         return TID_ERROR;
 #endif
