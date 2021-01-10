@@ -531,7 +531,7 @@ static bool install_page(void *upage, void *kpage, bool writable)
     return (pagedir_get_page(t->pagedir, upage) == NULL && pagedir_set_page(t->pagedir, upage, kpage, writable));
 }
 
-/* Returns a pointer to struct process that correspond to T. */
+/* Creates a struct process that correspond to T. */
 struct process *new_process(struct thread *t)
 {
     /* Allocate process. */
