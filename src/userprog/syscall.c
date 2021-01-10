@@ -171,7 +171,7 @@ static bool is_valid_str(const char *str)
     for (char *c = str; *c != '\0';)
     {
         ++c;
-        if (c - str + 2 == PGSIZE || (unsigned)c & PGMASK == 0 && !is_valid_ptr(c))
+        if (c - str + 2 == PGSIZE || !is_valid_ptr(c))
             return false;
     }
 
