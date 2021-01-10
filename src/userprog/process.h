@@ -1,8 +1,8 @@
 #ifndef USERPROG_PROCESS_H
 #define USERPROG_PROCESS_H
 
-#include "threads/thread.h"
 #include <list.h>
+#include "threads/thread.h"
 
 typedef int pid_t;
 
