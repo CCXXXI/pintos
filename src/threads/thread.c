@@ -384,12 +384,12 @@ void thread_update_priority(struct thread *t)
         lock_update_priority(t->donee);
 }
 
-/* Get the max priority of t->donor. */
+/* Get the max priority of t->donors. */
 static int thread_get_donor_priority(struct thread *t)
 {
-    if (list_empty(&t->donor))
+    if (list_empty(&t->donors))
         return PRI_MIN;
-    return list_entry(list_max(&t->donor, lock_elem_priority_cmp, NULL), struct lock, elem)->priority;
+    return list_entry(list_max(&t->donors, lock_elem_priority_cmp, NULL), struct lock, elem)->priority;
 }
 
 /* Sets the current thread's nice value to NICE. */
@@ -562,7 +562,7 @@ static void init_thread(struct thread *t, const char *name, int priority)
     {
         t->priority = t->base_priority = priority;
     }
-    list_init(&t->donor);
+    list_init(&t->donors);
     t->donee = NULL;
     t->magic = THREAD_MAGIC;
 
