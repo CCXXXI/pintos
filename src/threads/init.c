@@ -112,6 +112,7 @@ int main(void)
     kbd_init();
     input_init();
 #ifdef USERPROG
+    process_init();
     exception_init();
     syscall_init();
 #endif

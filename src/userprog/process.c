@@ -18,29 +18,87 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
+/* List of all user processes. */
+static struct list all_list;
+
+static int process_num = 1;
+enum
+{
+    PROCESS_NUM_LIMIT = 32
+};
+
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
+static void process_load_fail(void);
+static void process_load_success(const char *cmd);
+
+typedef void (*ret_addr_t)(void);
+typedef union
+{
+    void *vp;
+    char *cp;
+    unsigned u;
+    char **cpp;
+    char ***cppp;
+    int *ip;
+    ret_addr_t *rap;
+} esp_t;
+static void *arg_pass(esp_t esp, char *cmd, char *save_ptr);
+
+/* Initializes the user process system. */
+void process_init(void)
+{
+    list_init(&all_list);
+}
 
 /* Starts a new thread running a user program loaded from
-   FILENAME.  The new thread may be scheduled (and may even exit)
+   FILE_NAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
    thread id, or TID_ERROR if the thread cannot be created. */
 tid_t process_execute(const char *file_name)
 {
-    char *fn_copy;
+    if (process_num == PROCESS_NUM_LIMIT)
+        return TID_ERROR;
+    ++process_num;
+
+    char *fn_copy0, *fn_copy1;
     tid_t tid;
 
     /* Make a copy of FILE_NAME.
-       Otherwise there's a race between the caller and load(). */
-    fn_copy = palloc_get_page(0);
-    if (fn_copy == NULL)
+       Otherwise strtok_r will modify the const char *file_name. */
+    fn_copy0 = palloc_get_page(0);
+    if (fn_copy0 == NULL)
         return TID_ERROR;
-    strlcpy(fn_copy, file_name, PGSIZE);
+
+    /* Make a copy of FILE_NAME.
+       Otherwise there's a race between the caller and load(). */
+    fn_copy1 = palloc_get_page(0);
+    if (fn_copy1 == NULL)
+    {
+        palloc_free_page(fn_copy0);
+        return TID_ERROR;
+    }
+
+    strlcpy(fn_copy0, file_name, PGSIZE);
+    strlcpy(fn_copy1, file_name, PGSIZE);
 
     /* Create a new thread to execute FILE_NAME. */
-    tid = thread_create(file_name, PRI_DEFAULT, start_process, fn_copy);
+    char *save_ptr;
+    char *cmd = strtok_r(fn_copy0, " ", &save_ptr);
+    tid = thread_create(cmd, PRI_DEFAULT, start_process, fn_copy1);
     if (tid == TID_ERROR)
-        palloc_free_page(fn_copy);
+        palloc_free_page(fn_copy1);
+
+    palloc_free_page(fn_copy0);
+
+    if (thread_current()->tid != 1 && tid != TID_ERROR)
+    {
+        struct process *self = thread_current()->process;
+        struct process *child = get_process(tid);
+        child->parent = self;
+        list_push_back(&self->children, &child->elem);
+    }
+
     return tid;
 }
 
@@ -52,17 +110,31 @@ static void start_process(void *file_name_)
     struct intr_frame if_;
     bool success;
 
-    /* Initialize interrupt frame and load executable. */
+    /* Initialize interrupt frame. */
     memset(&if_, 0, sizeof if_);
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
     if_.cs = SEL_UCSEG;
     if_.eflags = FLAG_IF | FLAG_MBS;
-    success = load(file_name, &if_.eip, &if_.esp);
 
-    /* If load failed, quit. */
+    /* Load executable. */
+    char *save_ptr;
+    char *cmd = strtok_r(file_name, " ", &save_ptr);
+    success = load(cmd, &if_.eip, &if_.esp);
+
+    if (success)
+    {
+        if_.esp = arg_pass((esp_t)if_.esp, cmd, save_ptr);
+        process_load_success(cmd);
+    }
+
+    /* Free file_name whether successed or failed. */
     palloc_free_page(file_name);
+
     if (!success)
-        thread_exit();
+    {
+        process_load_fail();
+        NOT_REACHED();
+    }
 
     /* Start the user process by simulating a return from an
        interrupt, implemented by intr_exit (in
@@ -71,30 +143,80 @@ static void start_process(void *file_name_)
        we just point the stack pointer (%esp) to our stack frame
        and jump to it. */
     asm volatile(
-        "movl %0, %%esp; jmp intr_exit"
+        "movl %0, %%esp; \
+         jmp intr_exit"
         :
         : "g"(&if_)
         : "memory");
     NOT_REACHED();
 }
 
-/* Waits for thread TID to die and returns its exit status.  If
+/* Argument passing. */
+static void *arg_pass(esp_t esp, char *cmd, char *save_ptr)
+{
+    /* Push arguments. */
+    char *arg_ptrs[1024];
+    size_t i = 0;
+    for (char *arg = cmd; arg != NULL; arg = strtok_r(NULL, " ", &save_ptr))
+    {
+        size_t size = strlen(arg) + 1;
+        esp.cp -= size;
+        strlcpy(esp.cp, arg, size);
+        arg_ptrs[i++] = esp.cp;
+    }
+    int argc = i;
+    arg_ptrs[i++] = NULL;
+
+    /* Push word-align. */
+    esp.u -= esp.u % 4;
+
+    /* Push argv[i]. */
+    esp.cpp -= i;
+    memcpy(esp.cpp, arg_ptrs, i * sizeof(char *));
+    char **argv = esp.cpp;
+
+    /* Push argv. */
+    *(--esp.cppp) = argv;
+
+    /* Push argc. */
+    *(--esp.ip) = argc;
+
+    /* Push fake return address. */
+    *(--esp.rap) = NULL;
+
+    return esp.vp;
+}
+
+/* Waits for thread TID to die and returns its exit status. If
    it was terminated by the kernel (i.e. killed due to an
    exception), returns -1.  If TID is invalid or if it was not a
    child of the calling process, or if process_wait() has already
    been successfully called for the given TID, returns -1
-   immediately, without waiting.
-
-   This function will be implemented in problem 2-2.  For now, it
-   does nothing. */
-int process_wait(tid_t child_tid UNUSED)
+   immediately, without waiting. */
+int process_wait(tid_t child_tid)
 {
-    return -1;
+    bool cur_init = thread_current()->tid == 1;
+    struct process *child = cur_init ? get_process(child_tid) : get_child(child_tid);
+
+    if (child == NULL)
+        return -1;
+
+    sema_down(&child->sema_wait);
+
+    if (!cur_init)
+        list_remove(&child->elem);
+    list_remove(&child->allelem);
+    int exit_code = child->exit_code;
+    palloc_free_page(child);
+
+    return exit_code;
 }
 
 /* Free the current process's resources. */
 void process_exit(void)
 {
+    --process_num;
+
     struct thread *cur = thread_current();
     uint32_t *pd;
 
@@ -103,6 +225,8 @@ void process_exit(void)
     pd = cur->pagedir;
     if (pd != NULL)
     {
+        printf("%s: exit(%d)\n", cur->name, cur->process->exit_code);
+
         /* Correct ordering here is crucial.  We must set
            cur->pagedir to NULL before switching page directories,
            so that a timer interrupt can't switch back to the
@@ -114,6 +238,19 @@ void process_exit(void)
         pagedir_activate(NULL);
         pagedir_destroy(pd);
     }
+
+    struct process *self = cur->process;
+
+    self->thread = NULL;
+    self->status = PROCESS_EXITED;
+
+    if (self->file != NULL)
+    {
+        file_allow_write(self->file);
+        file_close(self->file);
+    }
+
+    sema_up(&self->sema_wait);
 }
 
 /* Sets up the CPU for running user code in the current
@@ -448,4 +585,89 @@ static bool install_page(void *upage, void *kpage, bool writable)
     /* Verify that there's not already a page at that virtual
        address, then map our page there. */
     return (pagedir_get_page(t->pagedir, upage) == NULL && pagedir_set_page(t->pagedir, upage, kpage, writable));
+}
+
+/* Creates a struct process that correspond to T. */
+struct process *process_create(struct thread *t)
+{
+    /* Allocate process. */
+    struct process *p = palloc_get_page(PAL_ZERO);
+    if (p == NULL)
+        return NULL;
+
+    p->thread = t;
+    p->pid = t->tid;
+    p->status = PROCESS_LOADING;
+    p->exit_code = -1;
+
+    list_push_back(&all_list, &p->allelem);
+    list_init(&p->children);
+    p->parent = NULL;
+
+    sema_init(&p->sema_load, 0);
+    sema_init(&p->sema_wait, 0);
+
+    list_init(&p->files);
+    p->fd = 2;
+
+    return p;
+}
+
+/* Get struct process in ALL_LIST by pid. */
+struct process *get_process(pid_t pid)
+{
+    ASSERT(pid != TID_ERROR);
+
+    struct list *l = &all_list;
+
+    for (struct list_elem *e = list_begin(l); e != list_end(l); e = list_next(e))
+    {
+        struct process *p = list_entry(e, struct process, allelem);
+        if (p->pid == pid)
+            return p;
+    }
+
+    NOT_REACHED();
+}
+
+/* Get struct process in self's children by pid.
+    Returns NULL if not found. */
+struct process *get_child(pid_t pid)
+{
+    ASSERT(pid != TID_ERROR);
+
+    struct list *l = &thread_current()->process->children;
+
+    for (struct list_elem *e = list_begin(l); e != list_end(l); e = list_next(e))
+    {
+        struct process *p = list_entry(e, struct process, elem);
+        if (p->pid == pid)
+            return p;
+    }
+
+    return NULL;
+}
+
+/* Set process status when load failed. */
+static void process_load_fail(void)
+{
+    struct process *self = thread_current()->process;
+
+    self->status = PROCESS_FAILED;
+
+    sema_up(&self->sema_load);
+
+    thread_exit();
+}
+
+/* Set process status when load successed. */
+static void process_load_success(const char *cmd)
+{
+    struct process *self = thread_current()->process;
+
+    self->status = PROCESS_NORMAL;
+    self->file = filesys_open(cmd);
+    file_deny_write(self->file);
+
+    sema_up(&self->sema_load);
 }
