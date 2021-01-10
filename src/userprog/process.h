@@ -3,6 +3,7 @@
 
 #include <list.h>
 #include "threads/thread.h"
+#include "threads/synch.h"
 
 typedef int pid_t;
 
@@ -25,6 +26,7 @@ struct process
     struct list_elem elem;      /* List element for children list. */
     struct list children;       /* List of children. */
     struct process *parent;     /* Parent. */
+    struct semaphore sema;      /* Parent block on this. */
 };
 
 void process_init(void);
@@ -34,5 +36,6 @@ void process_exit(void);
 void process_activate(void);
 struct process *process_create(struct thread *t);
 struct process *get_process(pid_t pid);
+struct process *get_child(pid_t pid);
 
 #endif /* userprog/process.h */

@@ -23,6 +23,8 @@ static struct list all_list;
 
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
+static void process_load_fail(void);
+static void process_load_success(void);
 
 typedef void (*ret_addr_t)(void);
 typedef union
@@ -116,9 +118,10 @@ static void start_process(void *file_name_)
     /* Free file_name whether successed or failed. */
     palloc_free_page(file_name);
 
-    /* If load failed, quit. */
-    if (!success)
-        thread_exit();
+    if (success)
+        process_load_success();
+    else
+        process_load_fail();
 
     /* Start the user process by simulating a return from an
        interrupt, implemented by intr_exit (in
@@ -565,20 +568,59 @@ struct process *process_create(struct thread *t)
     list_init(&p->children);
     p->parent = NULL;
 
+    sema_init(&p->sema, 0);
+
     return p;
 }
 
 /* Get struct process by pid. */
 struct process *get_process(pid_t pid)
 {
-    for (struct list_elem *e = list_begin(&all_list);
-         e != list_end(&all_list);
-         e = list_next(e))
+    struct list *l = &all_list;
+
+    for (struct list_elem *e = list_begin(l); e != list_end(l); e = list_next(e))
     {
         struct process *p = list_entry(e, struct process, allelem);
         if (p->pid == pid)
             return p;
     }
 
-    return NULL;
+    NOT_REACHED();
+}
+
+struct process *get_child(pid_t pid)
+{
+    struct list *l = &thread_current()->process->children;
+
+    for (struct list_elem *e = list_begin(l); e != list_end(l); e = list_next(e))
+    {
+        struct process *p = list_entry(e, struct process, elem);
+        if (p->pid == pid)
+            return p;
+    }
+
+    NOT_REACHED();
+}
+
+/* Set process status when load failed. */
+static void process_load_fail(void)
+{
+    struct process *self = thread_current()->process;
+
+    self->status = PROCESS_FAILED;
+    self->exit_code = -1;
+
+    sema_up(&self->sema);
+
+    thread_exit();
+}
+
+/* Set process status when load successed. */
+static void process_load_success(void)
+{
+    struct process *self = thread_current()->process;
+
+    self->status = PROCESS_NORMAL;
+
+    sema_up(&self->sema);
 }

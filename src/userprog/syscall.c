@@ -6,6 +6,7 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "threads/synch.h"
+#include "threads/palloc.h"
 #include "userprog/pagedir.h"
 #include "userprog/process.h"
 #include "devices/shutdown.h"
@@ -220,8 +221,25 @@ static int write(int fd, const void *buffer, unsigned size)
     synchronization to ensure this. */
 static pid_t exec(const char *cmd_line)
 {
-    // todo
-    return -1;
+    USER_ASSERT(is_valid_str(cmd_line));
+
+    lock_acquire(&file_lock);
+    pid_t pid = process_execute(cmd_line);
+    lock_release(&file_lock);
+
+    struct process *child = get_child(pid);
+    sema_down(&child->sema);
+
+    if (child->status == PROCESS_FAILED)
+    {
+        palloc_free_page(child);
+        return -1;
+    }
+    else
+    {
+        ASSERT(child->status == PROCESS_NORMAL);
+        return pid;
+    }
 }
 
 /* Waits for a child process PID and retrieves the
