@@ -205,7 +205,7 @@ static void exit(int status)
 
     while (!list_empty(&self->files))
     {
-        struct open_file *f = list_entry(list_pop_back(&self->files),
+        struct open_file *f = list_entry(list_back(&self->files),
                                          struct open_file, elem);
         close(f->fd);
     }
