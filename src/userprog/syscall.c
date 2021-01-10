@@ -474,5 +474,12 @@ static unsigned tell(int fd)
     for each one. */
 static void close(int fd)
 {
-    // todo
+    struct open_file *f = get_file_by_fd(fd);
+
+    lock_acquire(&file_lock);
+    file_close(f->file);
+    lock_release(&file_lock);
+
+    list_remove(&f->elem);
+    free(f);
 }
