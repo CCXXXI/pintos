@@ -44,14 +44,14 @@ tid_t process_execute(const char *file_name)
     tid_t tid;
 
     /* Make a copy of FILE_NAME.
-       Otherwise there's a race between the caller and load(). */
+       Otherwise strtok_r will modify the const char *file_name. */
     fn_copy0 = palloc_get_page(0);
     if (fn_copy0 == NULL)
         return TID_ERROR;
     strlcpy(fn_copy0, file_name, PGSIZE);
 
     /* Make a copy of FILE_NAME.
-       Otherwise strtok_r will change the const char *file_name. */
+       Otherwise there's a race between the caller and load(). */
     fn_copy1 = palloc_get_page(0);
     if (fn_copy1 == NULL)
     {
@@ -62,12 +62,12 @@ tid_t process_execute(const char *file_name)
 
     /* Create a new thread to execute FILE_NAME. */
     char *save_ptr;
-    char *cmd = strtok_r(fn_copy1, " ", &save_ptr);
-    tid = thread_create(cmd, PRI_DEFAULT, start_process, fn_copy0);
+    char *cmd = strtok_r(fn_copy0, " ", &save_ptr);
+    tid = thread_create(cmd, PRI_DEFAULT, start_process, fn_copy1);
     if (tid == TID_ERROR)
-        palloc_free_page(fn_copy0);
+        palloc_free_page(fn_copy1);
 
-    palloc_free_page(fn_copy1);
+    palloc_free_page(fn_copy0);
 
     return tid;
 }
