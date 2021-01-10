@@ -476,8 +476,10 @@ static unsigned tell(int fd)
     struct open_file *f = get_file_by_fd(fd);
 
     lock_acquire(&file_lock);
-    file_tell(f->file);
+    int ret = file_tell(f->file);
     lock_release(&file_lock);
+
+    return ret;
 }
 
 /* Closes file descriptor FD. Exiting or terminating a process implicitly
