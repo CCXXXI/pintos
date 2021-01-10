@@ -81,7 +81,7 @@ tid_t process_execute(const char *file_name)
 
     palloc_free_page(fn_copy0);
 
-    if (thread_current()->tid != 1)
+    if (thread_current()->tid != 1 && tid != TID_ERROR)
     {
         struct process *self = thread_current()->process;
         struct process *child = get_process(tid);
@@ -604,6 +604,8 @@ struct process *process_create(struct thread *t)
 /* Get struct process in ALL_LIST by pid. */
 struct process *get_process(pid_t pid)
 {
+    ASSERT(pid != TID_ERROR);
+
     struct list *l = &all_list;
 
     for (struct list_elem *e = list_begin(l); e != list_end(l); e = list_next(e))
@@ -620,6 +622,8 @@ struct process *get_process(pid_t pid)
     Returns NULL if not found. */
 struct process *get_child(pid_t pid)
 {
+    ASSERT(pid != TID_ERROR);
+
     struct list *l = &thread_current()->process->children;
 
     for (struct list_elem *e = list_begin(l); e != list_end(l); e = list_next(e))
