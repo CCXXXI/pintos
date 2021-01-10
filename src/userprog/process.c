@@ -228,7 +228,7 @@ void process_exit(void)
     }
 
     struct process *self = cur->process;
-    
+
     self->thread = NULL;
     self->status = PROCESS_EXITED;
 
