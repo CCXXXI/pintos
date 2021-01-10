@@ -457,7 +457,13 @@ static int read(int fd, void *buffer, unsigned size)
     system and do not require any special effort in system call implementation. */
 static void seek(int fd, unsigned position)
 {
-    // todo
+    struct open_file *f = get_file_by_fd(fd);
+
+    USER_ASSERT(f != NULL);
+
+    lock_acquire(&file_lock);
+    file_seek(f->file, position);
+    lock_release(&file_lock);
 }
 
 /* Returns the position of the next byte to be read or written in open
