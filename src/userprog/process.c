@@ -568,7 +568,7 @@ struct process *process_create(struct thread *t)
     list_init(&p->children);
     p->parent = NULL;
 
-    sema_init(&p->sema, 0);
+    sema_init(&p->sema_load, 0);
 
     return p;
 }
@@ -612,7 +612,7 @@ static void process_load_fail(void)
     self->status = PROCESS_FAILED;
     self->exit_code = -1;
 
-    sema_up(&self->sema);
+    sema_up(&self->sema_load);
 
     thread_exit();
 }
@@ -624,5 +624,5 @@ static void process_load_success(void)
 
     self->status = PROCESS_NORMAL;
 
-    sema_up(&self->sema);
+    sema_up(&self->sema_load);
 }

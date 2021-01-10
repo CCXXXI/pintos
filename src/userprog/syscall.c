@@ -228,7 +228,7 @@ static pid_t exec(const char *cmd_line)
     lock_release(&file_lock);
 
     struct process *child = get_child(pid);
-    sema_down(&child->sema);
+    sema_down(&child->sema_load);
 
     if (child->status == PROCESS_FAILED)
     {

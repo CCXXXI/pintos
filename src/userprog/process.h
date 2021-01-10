@@ -26,7 +26,7 @@ struct process
     struct list_elem elem;      /* List element for children list. */
     struct list children;       /* List of children. */
     struct process *parent;     /* Parent. */
-    struct semaphore sema;      /* Parent block on this. */
+    struct semaphore sema_load; /* Parent block on this while loading. */
 };
 
 void process_init(void);
