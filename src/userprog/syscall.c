@@ -12,6 +12,7 @@
 #include "userprog/process.h"
 #include "devices/shutdown.h"
 #include "filesys/filesys.h"
+#include "filesys/file.h"
 
 #define USER_ASSERT(CONDITION) \
     if (CONDITION)             \
@@ -33,6 +34,7 @@ static void syscall_handler(struct intr_frame *);
 static bool is_valid_ptr(const void *ptr);
 static bool is_user_mem(const void *start, size_t size);
 static bool is_valid_str(const char *str);
+static struct open_file *get_file_by_fd(const int fd);
 
 static void halt(void) NO_RETURN;
 static void exit(int status) NO_RETURN;
@@ -175,6 +177,20 @@ static bool is_valid_str(const char *str)
     }
 
     return true;
+}
+
+static struct open_file *get_file_by_fd(const int fd)
+{
+    struct list *l = &thread_current()->process->files;
+
+    for (struct list_elem *e = list_begin(l); e != list_end(l); e = list_next(e))
+    {
+        struct open_file *f = list_entry(e, struct open_file, elem);
+        if (f->fd == fd)
+            return f;
+    }
+
+    return NULL;
 }
 
 /* Terminates the current user program, returning
@@ -380,8 +396,15 @@ static int open(const char *file)
 /* Returns the size, in bytes, of the file open as FD. */
 static int filesize(int fd)
 {
-    // todo
-    return -1;
+    struct open_file *f = get_file_by_fd(fd);
+
+    USER_ASSERT(f != NULL);
+
+    lock_acquire(&file_lock);
+    int ret = file_length(f->file);
+    lock_release(&file_lock);
+
+    return ret;
 }
 
 /* Reads SIZE bytes from the file open as FD into buffer. Returns
