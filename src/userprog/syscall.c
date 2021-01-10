@@ -7,9 +7,8 @@
 #include "threads/vaddr.h"
 #include "threads/synch.h"
 #include "userprog/pagedir.h"
+#include "userprog/process.h"
 #include "devices/shutdown.h"
-
-typedef int pid_t;
 
 #define USER_ASSERT(CONDITION) \
     if (CONDITION)             \
