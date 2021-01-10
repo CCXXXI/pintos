@@ -10,7 +10,7 @@ enum process_status
 {
     PROCESS_LOADING, /* Default state. */
     PROCESS_FAILED,  /* Failed to load. */
-    PROCESS_RUNNING, /* Running process. */
+    PROCESS_NORMAL,  /* Running process. */
 };
 
 /* Contains the infos that should not be discarded when thread exit. */
