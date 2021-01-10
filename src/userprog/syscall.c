@@ -321,8 +321,13 @@ static bool create(const char *file, unsigned initial_size)
     or closed, and removing an open file does not close it. */
 static bool remove(const char *file)
 {
-    // todo
-    return false;
+    USER_ASSERT(is_valid_str(file));
+
+    lock_acquire(&file_lock);
+    bool ret = filesys_remove(file);
+    lock_release(&file_lock);
+
+    return ret;
 }
 
 /* Opens the file called FILE. Returns a nonnegative integer handle
