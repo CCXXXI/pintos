@@ -48,7 +48,6 @@ tid_t process_execute(const char *file_name)
     fn_copy0 = palloc_get_page(0);
     if (fn_copy0 == NULL)
         return TID_ERROR;
-    strlcpy(fn_copy0, file_name, PGSIZE);
 
     /* Make a copy of FILE_NAME.
        Otherwise there's a race between the caller and load(). */
@@ -58,6 +57,8 @@ tid_t process_execute(const char *file_name)
         palloc_free_page(fn_copy0);
         return TID_ERROR;
     }
+
+    strlcpy(fn_copy0, file_name, PGSIZE);
     strlcpy(fn_copy1, file_name, PGSIZE);
 
     /* Create a new thread to execute FILE_NAME. */
