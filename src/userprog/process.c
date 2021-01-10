@@ -24,7 +24,7 @@ static struct list all_list;
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
 static void process_load_fail(void);
-static void process_load_success(void);
+static void process_load_success(const char *cmd);
 
 typedef void (*ret_addr_t)(void);
 typedef union
@@ -111,16 +111,16 @@ static void start_process(void *file_name_)
     char *cmd = strtok_r(file_name, " ", &save_ptr);
     success = load(cmd, &if_.eip, &if_.esp);
 
-    /* If load successed, pass arguments. */
     if (success)
+    {
         if_.esp = arg_pass((esp_t)if_.esp, cmd, save_ptr);
+        process_load_success(cmd);
+    }
 
     /* Free file_name whether successed or failed. */
     palloc_free_page(file_name);
 
-    if (success)
-        process_load_success();
-    else
+    if (!success)
         process_load_fail();
 
     /* Start the user process by simulating a return from an
@@ -227,6 +227,11 @@ void process_exit(void)
     struct process *self = cur->process;
     self->thread = NULL;
     self->status = PROCESS_EXITED;
+
+    ASSERT(self->file != NULL);
+    file_allow_write(self->file);
+    file_close(self->file);
+
     sema_up(&self->sema_wait);
 }
 
@@ -634,11 +639,13 @@ static void process_load_fail(void)
 }
 
 /* Set process status when load successed. */
-static void process_load_success(void)
+static void process_load_success(const char *cmd)
 {
     struct process *self = thread_current()->process;
 
     self->status = PROCESS_NORMAL;
+    self->file = filesys_open(cmd);
+    file_deny_write(self->file);
 
     sema_up(&self->sema_load);
 }

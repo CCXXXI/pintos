@@ -33,6 +33,7 @@ struct process
     struct semaphore sema_wait; /* Parent block on this while waiting. */
     struct list files;          /* Opening files. */
     int fd;                     /* Max file descriptor num. */
+    struct file *file;          /* Executable file loaded by self. */
 };
 
 void process_init(void);
