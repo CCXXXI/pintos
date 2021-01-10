@@ -110,8 +110,8 @@ struct thread
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem; /* List element. */
-    struct list donor;     /* Locks that donate the thread. */
-    struct lock *donee;    /* Locks that donated by the thread. */
+    struct list donors;    /* Locks that donate the thread. */
+    struct lock *donee;    /* Lock that donated by the thread. */
 
     /* Shared between thread.c and timer.c. */
     fp_t recent_cpu;

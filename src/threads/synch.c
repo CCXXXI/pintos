@@ -251,7 +251,7 @@ static void lock_acquire_success(struct lock *lock)
     /* LOCK do donate to CUR now. */
     cur->donee = NULL;
     lock->holder = cur;
-    list_push_back(&cur->donor, &lock->elem);
+    list_push_back(&cur->donors, &lock->elem);
 
     lock_update_priority(lock);
     thread_update_priority(cur);
