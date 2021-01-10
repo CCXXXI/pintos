@@ -180,12 +180,23 @@ static void *arg_pass(esp_t esp, char *cmd, char *save_ptr)
    child of the calling process, or if process_wait() has already
    been successfully called for the given TID, returns -1
    immediately, without waiting. */
-int process_wait(tid_t child_tid UNUSED)
+int process_wait(tid_t child_tid)
 {
-#include "devices/timer.h"
-    timer_sleep(1 * TIMER_FREQ);
+    bool cur_init = thread_current()->tid == 1;
+    struct process *child = cur_init ? get_process(child_tid) : get_child(child_tid);
 
-    return -1;
+    if (child == NULL)
+        return -1;
+
+    sema_down(&child->sema_wait);
+
+    if (!cur_init)
+        list_remove(&child->elem);
+    list_remove(&child->allelem);
+    int exit_code = child->status == PROCESS_EXITED ? child->exit_code : -1;
+    palloc_free_page(child);
+
+    return exit_code;
 }
 
 /* Free the current process's resources. */
@@ -212,10 +223,11 @@ void process_exit(void)
         pagedir_activate(NULL);
         pagedir_destroy(pd);
     }
-    cur->process->thread = NULL;
-    // todo
-    list_remove(&cur->process->allelem);
-    palloc_free_page(cur->process);
+
+    struct process *self = cur->process;
+    self->thread = NULL;
+    self->status = PROCESS_EXITED;
+    sema_up(&self->sema_wait);
 }
 
 /* Sets up the CPU for running user code in the current
@@ -569,6 +581,7 @@ struct process *process_create(struct thread *t)
     p->parent = NULL;
 
     sema_init(&p->sema_load, 0);
+    sema_init(&p->sema_wait, 0);
 
     return p;
 }

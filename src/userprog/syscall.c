@@ -288,8 +288,7 @@ static pid_t exec(const char *cmd_line)
     system call in terms of process_wait(). */
 static int wait(pid_t pid)
 {
-    // todo
-    return -1;
+    return process_wait(pid);
 }
 
 /* Terminates Pintos by calling shutdown_power_off()

@@ -13,6 +13,7 @@ enum process_status
     PROCESS_LOADING, /* Default state. */
     PROCESS_FAILED,  /* Failed to load. */
     PROCESS_NORMAL,  /* Running process. */
+    PROCESS_EXITED,  /* Exited normally. */
 };
 
 /* Contains the infos that should not be discarded when thread exit. */
@@ -27,6 +28,7 @@ struct process
     struct list children;       /* List of children. */
     struct process *parent;     /* Parent. */
     struct semaphore sema_load; /* Parent block on this while loading. */
+    struct semaphore sema_wait; /* Parent block on this while waiting. */
 };
 
 void process_init(void);
