@@ -37,6 +37,12 @@ typedef union
 } esp_t;
 static void *arg_pass(esp_t esp, char *cmd, char *save_ptr);
 
+/* Initializes the user process system. */
+void process_init(void)
+{
+    list_init(&all_list);
+}
+
 /* Starts a new thread running a user program loaded from
    FILE_NAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
