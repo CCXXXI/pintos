@@ -580,6 +580,7 @@ struct process *process_create(struct thread *t)
     p->thread = t;
     p->pid = t->tid;
     p->status = PROCESS_LOADING;
+    p->exit_code = -1;
 
     list_push_back(&all_list, &p->allelem);
     list_init(&p->children);
