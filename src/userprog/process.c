@@ -193,7 +193,7 @@ int process_wait(tid_t child_tid)
     if (!cur_init)
         list_remove(&child->elem);
     list_remove(&child->allelem);
-    int exit_code = child->status == PROCESS_EXITED ? child->exit_code : -1;
+    int exit_code = child->exit_code;
     palloc_free_page(child);
 
     return exit_code;
