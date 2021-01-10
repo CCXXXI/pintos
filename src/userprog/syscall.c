@@ -6,6 +6,7 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
+#include "devices/shutdown.h"
 
 typedef int pid_t;
 
@@ -243,7 +244,7 @@ static int wait(pid_t pid)
     about possible deadlock situations, etc. */
 static void halt(void)
 {
-    // todo
+    shutdown_power_off();
 }
 
 /* Runs the executable whose name is given in CMD_LINE,
