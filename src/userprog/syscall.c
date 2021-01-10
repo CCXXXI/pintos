@@ -10,6 +10,7 @@
 #include "userprog/pagedir.h"
 #include "userprog/process.h"
 #include "devices/shutdown.h"
+#include "filesys/filesys.h"
 
 #define USER_ASSERT(CONDITION) \
     if (CONDITION)             \
@@ -306,8 +307,13 @@ static void halt(void)
     would require a open system call. */
 static bool create(const char *file, unsigned initial_size)
 {
-    // todo
-    return false;
+    USER_ASSERT(is_valid_str(file));
+
+    lock_acquire(&file_lock);
+    bool ret = filesys_create(file, initial_size);
+    lock_release(&file_lock);
+
+    return ret;
 }
 
 /* Deletes the file called FILE. Returns true if successful, false
