@@ -15,6 +15,7 @@
 #include "threads/init.h"
 #include "threads/interrupt.h"
 #include "threads/palloc.h"
+#include "threads/malloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
@@ -207,7 +208,7 @@ int process_wait(tid_t child_tid)
         list_remove(&child->elem);
     list_remove(&child->allelem);
     int exit_code = child->exit_code;
-    palloc_free_page(child);
+    free(child);
 
     return exit_code;
 }
@@ -591,7 +592,7 @@ static bool install_page(void *upage, void *kpage, bool writable)
 struct process *process_create(struct thread *t)
 {
     /* Allocate process. */
-    struct process *p = palloc_get_page(PAL_ZERO);
+    struct process *p = malloc(sizeof(struct process));
     if (p == NULL)
         return NULL;
 
