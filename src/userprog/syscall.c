@@ -274,7 +274,7 @@ static pid_t exec(const char *cmd_line)
     if (child->status == PROCESS_FAILED)
     {
         sema_down(&child->sema_wait);
-        free(child);
+        palloc_free_page(child);
         return -1;
     }
     else
